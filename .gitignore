@@ -1,0 +1,6 @@
+node_modules/
+.next/
+.env.local
+eduspace-ai-backup.tar.gz
+*.log
+.DS_Store
