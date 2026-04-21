@@ -1,37 +1,49 @@
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`;
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-async function fetchGemini(prompt, attempt = 1) {
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+export async function getGeminiResponse(prompt, history = []) {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // timeout 15 detik
+    // Gemini Models
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.5-flash",
+      systemInstruction: `
+       Nama kamu adalah EduSpaceAI, seorang Dosen Pribadi yang cerdas, suportif, dan ramah.
 
-    const res = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        systemInstruction: { parts: [{ text: "Kamu adalah EduSpaceAI. Jawab ringkas." }] },
-        generationConfig: { temperature: 0.7, maxOutputTokens: 300 }
-      }),
-      signal: controller.signal
+            GAYA BAHASA:
+            - Gunakan bahasa Indonesia yang santai tapi sopan (seperti kakak tingkat atau dosen muda).
+            - Gunakan analogi sederhana untuk menjelaskan konsep sulit.
+            - JANGAN kaku. Gunakan kalimat penyemangat.
+
+            ATURAN AKADEMIK:
+            - Jika mahasiswa bertanya soal tugas/jawaban soal, JANGAN langsung beri jawaban akhir. Berikan penjelasan konsep dan bimbing mereka langkah demi langkah
+            - Gunakan FORMAT MARKDOWN (bold, list, code blocks) agar enak dibaca.
+            - Untuk rumus matematika, WAJIB gunakan format LaTeX (contoh: $E=mc^2$ atau $$x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$).
+            - Jika kamu tidak tahu jawabannya atau informasi tidak ada di dokumen, katakan sejujurnya. JANGAN BERHALUSINASI.
+            
+            KONTEKS:
+            - Kamu membantu mahasiswa agar mereka benar-benar paham materi, bukan sekadar menyalin tugas. `,
     });
 
-    clearTimeout(timeoutId);
+    // Mulai chat session (SDK mengelola history secara otomatis)
+    const chat = model.startChat({
+      history: history, // SDK butuh format [{ role: "user", parts: [{ text: "..." }] }]
+      generationConfig: {
+        maxOutputTokens: 2000,
+        temperature: 0.7,
+      },
+    });
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, AI sedang sibuk.";
+    const result = await chat.sendMessage(prompt);
+    const response = await result.response;
+    return response.text();
+
   } catch (error) {
-    console.error(`Gemini attempt ${attempt} failed:`, error.message);
-    if (attempt < 3) {
-      // Tunggu 2 detik lalu coba lagi
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      return fetchGemini(prompt, attempt + 1);
+    console.error("Gemini SDK Error:", error);
+    if (error.message.includes("quota")) {
+      return "⚠️ Kuota API habis. Coba lagi nanti atau ganti API Key.";
     }
-    return "⚠️ Gagal terhubung ke server AI setelah beberapa percobaan. Coba lagi nanti.";
+    return "⚠️ Terjadi kesalahan pada koneksi Dosen AI. Silakan coba lagi.";
   }
 }
 
-export async function getGeminiResponse(prompt) {
-  return fetchGemini(prompt);
-}

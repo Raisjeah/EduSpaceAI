@@ -17,41 +17,37 @@ export default function Home() {
   // Ambil data auth
   const { userId, isLoading } = useAuth();
 
+  // Mencegah Hydration Error di Next.js
   useEffect(() => {
     setHasMounted(true);
   }, []);
 
-  // Mencegah Hydration Error
+  // 1. TAMPILAN LOADING (Hanya muncul saat pertama kali buka & ID belum ketemu)
+  if (isLoading && !userId) {
+    return (
+      <div className="h-screen bg-[#0F0F0F] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-500 text-sm font-medium">Memuat EduSpaceAI...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Safety check jika sudah tidak loading tapi userId benar-benar tidak ada
   if (!hasMounted) return null;
+  if (!userId && !isLoading) {
+    return (
+      <div className="h-screen bg-[#0F0F0F] flex items-center justify-center text-gray-400">
+        User tidak ditemukan. Silakan bersihkan cache atau refresh browser.
+      </div>
+    );
+  }
 
+  // 3. RENDER UTAMA (Sekali masuk sini, komponen tidak akan unmount/reset)
   return (
-    // Gunakan 'relative h-screen overflow-hidden' agar layar tidak bisa di-scroll keluar jalur
-    <div className="relative h-screen w-full bg-[#0F0F0F] text-gray-200 overflow-hidden flex">
-      
-      {/* 1. TIRAI LOADING (OVERLAY) 
-          Menggunakan fixed dan z-[9999] agar PASTI di depan dan tidak mendorong konten lain */}
-      {isLoading && !userId && (
-        <div className="fixed inset-0 z-[9999] bg-[#0F0F0F] flex flex-col items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-gray-400 text-sm font-medium animate-pulse">Menyiapkan Ruang Belajar...</p>
-          </div>
-        </div>
-      )}
-
-      {/* 2. PESAN JIKA USER BENAR-BENAR TIDAK ADA (Setelah Loading Selesai) */}
-      {!isLoading && !userId && (
-        <div className="fixed inset-0 z-[9998] bg-[#0F0F0F] flex items-center justify-center p-6 text-center">
-          <div className="max-w-xs">
-            <p className="text-gray-400 mb-4 text-sm">Sesi belajar tidak ditemukan. Silakan refresh browser atau coba lagi.</p>
-            <button onClick={() => window.location.reload()} className="px-4 py-2 bg-indigo-600 rounded-lg text-xs font-bold">Refresh Sekarang</button>
-          </div>
-        </div>
-      )}
-
-      {/* 3. STRUKTUR UTAMA (Sudah siap di belakang tirai loading) */}
-      
-      {/* Overlay Sidebar untuk Mobile */}
+    <div className="flex h-screen bg-[#0F0F0F] text-gray-200 overflow-hidden">
+      {/* Overlay Mobile */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
@@ -59,6 +55,7 @@ export default function Home() {
         />
       )}
 
+      {/* SIDEBAR - Menggunakan activeChatId untuk sinkronisasi history */}
       <Sidebar
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
@@ -72,6 +69,7 @@ export default function Home() {
         <Header setIsSidebarOpen={setIsSidebarOpen} />
 
         <div className="flex-1 overflow-hidden relative">
+          {/* TAMPILAN CHAT - Tetap mounted selama userId ada */}
           {currentView === 'chat' && (
             <ChatView
               userId={userId}
@@ -81,12 +79,14 @@ export default function Home() {
             />
           )}
 
+          {/* TAMPILAN TOOLS */}
           {currentView === 'tools' && (
             <ToolsView
               setCurrentView={setCurrentView}
             />
           )}
 
+          {/* TAMPILAN EDITOR DOKUMEN */}
           {currentView.startsWith('editor:') && (
             <DocumentEditor
               type={currentView.split(':')[1]}
