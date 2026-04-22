@@ -66,8 +66,8 @@ export async function extractFileContent(formData) {
       throw new Error('Tipe file tidak didukung. Gunakan PDF, Word, Excel, atau Teks.');
     }
 
-    // PEMBERSIHAN AKHIR: Hapus spasi berlebih agar tidak boros token AI
-    const cleanedText = text.replace(/\s+/g, ' ').trim();
+    // PEMBERSIHAN AKHIR: Hapus spasi horizontal berlebih, tetap pertahankan newline
+    const cleanedText = text.replace(/[^\S\r\n]+/g, ' ').trim();
 
     // HAPUS FILE SEMENTARA SETELAH SELESAI
     if (fs.existsSync(filePath)) await fs.promises.unlink(filePath);

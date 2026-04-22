@@ -17,11 +17,9 @@ export default function ChatView({ userId, setCurrentView, activeChatId, setActi
   // 1. Load detail chat saat activeChatId berubah
   useEffect(() => {
     if (activeChatId && userId) {
-      if (messages.length === 0) {
-        getChatDetails(activeChatId, userId).then(res => {
-          setMessages(res);
-        });
-      }
+      getChatDetails(activeChatId, userId).then(res => {
+        setMessages(res);
+      });
     } else if (!activeChatId) {
       setMessages([]);
     }
