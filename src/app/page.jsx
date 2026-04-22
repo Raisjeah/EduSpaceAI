@@ -92,6 +92,7 @@ export default function Home() {
               type={currentView.split(':')[1]}
               setCurrentView={setCurrentView}
               userId={userId}
+              setActiveChatId={setActiveChatId}
             />
           )}
         </div>

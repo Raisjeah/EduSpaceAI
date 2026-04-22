@@ -6,15 +6,17 @@ import { saveDocument } from '@/app/actions/documentActions';
 import { saveChat } from '@/app/actions/chatActions';
 import { extractFileContent } from '@/app/actions/fileActions'; // server action
 
-export default function DocumentEditor({ type, setCurrentView, userId }) {
+export default function DocumentEditor({ type, setCurrentView, userId, setActiveChatId }) {
   const [content, setContent] = useState('');
   const [fileName, setFileName] = useState('Belum ada file diunggah');
+  const [fileType, setFileType] = useState('text/plain');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setFileName(file.name);
+    setFileType(file.type || 'text/plain');
     setIsLoading(true);
 
     const formData = new FormData();
@@ -22,7 +24,7 @@ export default function DocumentEditor({ type, setCurrentView, userId }) {
     const result = await extractFileContent(formData);
 
     if (result.success) {
-      setContent(result.text);
+      setContent(result.content);
     } else {
       setContent(`Gagal ekstrak file: ${result.error}`);
     }
@@ -31,8 +33,10 @@ export default function DocumentEditor({ type, setCurrentView, userId }) {
 
   const handleAnalyze = async () => {
     if (!content) return;
-    await saveDocument(userId, fileName, 'text/plain', content);
-    await saveChat('user', `Tolong analisis dan perbaiki isi dokumen ini (${fileName}):\n\n${content}`, userId);
+    const chatId = `chat_${Date.now()}`;
+    await saveDocument(userId, fileName, fileType, content);
+    await saveChat('user', `Tolong analisis dan perbaiki isi dokumen ini (${fileName}):\n\n${content}`, userId, chatId);
+    setActiveChatId(chatId);
     setCurrentView('chat');
   };
 

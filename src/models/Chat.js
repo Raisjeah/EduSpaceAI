@@ -4,6 +4,7 @@ const ChatSchema = new mongoose.Schema({
   role: { type: String, enum: ['user', 'model'], required: true },
   text: { type: String, required: true },
   userId: { type: String, required: true },
+  chatId: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 
