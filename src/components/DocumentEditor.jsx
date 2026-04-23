@@ -5,12 +5,15 @@ import { X, FolderOpen, BrainCircuit } from 'lucide-react';
 import { saveDocument } from '@/app/actions/documentActions';
 import { saveChat } from '@/app/actions/chatActions';
 import { extractFileContent } from '@/app/actions/fileActions'; // server action
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
-export default function DocumentEditor({ type, setCurrentView, userId, setActiveChatId }) {
+export default function DocumentEditor({ type, userId }) {
   const [content, setContent] = useState('');
   const [fileName, setFileName] = useState('Belum ada file diunggah');
   const [fileType, setFileType] = useState('text/plain');
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -36,8 +39,7 @@ export default function DocumentEditor({ type, setCurrentView, userId, setActive
     const chatId = `chat_${Date.now()}`;
     await saveDocument(userId, fileName, fileType, content);
     await saveChat('user', `Tolong analisis dan perbaiki isi dokumen ini (${fileName}):\n\n${content}`, userId, chatId);
-    setActiveChatId(chatId);
-    setCurrentView('chat');
+    router.push(`/chat/${chatId}`);
   };
 
   return (
@@ -49,7 +51,7 @@ export default function DocumentEditor({ type, setCurrentView, userId, setActive
           </h2>
           <p className="text-[11px] text-gray-500">Unggah file, edit isinya di sini, lalu klik Analisis.</p>
         </div>
-        <button onClick={() => setCurrentView('tools')} className="text-gray-400 hover:text-white"><X size={20}/></button>
+        <Link href="/tools" className="text-gray-400 hover:text-white"><X size={20}/></Link>
       </div>
 
       <div className="flex gap-2 mb-4 bg-[#242424] p-2 rounded-xl border border-[#333]">

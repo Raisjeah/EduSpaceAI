@@ -3,16 +3,16 @@
 import { Plus, Wrench, User, Menu, MessageSquare } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getChatHistory } from '@/app/actions/chatActions';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function Sidebar({ 
   isSidebarOpen, 
   setIsSidebarOpen, 
-  setCurrentView, 
-  userId,
-  activeChatId,
-  setActiveChatId 
+  userId
 }) {
   const [chatGroups, setChatGroups] = useState([]);
+  const pathname = usePathname();
 
   // 1. Ambil history yang sudah dikelompokkan berdasarkan chatId dari database
   const fetchHistory = async () => {
@@ -24,21 +24,10 @@ export default function Sidebar({
 
   useEffect(() => {
     fetchHistory();
-    // Re-fetch saat ada chat baru atau chat aktif berubah
-  }, [userId, activeChatId]);
+  }, [userId, pathname]);
 
-  // 2. Fungsi untuk New Chat
-  const handleNewChat = () => {
-    setActiveChatId(null); // Reset ID Chat
-    setCurrentView('chat'); // Pastikan tampilan di Chat
-    if (window.innerWidth < 768) setIsSidebarOpen(false); // Tutup sidebar di HP
-  };
-
-  // 3. Fungsi untuk klik History
-  const handleHistoryClick = (chatId) => {
-    setActiveChatId(chatId); // Set chat yang aktif
-    setCurrentView('chat'); // Pindah ke tampilan chat
-    if (window.innerWidth < 768) setIsSidebarOpen(false); // Tutup sidebar di HP
+  const closeSidebarOnMobile = () => {
+    if (window.innerWidth < 768) setIsSidebarOpen(false);
   };
 
   return (
@@ -51,34 +40,37 @@ export default function Sidebar({
       <div className="flex flex-col h-full p-4">
         {/* Header / Brand */}
         <div className="flex items-center justify-between mb-6 px-2">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2" onClick={closeSidebarOnMobile}>
             <div className="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center font-bold text-[10px]">E</div>
             <span className="font-bold text-[14px] text-white tracking-tight">EduSpaceAI</span>
-          </div>
+          </Link>
           <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-white">
             <Menu size={18} />
           </button>
         </div>
 
         {/* Button New Chat */}
-        <button 
-          onClick={handleNewChat}
+        <Link
+          href="/"
+          onClick={closeSidebarOnMobile}
           className="flex items-center justify-center gap-2 w-full py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all mb-6 text-white shadow-lg shadow-indigo-900/20"
         >
           <Plus size={16} /> <span className="text-[12px] font-semibold">Percakapan Baru</span>
-        </button>
+        </Link>
 
         {/* Navigation */}
         <nav className="flex-1 flex flex-col min-h-0">
-          <div 
-            onClick={() => setCurrentView('tools')} 
+          <Link
+            href="/tools"
+            onClick={closeSidebarOnMobile}
             className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all text-[12px] mb-2 ${
-              // Kasih warna beda kalau sedang di halaman tools
-              'text-gray-400 hover:text-white hover:bg-[#1A1A1A]'
+              pathname === '/tools'
+              ? 'bg-[#1A1A1A] text-white'
+              : 'text-gray-400 hover:text-white hover:bg-[#1A1A1A]'
             }`}
           >
             <Wrench size={16} /> <span className="font-medium">Tools & File Editor</span>
-          </div>
+          </Link>
           
           <div className="mt-4 mb-3 px-3 text-[10px] font-bold text-gray-500 tracking-[0.1em] uppercase">Riwayat Belajar</div>
           
@@ -88,20 +80,24 @@ export default function Sidebar({
                 Belum ada percakapan
               </div>
             ) : (
-              chatGroups.map((group) => (
-                <div 
-                  key={group._id} 
-                  onClick={() => handleHistoryClick(group._id)}
-                  className={`group flex items-center gap-3 px-3 py-3 text-[12px] rounded-xl cursor-pointer transition-all border-l-4 ${
-                    activeChatId === group._id 
-                    ? 'bg-[#1A1A1A] text-white border-indigo-500' 
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-[#151515] border-transparent'
-                  }`}
-                >
-                  <MessageSquare size={14} className={activeChatId === group._id ? 'text-indigo-400' : 'text-gray-600'} />
-                  <span className="truncate flex-1">{group.text}</span>
-                </div>
-              ))
+              chatGroups.map((group) => {
+                const isActive = pathname === `/chat/${group._id}`;
+                return (
+                  <Link
+                    key={group._id}
+                    href={`/chat/${group._id}`}
+                    onClick={closeSidebarOnMobile}
+                    className={`group flex items-center gap-3 px-3 py-3 text-[12px] rounded-xl cursor-pointer transition-all border-l-4 ${
+                      isActive
+                      ? 'bg-[#1A1A1A] text-white border-indigo-500'
+                      : 'text-gray-400 hover:text-gray-200 hover:bg-[#151515] border-transparent'
+                    }`}
+                  >
+                    <MessageSquare size={14} className={isActive ? 'text-indigo-400' : 'text-gray-600'} />
+                    <span className="truncate flex-1">{group.text}</span>
+                  </Link>
+                );
+              })
             )}
           </div>
         </nav>

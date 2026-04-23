@@ -7,12 +7,15 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
-export default function ChatView({ userId, setCurrentView, activeChatId, setActiveChatId }) {
+export default function ChatView({ userId, activeChatId }) {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([]);
   const [isPending, startTransition] = useTransition();
   const chatEndRef = useRef(null);
+  const router = useRouter();
 
   // 1. Load detail chat saat activeChatId berubah
   useEffect(() => {
@@ -52,7 +55,8 @@ export default function ChatView({ userId, setCurrentView, activeChatId, setActi
 
       if (result.success) {
         if (!activeChatId) {
-          setActiveChatId(result.chatId);
+          // Redirect ke chat yang baru dibuat
+          router.push(`/chat/${result.chatId}`);
         }
         const aiMessage = {
           role: 'model',
@@ -79,7 +83,9 @@ export default function ChatView({ userId, setCurrentView, activeChatId, setActi
             <div className="w-full max-w-xl text-center">
               <InputBox input={input} setInput={setInput} handleSend={() => handleSend()} />
               <div className="flex flex-wrap justify-center gap-3 mt-8">
-                <SuggestionChip label="Buka Tools" icon={<Plus size={12}/>} onClick={() => setCurrentView('tools')} />
+                <Link href="/tools">
+                  <SuggestionChip label="Buka Tools" icon={<Plus size={12}/>} isLink={true} />
+                </Link>
                 <SuggestionChip label="Bimbingan Skripsi" onClick={() => handleSend("Saya butuh bantuan bimbingan skripsi, bisa mulai dari mana?")} />
                 <SuggestionChip label="Buat Latihan Soal" onClick={() => handleSend("Buatkan 5 soal pilihan ganda tentang Pemrograman Dasar")} />
               </div>
@@ -134,16 +140,17 @@ export default function ChatView({ userId, setCurrentView, activeChatId, setActi
   );
 }
 
-// --- KOMPONEN PENDUKUNG (PASTIKAN INI IKUT TERSALIN) ---
+// --- KOMPONEN PENDUKUNG ---
 
-function SuggestionChip({ label, icon, onClick }) {
+function SuggestionChip({ label, icon, onClick, isLink }) {
+  const Component = isLink ? 'div' : 'button';
   return (
-    <button 
+    <Component
       onClick={onClick} 
-      className="flex items-center gap-2 px-4 py-2 bg-[#1E1E1E] border border-[#2A2A2A] rounded-full text-[11px] text-gray-400 hover:text-white hover:border-indigo-500/50 transition-all"
+      className="flex items-center gap-2 px-4 py-2 bg-[#1E1E1E] border border-[#2A2A2A] rounded-full text-[11px] text-gray-400 hover:text-white hover:border-indigo-500/50 transition-all cursor-pointer"
     >
       {icon} {label}
-    </button>
+    </Component>
   );
 }
 
