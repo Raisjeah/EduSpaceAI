@@ -1,15 +1,17 @@
 'use client';
 
-import { Plus, Wrench, User, Menu, MessageSquare } from 'lucide-react';
+import { Plus, Wrench, User, Menu, MessageSquare, LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getChatHistory } from '@/app/actions/chatActions';
+import { logout } from '@/app/actions/authActions';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 export default function Sidebar({ 
   isSidebarOpen, 
   setIsSidebarOpen, 
-  userId
+  userId,
+  user
 }) {
   const [chatGroups, setChatGroups] = useState([]);
   const pathname = usePathname();
@@ -30,6 +32,11 @@ export default function Sidebar({
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   };
 
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = '/';
+  };
+
   return (
     <aside className={`
       fixed top-0 left-0 h-full z-50 bg-[#0F0F0F] border-r border-[#1E1E1E]
@@ -40,7 +47,7 @@ export default function Sidebar({
       <div className="flex flex-col h-full p-4">
         {/* Header / Brand */}
         <div className="flex items-center justify-between mb-6 px-2">
-          <Link href="/" className="flex items-center gap-2" onClick={closeSidebarOnMobile}>
+          <Link href="/chat-new" className="flex items-center gap-2" onClick={closeSidebarOnMobile}>
             <div className="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center font-bold text-[10px]">E</div>
             <span className="font-bold text-[14px] text-white tracking-tight">EduSpaceAI</span>
           </Link>
@@ -51,7 +58,7 @@ export default function Sidebar({
 
         {/* Button New Chat */}
         <Link
-          href="/"
+          href="/chat-new"
           onClick={closeSidebarOnMobile}
           className="flex items-center justify-center gap-2 w-full py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all mb-6 text-white shadow-lg shadow-indigo-900/20"
         >
@@ -103,15 +110,24 @@ export default function Sidebar({
         </nav>
 
         {/* User Profile */}
-        <div className="mt-auto pt-4 border-t border-[#1E1E1E] flex items-center justify-between px-2">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-inner">
-                <User size={14} className="text-white" />
+        <div className="mt-auto pt-4 border-t border-[#1E1E1E] flex flex-col gap-2">
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-inner overflow-hidden">
+                  {user?.image ? <img src={user.image} alt="" /> : <User size={14} className="text-white" />}
+              </div>
+              <div className="flex flex-col">
+                  <span className="text-[12px] font-bold text-gray-200 truncate max-w-[120px]">{user?.name || 'User'}</span>
+                  <span className="text-[9px] text-gray-500">Free Account</span>
+              </div>
             </div>
-            <div className="flex flex-col">
-                <span className="text-[12px] font-bold text-gray-200">Rais Dev</span>
-                <span className="text-[9px] text-gray-500">Free Account</span>
-            </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 text-gray-500 hover:text-red-400 transition-colors"
+              title="Keluar"
+            >
+              <LogOut size={16} />
+            </button>
           </div>
         </div>
       </div>

@@ -1,31 +1,33 @@
+'use client';
+
 import { useState, useEffect } from 'react';
+import { getSession } from '@/app/actions/authActions';
 
 export default function useAuth() {
-  // 1. Ambil ID langsung saat state pertama kali dibuat (hanya di browser)
-  const [userId, setUserId] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('eduspace_user_id');
-    }
-    return null;
-  });
-
+  const [userId, setUserId] = useState(null);
   const [user, setUser] = useState(null);
-  
-  // 2. Jika ID sudah ada sejak awal, isLoading langsung false
-  const [isLoading, setIsLoading] = useState(!userId);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchSession = async () => {
+    try {
+      const session = await getSession();
+      if (session) {
+        setUserId(session.uid);
+        setUser(session);
+      } else {
+        setUserId(null);
+        setUser(null);
+      }
+    } catch (error) {
+      console.error("Gagal ambil sesi:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let id = localStorage.getItem('eduspace_user_id');
-    
-    if (!id) {
-      id = 'user_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('eduspace_user_id', id);
-    }
-    
-    setUserId(id);
-    setUser({ uid: id, name: 'Rais Dev' });
-    setIsLoading(false);
+    fetchSession();
   }, []);
 
-  return { user, userId, isLoading };
+  return { user, userId, isLoading, refreshSession: fetchSession };
 }

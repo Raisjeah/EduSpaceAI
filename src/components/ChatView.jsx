@@ -129,13 +129,11 @@ export default function ChatView({ userId, activeChatId }) {
           </div>
         )}
       </div>
-      {messages.length > 0 && (
-        <div className="p-6 bg-gradient-to-t from-[#0F0F0F] via-[#0F0F0F] to-transparent">
-          <div className="max-w-3xl mx-auto">
-            <InputBox input={input} setInput={setInput} handleSend={() => handleSend()} disabled={isPending} />
-          </div>
+      <div className="p-6 bg-gradient-to-t from-[#0F0F0F] via-[#0F0F0F] to-transparent">
+        <div className="max-w-3xl mx-auto">
+          <InputBox input={input} setInput={setInput} handleSend={() => handleSend()} disabled={isPending} />
         </div>
-      )}
+      </div>
     </div>
   );
 }
