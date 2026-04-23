@@ -6,7 +6,11 @@ import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-eduspace';
+/**
+ * PENTING: Jangan gunakan fallback hardcoded di produksi.
+ * Pastikan JWT_SECRET didefinisikan di environment variable (.env.local).
+ */
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-dev-only-change-in-prod';
 
 export async function login(formData) {
   const email = formData.get('email');
@@ -35,6 +39,7 @@ export async function login(formData) {
     cookieStore.set('eduspace_session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 1 week
       path: '/'
     });
@@ -74,6 +79,7 @@ export async function register(formData) {
     cookieStore.set('eduspace_session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7,
       path: '/'
     });
@@ -112,6 +118,7 @@ export async function getSession() {
       image: user.image
     };
   } catch (error) {
+    // Jika token expired atau invalid, biarkan user logout
     return null;
   }
 }

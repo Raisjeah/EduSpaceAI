@@ -5,13 +5,17 @@ import path from 'path';
 import os from 'os';
 import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
-import * as XLSX from 'xlsx'; // Jangan lupa install: npm install xlsx
+import ExcelJS from 'exceljs';
 
 async function saveTempFile(file) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
   const tempDir = os.tmpdir();
-  const tempPath = path.join(tempDir, `upload_${Date.now()}_${file.name.replace(/\s+/g, '_')}`);
+
+  // Sanitasi nama file untuk mencegah path traversal
+  const safeName = path.basename(file.name).replace(/[^\w\s.-]/g, '_').replace(/\s+/g, '_');
+  const tempPath = path.join(tempDir, `upload_${Date.now()}_${safeName}`);
+
   await fs.promises.writeFile(tempPath, buffer);
   return tempPath;
 }
@@ -42,20 +46,29 @@ export async function extractFileContent(formData) {
       const result = await mammoth.extractRawText({ buffer });
       text = result.value;
     }
-    // 3. PARSE EXCEL (XLSX / CSV)
+    // 3. PARSE EXCEL / CSV (Menggunakan ExcelJS)
     else if (
       fileName.endsWith('.xlsx') || 
       fileName.endsWith('.xls') || 
       fileName.endsWith('.csv') ||
       fileType === 'text/csv'
     ) {
-      const buffer = await fs.promises.readFile(filePath);
-      const workbook = XLSX.read(buffer, { type: 'buffer' });
-      // Ambil semua data dari semua sheet dan gabungkan jadi teks
-      workbook.SheetNames.forEach(sheetName => {
-        const sheet = workbook.Sheets[sheetName];
-        text += `\n--- Sheet: ${sheetName} ---\n`;
-        text += XLSX.utils.sheet_to_txt(sheet);
+      const workbook = new ExcelJS.Workbook();
+      if (fileName.endsWith('.csv')) {
+        await workbook.csv.readFile(filePath);
+      } else {
+        await workbook.xlsx.readFile(filePath);
+      }
+
+      workbook.eachSheet((worksheet) => {
+        text += `\n--- Sheet: ${worksheet.name} ---\n`;
+        worksheet.eachRow((row) => {
+          // Gabungkan nilai sel dalam baris dengan spasi
+          const rowValues = Array.isArray(row.values)
+            ? row.values.slice(1).map(val => (val && typeof val === 'object' ? JSON.stringify(val) : val)).join(' ')
+            : '';
+          text += rowValues + '\n';
+        });
       });
     }
     // 4. PARSE TEXT BIASA
