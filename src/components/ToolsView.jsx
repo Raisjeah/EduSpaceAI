@@ -1,6 +1,7 @@
 import { FileText, BookOpen, FileSpreadsheet, BrainCircuit, Edit3 } from 'lucide-react';
+import Link from 'next/link';
 
-export default function ToolsView({ setCurrentView }) {
+export default function ToolsView() {
   const tools = [
     { id: 'pdf', title: 'Edit & Analisis PDF', icon: <FileText size={24} className="text-red-400" />, desc: 'Ekstrak teks PDF ke dalam editor lalu analisis.' },
     { id: 'doc', title: 'Edit & Analisis DOC', icon: <BookOpen size={24} className="text-blue-400" />, desc: 'Buka dokumen teks, edit manual, minta saran AI.' },
@@ -16,17 +17,17 @@ export default function ToolsView({ setCurrentView }) {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {tools.map(tool => (
-          <div 
+          <Link
             key={tool.id} 
-            onClick={() => setCurrentView(`editor:${tool.id}`)}
-            className="bg-[#242424] p-5 rounded-[1.5rem] border border-[#333] hover:border-indigo-500/50 cursor-pointer transition-all group"
+            href={`/editor/${tool.id}`}
+            className="bg-[#242424] p-5 rounded-[1.5rem] border border-[#333] hover:border-indigo-500/50 cursor-pointer transition-all group block"
           >
             <div className="w-12 h-12 rounded-xl bg-[#1A1A1A] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               {tool.icon}
             </div>
             <h3 className="font-bold text-gray-200 text-sm mb-2">{tool.title}</h3>
             <p className="text-[10px] text-gray-500 leading-relaxed">{tool.desc}</p>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
