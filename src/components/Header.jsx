@@ -1,17 +1,56 @@
-import { Menu, Search, User } from 'lucide-react';
+'use client';
+
+import { Menu, Search, User, X } from 'lucide-react';
+import { useState } from 'react';
+import useAuth from '@/hooks/useAuth';
+import Link from 'next/link';
 
 export default function Header({ setIsSidebarOpen }) {
+  const { searchQuery, setSearchQuery, userId } = useAuth();
+  const [isSearchActive, setIsSearchActive] = useState(false);
+
   return (
-    <header className="flex justify-between items-center p-4">
+    <header className="flex justify-between items-center p-4 relative z-10">
       <div className="flex items-center gap-3">
         <button onClick={() => setIsSidebarOpen(true)} className="text-gray-400 hover:text-white transition-colors md:hidden">
           <Menu size={20} />
         </button>
       </div>
-      <div className="flex items-center gap-4 text-gray-400">
-        <Search size={18} className="cursor-pointer hover:text-white" />
-        <div className="w-7 h-7 rounded-full bg-[#333] flex items-center justify-center border border-[#444]">
-          <User size={14} />
+
+      <div className="flex items-center gap-3 flex-1 justify-end">
+        {userId && (
+          <div className={`flex items-center transition-all duration-300 overflow-hidden ${isSearchActive ? 'flex-1 max-w-md' : 'w-0'}`}>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari riwayat..."
+              className="w-full bg-[#1A1A1A] border border-[#333] rounded-full py-1.5 px-4 text-[12px] outline-none focus:border-indigo-500/50 transition-colors"
+              autoFocus={isSearchActive}
+            />
+          </div>
+        )}
+
+        <div className="flex items-center gap-4 text-gray-400">
+          {userId && (
+            <button
+              onClick={() => {
+                setIsSearchActive(!isSearchActive);
+                if (isSearchActive) setSearchQuery('');
+              }}
+              className="hover:text-white transition-colors"
+            >
+              {isSearchActive ? <X size={18} /> : <Search size={18} />}
+            </button>
+          )}
+
+          {userId && (
+            <Link href="/profile" title="Edit Profil" className="hover:text-white transition-colors">
+              <div className="w-8 h-8 rounded-full bg-[#1A1A1A] flex items-center justify-center border border-[#333] hover:border-indigo-500/50 transition-all">
+                <User size={16} />
+              </div>
+            </Link>
+          )}
         </div>
       </div>
     </header>

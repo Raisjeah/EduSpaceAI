@@ -7,7 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 export default function ChatView({ userId, activeChatId }) {
@@ -16,40 +16,49 @@ export default function ChatView({ userId, activeChatId }) {
   const [isPending, startTransition] = useTransition();
   const chatEndRef = useRef(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isAnalyzing = searchParams.get('analyze') === 'true';
 
   // 1. Load detail chat saat activeChatId berubah
   useEffect(() => {
     if (activeChatId && userId) {
       getChatDetails(activeChatId, userId).then(res => {
         setMessages(res);
+
+        // Jika dari mode analisa, trigger AI untuk pesan terakhir
+        if (isAnalyzing && res.length > 0 && res[res.length - 1].role === 'user') {
+          handleSend(res[res.length - 1].text, true);
+        }
       });
     } else if (!activeChatId) {
       setMessages([]);
     }
-  }, [activeChatId, userId]);
+  }, [activeChatId, userId, isAnalyzing]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isPending]);
 
-  const handleSend = async (overrideInput) => {
+  const handleSend = async (overrideInput, isAutoTrigger = false) => {
     const textToSend = overrideInput || input;
-    if (!textToSend.trim() || isPending) return;
+    if (!textToSend.trim() || (isPending && !isAutoTrigger)) return;
 
-    const userMessage = {
-      role: 'user',
-      text: textToSend,
-      _id: Date.now().toString()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
+    if (!isAutoTrigger) {
+      const userMessage = {
+        role: 'user',
+        text: textToSend,
+        _id: Date.now().toString()
+      };
+      setMessages(prev => [...prev, userMessage]);
+      setInput('');
+    }
 
     startTransition(async () => {
       const formData = new FormData();
       formData.append('userId', userId);
       formData.append('prompt', textToSend);
       if (activeChatId) formData.append('chatId', activeChatId);
+      if (isAutoTrigger) formData.append('skipSave', 'true');
 
       const result = await sendMessage(formData);
 

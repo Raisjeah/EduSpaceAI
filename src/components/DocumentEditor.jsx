@@ -37,9 +37,22 @@ export default function DocumentEditor({ type, userId }) {
   const handleAnalyze = async () => {
     if (!content) return;
     const chatId = `chat_${Date.now()}`;
-    await saveDocument(userId, fileName, fileType, content);
-    await saveChat('user', `Tolong analisis dan perbaiki isi dokumen ini (${fileName}):\n\n${content}`, userId, chatId);
-    router.push(`/chat/${chatId}`);
+
+    setIsLoading(true);
+    try {
+      await saveDocument(userId, fileName, fileType, content);
+
+      // Simpan pesan awal ke DB agar ChatView bisa melanjutkannya
+      const prompt = `Tolong analisis dan perbaiki isi dokumen ini (${fileName}):\n\n${content}`;
+      await saveChat('user', prompt, userId, chatId);
+
+      // Redirect ke chat view dengan flag khusus agar dia tahu harus trigger AI response
+      router.push(`/chat/${chatId}?analyze=true`);
+    } catch (error) {
+      console.error("Gagal memulai analisis:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

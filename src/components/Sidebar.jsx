@@ -1,10 +1,11 @@
 'use client';
 
 import { Plus, Wrench, User, Menu, MessageSquare } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { getChatHistory } from '@/app/actions/chatActions';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import useAuth from '@/hooks/useAuth';
 
 export default function Sidebar({ 
   isSidebarOpen, 
@@ -13,6 +14,7 @@ export default function Sidebar({
 }) {
   const [chatGroups, setChatGroups] = useState([]);
   const pathname = usePathname();
+  const { user, searchQuery } = useAuth();
 
   // 1. Ambil history yang sudah dikelompokkan berdasarkan chatId dari database
   const fetchHistory = async () => {
@@ -25,6 +27,13 @@ export default function Sidebar({
   useEffect(() => {
     fetchHistory();
   }, [userId, pathname]);
+
+  const filteredChatGroups = useMemo(() => {
+    if (!searchQuery.trim()) return chatGroups;
+    return chatGroups.filter(group =>
+      group.text.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [chatGroups, searchQuery]);
 
   const closeSidebarOnMobile = () => {
     if (window.innerWidth < 768) setIsSidebarOpen(false);
@@ -75,12 +84,12 @@ export default function Sidebar({
           <div className="mt-4 mb-3 px-3 text-[10px] font-bold text-gray-500 tracking-[0.1em] uppercase">Riwayat Belajar</div>
           
           <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1 pr-2">
-            {chatGroups.length === 0 ? (
+            {filteredChatGroups.length === 0 ? (
               <div className="px-3 py-4 text-[11px] text-gray-600 italic text-center bg-[#151515] rounded-xl border border-dashed border-[#222]">
-                Belum ada percakapan
+                {searchQuery ? 'Tidak ada hasil pencarian' : 'Belum ada percakapan'}
               </div>
             ) : (
-              chatGroups.map((group) => {
+              filteredChatGroups.map((group) => {
                 const isActive = pathname === `/chat/${group._id}`;
                 return (
                   <Link
@@ -111,7 +120,7 @@ export default function Sidebar({
                     <User size={14} className="text-white" />
                 </div>
                 <div className="flex flex-col">
-                    <span className="text-[12px] font-bold text-gray-200">Rais Dev</span>
+                    <span className="text-[12px] font-bold text-gray-200 truncate max-w-[120px]">{user?.name || 'Anon'}</span>
                     <span className="text-[9px] text-gray-500">Free Account</span>
                 </div>
               </div>

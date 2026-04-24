@@ -117,3 +117,33 @@ export async function getUser() {
     return null;
   }
 }
+
+export async function updateProfile(formData) {
+  const name = formData.get('name');
+  const userId = formData.get('userId');
+
+  if (!name || !userId) {
+    return { success: false, error: 'Nama harus diisi' };
+  }
+
+  try {
+    await dbConnect();
+    const user = await User.findByIdAndUpdate(userId, { name }, { new: true });
+
+    if (!user) {
+      return { success: false, error: 'User tidak ditemukan' };
+    }
+
+    return {
+      success: true,
+      user: {
+        uid: user._id.toString(),
+        name: user.name,
+        email: user.email
+      }
+    };
+  } catch (error) {
+    console.error('Update profile error:', error);
+    return { success: false, error: 'Gagal memperbarui profil' };
+  }
+}
