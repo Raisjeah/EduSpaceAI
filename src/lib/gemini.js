@@ -29,7 +29,7 @@ export async function getGeminiResponse(prompt, history = []) {
     const chat = model.startChat({
       history: history, // SDK butuh format [{ role: "user", parts: [{ text: "..." }] }]
       generationConfig: {
-        maxOutputTokens: 2000,
+        maxOutputTokens: 4096,
         temperature: 0.7,
       },
     });
