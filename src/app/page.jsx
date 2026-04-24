@@ -1,12 +1,13 @@
 'use client';
 
 import ChatView from '@/components/ChatView';
+import LandingPage from '@/components/LandingPage';
 import useAuth from '@/hooks/useAuth';
 
 export default function Home() {
-  const { userId } = useAuth();
+  const { userId, isLoading } = useAuth();
 
-  return (
-    <ChatView userId={userId} />
-  );
+  if (isLoading) return null;
+
+  return userId ? <ChatView userId={userId} /> : <LandingPage />;
 }
