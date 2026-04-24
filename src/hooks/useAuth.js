@@ -1,31 +1,14 @@
-import { useState, useEffect } from 'react';
-import { getUser } from '@/app/actions/authActions';
+'use client';
+
+import { useContext } from 'react';
+import { AuthContext } from '@/context/AuthContext';
 
 export default function useAuth() {
-  const [userId, setUserId] = useState(null);
-  const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const context = useContext(AuthContext);
 
-  useEffect(() => {
-    async function fetchUser() {
-      try {
-        const userData = await getUser();
-        if (userData) {
-          setUserId(userData.uid);
-          setUser(userData);
-        } else {
-          setUserId(null);
-          setUser(null);
-        }
-      } catch (error) {
-        console.error("Error fetching user:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
 
-    fetchUser();
-  }, []);
-
-  return { user, userId, isLoading };
+  return context;
 }

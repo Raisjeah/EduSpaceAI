@@ -25,6 +25,7 @@ export async function saveChat(role, text, userId, chatId) {
 export async function sendMessage(formData) {
   const userId = formData.get('userId');
   const prompt = formData.get('prompt');
+  const skipSave = formData.get('skipSave') === 'true';
   // Ambil chatId dari frontend, jika tidak ada buat baru
   const chatId = formData.get('chatId') || `chat_${Date.now()}`;
 
@@ -39,13 +40,18 @@ export async function sendMessage(formData) {
       .lean();
 
     // B. Format History agar Sesuai dengan SDK (@google/generative-ai)
-    const historyForGemini = previousMessages.map(msg => ({
+    // Jika skipSave true, berarti prompt sudah ada di DB (pesan terakhir), jangan masukkan ke history
+    const historyMessages = skipSave ? previousMessages.slice(0, -1) : previousMessages;
+
+    const historyForGemini = historyMessages.map(msg => ({
       role: msg.role === 'user' ? 'user' : 'model',
       parts: [{ text: msg.text }]
     }));
 
-    // C. Simpan pesan User ke Database dulu
-    await saveChat('user', prompt, userId, chatId);
+    // C. Simpan pesan User ke Database dulu jika belum ada
+    if (!skipSave) {
+      await saveChat('user', prompt, userId, chatId);
+    }
 
     // D. Panggil Gemini SDK (Pastikan gemini.js kamu sudah pakai startChat)
     const aiResponse = await getGeminiResponse(prompt, historyForGemini);
