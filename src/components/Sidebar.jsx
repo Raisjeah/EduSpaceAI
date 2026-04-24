@@ -102,17 +102,31 @@ export default function Sidebar({
           </div>
         </nav>
 
-        {/* User Profile */}
-        <div className="mt-auto pt-4 border-t border-[#1E1E1E] flex items-center justify-between px-2">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-inner">
-                <User size={14} className="text-white" />
+        {/* User Profile or Login Button */}
+        <div className="mt-auto pt-4 border-t border-[#1E1E1E]">
+          {userId ? (
+            <div className="flex items-center justify-between px-2">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-inner">
+                    <User size={14} className="text-white" />
+                </div>
+                <div className="flex flex-col">
+                    <span className="text-[12px] font-bold text-gray-200">Rais Dev</span>
+                    <span className="text-[9px] text-gray-500">Free Account</span>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col">
-                <span className="text-[12px] font-bold text-gray-200">Rais Dev</span>
-                <span className="text-[9px] text-gray-500">Free Account</span>
+          ) : (
+            <div className="px-2">
+              <Link
+                href="/auth/login"
+                onClick={closeSidebarOnMobile}
+                className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#1A1A1A] hover:bg-[#252525] border border-[#2A2A2A] text-gray-200 rounded-xl transition-all text-[12px] font-semibold"
+              >
+                Login / Daftar
+              </Link>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </aside>
