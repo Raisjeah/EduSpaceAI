@@ -34,6 +34,21 @@ export async function sendMessage(formData) {
   try {
     await dbConnect();
 
+    // Rate Limiting: Max 10 messages per minute
+    const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+    const messageCount = await Chat.countDocuments({
+      userId,
+      role: 'user',
+      createdAt: { $gte: oneMinuteAgo }
+    });
+
+    if (messageCount >= 10) {
+      return {
+        success: false,
+        error: "Batas pesan tercapai (10 pesan/menit). Silakan tunggu sebentar."
+      };
+    }
+
     // A. Ambil History untuk Konteks AI (Memory)
     const previousMessages = await Chat.find({ userId, chatId })
       .sort({ createdAt: 1 })

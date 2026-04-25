@@ -1,10 +1,11 @@
 'use client';
 
-import { Plus, Wrench, User, Menu, MessageSquare } from 'lucide-react';
+import { Plus, Wrench, User, Menu, MessageSquare, LogOut } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 import { getChatHistory } from '@/app/actions/chatActions';
+import { logout } from '@/app/actions/authActions';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import useAuth from '@/hooks/useAuth';
 
 export default function Sidebar({ 
@@ -14,7 +15,8 @@ export default function Sidebar({
 }) {
   const [chatGroups, setChatGroups] = useState([]);
   const pathname = usePathname();
-  const { user, searchQuery } = useAuth();
+  const router = useRouter();
+  const { user, searchQuery, fetchUser } = useAuth();
 
   // 1. Ambil history yang sudah dikelompokkan berdasarkan chatId dari database
   const fetchHistory = async () => {
@@ -39,6 +41,13 @@ export default function Sidebar({
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   };
 
+  const handleLogout = async () => {
+    await logout();
+    await fetchUser();
+    router.push('/');
+    router.refresh();
+  };
+
   return (
     <aside className={`
       fixed top-0 left-0 h-full z-50 bg-[#0F0F0F] border-r border-[#1E1E1E]
@@ -50,7 +59,6 @@ export default function Sidebar({
         {/* Header / Brand */}
         <div className="flex items-center justify-between mb-6 px-2">
           <Link href="/" className="flex items-center gap-2" onClick={closeSidebarOnMobile}>
-            <div className="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center font-bold text-[10px]">E</div>
             <span className="font-bold text-[14px] text-white tracking-tight">EduSpaceAI</span>
           </Link>
           <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-white">
@@ -114,16 +122,25 @@ export default function Sidebar({
         {/* User Profile or Login Button */}
         <div className="mt-auto pt-4 border-t border-[#1E1E1E]">
           {userId ? (
-            <div className="flex items-center justify-between px-2">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-inner">
-                    <User size={14} className="text-white" />
-                </div>
-                <div className="flex flex-col">
-                    <span className="text-[12px] font-bold text-gray-200 truncate max-w-[120px]">{user?.name || 'Anon'}</span>
-                    <span className="text-[9px] text-gray-500">Free Account</span>
+            <div className="space-y-4 px-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-inner">
+                      <User size={14} className="text-white" />
+                  </div>
+                  <div className="flex flex-col">
+                      <span className="text-[12px] font-bold text-gray-200 truncate max-w-[120px]">{user?.name || 'Anon'}</span>
+                      <span className="text-[9px] text-gray-500">Free Account</span>
+                  </div>
                 </div>
               </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 w-full p-3 text-[12px] font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all"
+              >
+                <LogOut size={16} />
+                <span>Keluar</span>
+              </button>
             </div>
           ) : (
             <div className="px-2">

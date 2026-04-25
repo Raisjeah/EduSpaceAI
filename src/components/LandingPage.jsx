@@ -118,7 +118,6 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="py-12 border-t border-[#1E1E1E] px-6 text-center">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <div className="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center font-bold text-[10px]">E</div>
           <span className="font-bold text-[14px] text-white tracking-tight">EduSpaceAI</span>
         </div>
         <p className="text-gray-500 text-sm italic">

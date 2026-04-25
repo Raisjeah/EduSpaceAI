@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { login } from '@/app/actions/authActions';
+import { login, loginWithGoogle } from '@/app/actions/authActions';
 
 export default function LoginPage() {
   const [error, setError] = useState('');
@@ -26,6 +26,32 @@ export default function LoginPage() {
       setLoading(false);
     }
   }
+
+  async function handleGoogleResponse(response) {
+    setLoading(true);
+    const result = await loginWithGoogle(response.credential);
+    if (result.success) {
+      router.push('/');
+      router.refresh();
+    } else {
+      setError(result.error);
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    /* global google */
+    if (typeof google !== 'undefined') {
+      google.accounts.id.initialize({
+        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        callback: handleGoogleResponse
+      });
+      google.accounts.id.renderButton(
+        document.getElementById("googleSignIn"),
+        { theme: "outline", size: "large", width: "100%" }
+      );
+    }
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6">
@@ -67,6 +93,14 @@ export default function LoginPage() {
             {loading ? 'Masuk...' : 'Masuk'}
           </button>
         </form>
+
+        <div className="my-6 flex items-center gap-4">
+          <div className="h-px bg-gray-800 flex-1"></div>
+          <span className="text-gray-500 text-xs uppercase font-bold">Atau</span>
+          <div className="h-px bg-gray-800 flex-1"></div>
+        </div>
+
+        <div id="googleSignIn" className="w-full mb-4"></div>
 
         <p className="mt-6 text-center text-gray-400 text-sm">
           Belum punya akun?{' '}
