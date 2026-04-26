@@ -125,9 +125,13 @@ export default function Sidebar({
             <div className="space-y-4 px-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-inner">
-                      <User size={14} className="text-white" />
-                  </div>
+                  {user?.image ? (
+                    <img src={user.image} alt={user.name} className="w-8 h-8 rounded-full border border-gray-700 object-cover" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-inner">
+                        <User size={14} className="text-white" />
+                    </div>
+                  )}
                   <div className="flex flex-col">
                       <span className="text-[12px] font-bold text-gray-200 truncate max-w-[120px]">{user?.name || 'Anon'}</span>
                       <span className="text-[9px] text-gray-500">Free Account</span>

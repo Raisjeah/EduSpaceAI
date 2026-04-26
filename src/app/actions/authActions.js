@@ -116,7 +116,7 @@ export async function loginWithGoogle(idToken) {
       audience: GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload();
-    const { email, name, sub: googleId } = payload;
+    const { email, name, picture, sub: googleId } = payload;
 
     await dbConnect();
 
@@ -130,8 +130,15 @@ export async function loginWithGoogle(idToken) {
         name,
         email,
         password: randomPassword,
+        image: picture,
       });
       await user.save();
+    } else {
+      // Update image if it changed or wasn't there
+      if (user.image !== picture) {
+        user.image = picture;
+        await user.save();
+      }
     }
 
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
@@ -168,6 +175,7 @@ export async function getUser() {
       uid: user._id.toString(),
       name: user.name,
       email: user.email,
+      image: user.image,
     };
   } catch (error) {
     return null;
