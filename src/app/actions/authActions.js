@@ -5,8 +5,12 @@ import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
+import { OAuth2Client } from 'google-auth-library';
+import crypto from 'crypto';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 export async function register(formData) {
   const name = formData.get('name');
@@ -15,6 +19,12 @@ export async function register(formData) {
 
   if (!name || !email || !password) {
     return { success: false, error: 'Semua field harus diisi' };
+  }
+
+  // Strict email validation
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailRegex.test(email)) {
+    return { success: false, error: 'Format email tidak valid' };
   }
 
   try {
@@ -93,6 +103,52 @@ export async function logout() {
   const cookieStore = await cookies();
   cookieStore.delete('eduspace_session');
   return { success: true };
+}
+
+export async function loginWithGoogle(idToken) {
+  if (!idToken) {
+    return { success: false, error: 'Token Google tidak ditemukan' };
+  }
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { email, name, sub: googleId } = payload;
+
+    await dbConnect();
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Create new user if doesn't exist
+      // Use a random password since they login with Google
+      const randomPassword = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
+      user = new User({
+        name,
+        email,
+        password: randomPassword,
+      });
+      await user.save();
+    }
+
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+
+    const cookieStore = await cookies();
+    cookieStore.set('eduspace_session', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+      path: '/',
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Google login error:', error);
+    return { success: false, error: 'Gagal login dengan Google' };
+  }
 }
 
 export async function getUser() {

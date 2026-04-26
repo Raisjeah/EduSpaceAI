@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { register } from '@/app/actions/authActions';
+import { register, loginWithGoogle } from '@/app/actions/authActions';
 
 export default function RegisterPage() {
   const [error, setError] = useState('');
@@ -16,6 +16,15 @@ export default function RegisterPage() {
     setLoading(true);
 
     const formData = new FormData(e.target);
+    const email = formData.get('email');
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+    if (!emailRegex.test(email)) {
+      setError('Format email tidak valid');
+      setLoading(false);
+      return;
+    }
+
     const result = await register(formData);
 
     if (result.success) {
@@ -26,6 +35,32 @@ export default function RegisterPage() {
       setLoading(false);
     }
   }
+
+  async function handleGoogleResponse(response) {
+    setLoading(true);
+    const result = await loginWithGoogle(response.credential);
+    if (result.success) {
+      router.push('/');
+      router.refresh();
+    } else {
+      setError(result.error);
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    /* global google */
+    if (typeof google !== 'undefined') {
+      google.accounts.id.initialize({
+        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        callback: handleGoogleResponse
+      });
+      google.accounts.id.renderButton(
+        document.getElementById("googleSignIn"),
+        { theme: "outline", size: "large", width: "100%" }
+      );
+    }
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6">
@@ -77,6 +112,14 @@ export default function RegisterPage() {
             {loading ? 'Mendaftarkan...' : 'Daftar Sekarang'}
           </button>
         </form>
+
+        <div className="my-6 flex items-center gap-4">
+          <div className="h-px bg-gray-800 flex-1"></div>
+          <span className="text-gray-500 text-xs uppercase font-bold">Atau</span>
+          <div className="h-px bg-gray-800 flex-1"></div>
+        </div>
+
+        <div id="googleSignIn" className="w-full mb-4"></div>
 
         <p className="mt-6 text-center text-gray-400 text-sm">
           Sudah punya akun?{' '}
