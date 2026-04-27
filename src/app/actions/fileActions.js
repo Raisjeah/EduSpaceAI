@@ -5,7 +5,7 @@ import path from 'path';
 import os from 'os';
 import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
-import * as XLSX from 'xlsx'; // Jangan lupa install: npm install xlsx
+import ExcelJS from 'exceljs';
 
 async function saveTempFile(file) {
   const bytes = await file.arrayBuffer();
@@ -49,13 +49,19 @@ export async function extractFileContent(formData) {
       fileName.endsWith('.csv') ||
       fileType === 'text/csv'
     ) {
-      const buffer = await fs.promises.readFile(filePath);
-      const workbook = XLSX.read(buffer, { type: 'buffer' });
-      // Ambil semua data dari semua sheet dan gabungkan jadi teks
-      workbook.SheetNames.forEach(sheetName => {
-        const sheet = workbook.Sheets[sheetName];
-        text += `\n--- Sheet: ${sheetName} ---\n`;
-        text += XLSX.utils.sheet_to_txt(sheet);
+      const workbook = new ExcelJS.Workbook();
+      if (fileName.endsWith('.csv') || fileType === 'text/csv') {
+        await workbook.csv.readFile(filePath);
+      } else {
+        await workbook.xlsx.readFile(filePath);
+      }
+
+      workbook.eachSheet((worksheet, sheetId) => {
+        text += `\n--- Sheet: ${worksheet.name} ---\n`;
+        worksheet.eachRow((row, rowNumber) => {
+          const rowValues = Array.isArray(row.values) ? row.values.slice(1) : [];
+          text += rowValues.join('\t') + '\n';
+        });
       });
     }
     // 4. PARSE TEXT BIASA

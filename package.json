@@ -11,6 +11,7 @@
     "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^3.0.3",
     "cookie": "^1.1.1",
+    "exceljs": "^4.4.0",
     "google-auth-library": "^10.6.2",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.469.0",
@@ -23,8 +24,7 @@
     "react-dom": "latest",
     "react-markdown": "^10.1.0",
     "rehype-katex": "^7.0.1",
-    "remark-math": "^6.0.0",
-    "xlsx": "^0.18.5"
+    "remark-math": "^6.0.0"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.19",
