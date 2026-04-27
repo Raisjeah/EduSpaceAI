@@ -6,7 +6,7 @@ export async function getGeminiResponse(prompt, history = [], fileParts = []) {
   try {
     // Gemini Models
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       systemInstruction: `
        Nama kamu adalah EduSpaceAI, seorang Dosen Pribadi yang cerdas, suportif, dan ramah.
 
