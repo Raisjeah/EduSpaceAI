@@ -2,6 +2,7 @@
 import dbConnect from '@/lib/mongodb';
 import Chat from '@/models/Chat';
 import { getGeminiResponse } from '@/lib/gemini';
+import { extractFileContent } from './fileActions';
 
 // 1. Fungsi Simpan Chat
 export async function saveChat(role, text, userId, chatId) {
@@ -24,14 +25,39 @@ export async function saveChat(role, text, userId, chatId) {
 // 2. Fungsi Kirim Pesan (Versi SDK Friendly)
 export async function sendMessage(formData) {
   const userId = formData.get('userId');
-  const prompt = formData.get('prompt');
+  let prompt = formData.get('prompt') || '';
   const skipSave = formData.get('skipSave') === 'true';
+  const file = formData.get('file');
   // Ambil chatId dari frontend, jika tidak ada buat baru
   const chatId = formData.get('chatId') || `chat_${Date.now()}`;
 
-  if (!prompt) return { error: "Prompt kosong!" };
+  if (!prompt && !file) return { error: "Prompt kosong!" };
 
   try {
+    let fileParts = [];
+
+    // Jika ada file yang diupload
+    if (file && file.size > 0) {
+      if (file.type.startsWith('image/')) {
+        // Handle Image
+        const bytes = await file.arrayBuffer();
+        const base64Data = Buffer.from(bytes).toString('base64');
+        fileParts.push({
+          inlineData: {
+            data: base64Data,
+            mimeType: file.type
+          }
+        });
+        if (!prompt) prompt = "Tolong jelaskan gambar ini.";
+      } else {
+        // Handle Document (PDF, DOCX, etc.)
+        const extractionResult = await extractFileContent(formData);
+        if (extractionResult.success) {
+          prompt = `[Konteks Dokumen: ${extractionResult.fileName}]\n${extractionResult.content}\n\nPertanyaan: ${prompt || 'Tolong ringkas dokumen ini.'}`;
+        }
+      }
+    }
+
     await dbConnect();
 
     // Rate Limiting: Max 10 messages per minute
@@ -69,7 +95,7 @@ export async function sendMessage(formData) {
     }
 
     // D. Panggil Gemini SDK (Pastikan gemini.js kamu sudah pakai startChat)
-    const aiResponse = await getGeminiResponse(prompt, historyForGemini);
+    const aiResponse = await getGeminiResponse(prompt, historyForGemini, fileParts);
 
     // E. Simpan respon AI ke Database
     await saveChat('model', aiResponse, userId, chatId);

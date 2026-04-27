@@ -2,11 +2,11 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-export async function getGeminiResponse(prompt, history = []) {
+export async function getGeminiResponse(prompt, history = [], fileParts = []) {
   try {
     // Gemini Models
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash",
       systemInstruction: `
        Nama kamu adalah EduSpaceAI, seorang Dosen Pribadi yang cerdas, suportif, dan ramah.
 
@@ -34,7 +34,7 @@ export async function getGeminiResponse(prompt, history = []) {
       },
     });
 
-    const result = await chat.sendMessage(prompt);
+    const result = await chat.sendMessage([prompt, ...fileParts]);
     const response = await result.response;
     return response.text();
 

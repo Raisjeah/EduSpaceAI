@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useTransition } from 'react';
-import { ChevronDown, Plus, Send } from 'lucide-react';
+import { ChevronDown, Plus, Send, X, FileText, Image as ImageIcon } from 'lucide-react';
 import { sendMessage, getChatDetails } from '@/app/actions/chatActions';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -12,6 +12,7 @@ import Link from 'next/link';
 
 export default function ChatView({ userId, activeChatId }) {
   const [input, setInput] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
   const [messages, setMessages] = useState([]);
   const [isPending, startTransition] = useTransition();
   const chatEndRef = useRef(null);
@@ -41,17 +42,20 @@ export default function ChatView({ userId, activeChatId }) {
 
   const handleSend = async (overrideInput, isAutoTrigger = false) => {
     const textToSend = overrideInput || input;
-    if (!textToSend.trim() || (isPending && !isAutoTrigger)) return;
+    if ((!textToSend.trim() && !selectedFile) || (isPending && !isAutoTrigger)) return;
 
     if (!isAutoTrigger) {
       const userMessage = {
         role: 'user',
-        text: textToSend,
+        text: textToSend || (selectedFile ? `[File: ${selectedFile.name}]` : ''),
         _id: Date.now().toString()
       };
       setMessages(prev => [...prev, userMessage]);
       setInput('');
     }
+
+    const fileToUpload = selectedFile;
+    setSelectedFile(null);
 
     startTransition(async () => {
       const formData = new FormData();
@@ -59,6 +63,7 @@ export default function ChatView({ userId, activeChatId }) {
       formData.append('prompt', textToSend);
       if (activeChatId) formData.append('chatId', activeChatId);
       if (isAutoTrigger) formData.append('skipSave', 'true');
+      if (fileToUpload) formData.append('file', fileToUpload);
 
       const result = await sendMessage(formData);
 
@@ -90,7 +95,13 @@ export default function ChatView({ userId, activeChatId }) {
               Dosen pribadi bertenaga AI yang siap bantu skripsi, tugas, dan belajarmu.
             </p>
             <div className="w-full max-w-xl text-center">
-              <InputBox input={input} setInput={setInput} handleSend={() => handleSend()} />
+              <InputBox
+                input={input}
+                setInput={setInput}
+                handleSend={() => handleSend()}
+                selectedFile={selectedFile}
+                setSelectedFile={setSelectedFile}
+              />
               <div className="flex flex-wrap justify-center gap-3 mt-8">
                 <Link href="/tools">
                   <SuggestionChip label="Buka Tools" icon={<Plus size={12}/>} isLink={true} />
@@ -105,11 +116,6 @@ export default function ChatView({ userId, activeChatId }) {
             {messages.map((msg, idx) => (
               <div key={msg._id || idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`group relative flex gap-4 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                  {msg.role === 'model' && (
-                    <div className="w-8 h-8 rounded-lg bg-indigo-600 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white shadow-lg shadow-indigo-500/20">
-                      AI
-                    </div>
-                  )}
                   <div className={`p-4 rounded-2xl text-[13px] leading-relaxed shadow-sm transition-all ${
                     msg.role === 'user'
                     ? 'bg-indigo-600 text-white rounded-tr-none'
@@ -141,7 +147,14 @@ export default function ChatView({ userId, activeChatId }) {
       {messages.length > 0 && (
         <div className="p-6 bg-gradient-to-t from-[#0F0F0F] via-[#0F0F0F] to-transparent">
           <div className="max-w-3xl mx-auto">
-            <InputBox input={input} setInput={setInput} handleSend={() => handleSend()} disabled={isPending} />
+            <InputBox
+              input={input}
+              setInput={setInput}
+              handleSend={() => handleSend()}
+              disabled={isPending}
+              selectedFile={selectedFile}
+              setSelectedFile={setSelectedFile}
+            />
           </div>
         </div>
       )}
@@ -163,35 +176,72 @@ function SuggestionChip({ label, icon, onClick, isLink }) {
   );
 }
 
-function InputBox({ input, setInput, handleSend, disabled }) {
+function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile }) {
+  const fileInputRef = useRef(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
   return (
-    <div className="relative bg-[#1E1E1E] rounded-2xl p-2 flex items-center border border-[#2A2A2A] focus-within:border-indigo-500/50 transition-all shadow-2xl">
-      <div className="w-10 h-10 flex items-center justify-center text-gray-500">
-        <Plus size={20} />
+    <div className="flex flex-col w-full">
+      {selectedFile && (
+        <div className="flex items-center gap-2 mb-2 ml-2 p-2 bg-[#2A2A2A] rounded-xl w-fit border border-indigo-500/30">
+          {selectedFile.type.startsWith('image/') ? (
+            <ImageIcon size={16} className="text-indigo-400" />
+          ) : (
+            <FileText size={16} className="text-indigo-400" />
+          )}
+          <span className="text-[11px] text-gray-300 truncate max-w-[150px]">{selectedFile.name}</span>
+          <button
+            onClick={() => setSelectedFile(null)}
+            className="hover:text-red-400 text-gray-500 transition-colors"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+      <div className="relative bg-[#1E1E1E] rounded-2xl p-2 flex items-center border border-[#2A2A2A] focus-within:border-indigo-500/50 transition-all shadow-2xl">
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-indigo-400 transition-colors"
+        >
+          <Plus size={20} />
+        </button>
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          className="hidden"
+          accept="image/*,.pdf,.doc,.docx,.txt,.csv"
+        />
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
+          disabled={disabled}
+          placeholder="Tanya apa saja ke Dosen AI-mu..."
+          className="flex-1 bg-transparent border-none outline-none px-3 text-[14px] text-gray-200 placeholder-gray-500"
+        />
+        <button
+          onClick={(e) => { e.preventDefault(); handleSend(); }}
+          disabled={disabled || (!input.trim() && !selectedFile)}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+            (input.trim() || selectedFile) && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40' : 'bg-[#2A2A2A] text-gray-600'
+          }`}
+        >
+          <Send size={18} />
+        </button>
       </div>
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            handleSend();
-          }
-        }}
-        disabled={disabled}
-        placeholder="Tanya apa saja ke Dosen AI-mu..."
-        className="flex-1 bg-transparent border-none outline-none px-3 text-[14px] text-gray-200 placeholder-gray-500"
-      />
-      <button
-        onClick={(e) => { e.preventDefault(); handleSend(); }}
-        disabled={disabled || !input.trim()}
-        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-          input.trim() && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40' : 'bg-[#2A2A2A] text-gray-600'
-        }`}
-      >
-        <Send size={18} />
-      </button>
     </div>
   );
 }
