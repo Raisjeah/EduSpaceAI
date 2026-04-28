@@ -15,6 +15,7 @@ export default function ChatView({ userId, activeChatId }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [messages, setMessages] = useState([]);
   const [isPending, startTransition] = useTransition();
+  const [isLoadingChat, setIsLoadingChat] = useState(false);
   const chatEndRef = useRef(null);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -23,8 +24,10 @@ export default function ChatView({ userId, activeChatId }) {
   // 1. Load detail chat saat activeChatId berubah
   useEffect(() => {
     if (activeChatId && userId) {
+      setIsLoadingChat(true);
       getChatDetails(activeChatId, userId).then(res => {
         setMessages(res);
+        setIsLoadingChat(false);
 
         // Jika dari mode analisa, trigger AI untuk pesan terakhir
         if (isAnalyzing && res.length > 0 && res[res.length - 1].role === 'user') {
@@ -33,6 +36,7 @@ export default function ChatView({ userId, activeChatId }) {
       });
     } else if (!activeChatId) {
       setMessages([]);
+      setIsLoadingChat(false);
     }
   }, [activeChatId, userId, isAnalyzing]);
 
@@ -72,12 +76,34 @@ export default function ChatView({ userId, activeChatId }) {
           // Redirect ke chat yang baru dibuat
           router.push(`/chat/${result.chatId}`);
         }
-        const aiMessage = {
+
+        // --- TYPEWRITER EFFECT ---
+        const fullResponse = result.aiResponse;
+        const aiMessageId = (Date.now() + 1).toString();
+
+        // Inisialisasi pesan AI kosong
+        setMessages(prev => [...prev, {
           role: 'model',
-          text: result.aiResponse,
-          _id: (Date.now() + 1).toString()
-        };
-        setMessages(prev => [...prev, aiMessage]);
+          text: '',
+          _id: aiMessageId
+        }]);
+
+        // Simulasi kata demi kata
+        const words = fullResponse.split(' ');
+        let currentText = '';
+        let wordIndex = 0;
+
+        const interval = setInterval(() => {
+          if (wordIndex < words.length) {
+            currentText += (wordIndex === 0 ? '' : ' ') + words[wordIndex];
+            setMessages(prev => prev.map(m =>
+              m._id === aiMessageId ? { ...m, text: currentText } : m
+            ));
+            wordIndex++;
+          } else {
+            clearInterval(interval);
+          }
+        }, 30); // Kecepatan munculnya kata
       }
     });
   };
@@ -85,7 +111,12 @@ export default function ChatView({ userId, activeChatId }) {
   return (
     <div className="flex flex-col h-full bg-[#0F0F0F]">
       <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
-        {messages.length === 0 ? (
+        {isLoadingChat ? (
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-gray-500 text-sm animate-pulse">Memuat percakapan...</p>
+          </div>
+        ) : messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-10">
             <div className="w-16 h-16 bg-indigo-600/20 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30">
               <span className="text-2xl text-indigo-500">🎓</span>

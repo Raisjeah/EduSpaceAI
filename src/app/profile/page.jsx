@@ -53,8 +53,12 @@ export default function ProfilePage() {
 
       <div className="bg-[#1A1A1A] rounded-[2rem] border border-[#2A2A2A] p-8 shadow-xl">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-inner mb-4">
-            <User size={40} className="text-white" />
+          <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-inner mb-4 overflow-hidden">
+            {user.image ? (
+              <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+            ) : (
+              <User size={40} className="text-white" />
+            )}
           </div>
           <p className="text-gray-400 text-sm">{user.email}</p>
         </div>
