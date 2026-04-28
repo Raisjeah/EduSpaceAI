@@ -4,6 +4,7 @@ const UserSchema = new mongoose.Schema({
   name: { type: String, default: 'Anon' },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  image: { type: String },
   createdAt: { type: Date, default: Date.now },
 });
 
