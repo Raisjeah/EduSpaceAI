@@ -155,7 +155,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
               <p className="text-[10px] text-gray-500 uppercase tracking-widest">{getAgentName(project.agentId)}</p>
             </div>
           </div>
-          <div className="text-[10px] text-gray-500 bg-[#1A1A1A] px-2 py-1 rounded border border-[#333]">Active Project</div>
+          <div className="text-[10px] text-gray-500 bg-[#1A1A1A] px-2 py-1 rounded border border-[#333]">Active Agent Workspace</div>
         </div>
       )}
 

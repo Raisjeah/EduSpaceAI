@@ -6,7 +6,7 @@ import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';
 
 export default function Header({ setIsSidebarOpen }) {
-  const { searchQuery, setSearchQuery, userId } = useAuth();
+  const { searchQuery, setSearchQuery, userId, user } = useAuth();
   const [isSearchActive, setIsSearchActive] = useState(false);
 
   return (
@@ -46,8 +46,12 @@ export default function Header({ setIsSidebarOpen }) {
 
           {userId && (
             <Link href="/profile" title="Edit Profil" className="hover:text-white transition-colors">
-              <div className="w-8 h-8 rounded-full bg-[#1A1A1A] flex items-center justify-center border border-[#333] hover:border-indigo-500/50 transition-all">
-                <User size={16} />
+              <div className="w-8 h-8 rounded-full bg-[#1A1A1A] flex items-center justify-center border border-[#333] hover:border-indigo-500/50 transition-all overflow-hidden">
+                {user?.image ? (
+                  <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  <User size={16} />
+                )}
               </div>
             </Link>
           )}

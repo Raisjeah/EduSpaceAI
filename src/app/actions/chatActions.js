@@ -126,6 +126,7 @@ export async function sendMessage(formData) {
 
 // 3. Fungsi List History untuk Sidebar
 export async function getChatHistory(userId, projectId = null) {
+  if (!userId) return [];
   try {
     await dbConnect();
     const match = { userId };

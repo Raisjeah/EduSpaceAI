@@ -42,7 +42,7 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-[#1A1A1A] w-full max-w-md rounded-3xl border border-[#333] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
         <div className="flex items-center justify-between p-6 border-b border-[#333]">
-          <h2 className="text-xl font-bold text-white">Buat Project Baru</h2>
+          <h2 className="text-xl font-bold text-white">Buat Agent Baru</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
             <X size={20} />
           </button>
@@ -50,7 +50,7 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div>
-            <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nama Project</label>
+            <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nama Agent Workspace</label>
             <input
               type="text"
               value={name}
@@ -91,7 +91,7 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
             disabled={isLoading || !name.trim()}
             className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-900/20 transition-all"
           >
-            {isLoading ? 'Sedang Membuat...' : 'Create Project'}
+            {isLoading ? 'Sedang Membuat...' : 'Create Agent Workspace'}
           </button>
         </form>
       </div>
