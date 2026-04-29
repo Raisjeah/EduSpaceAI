@@ -1,14 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { login, loginWithGoogle } from '@/app/actions/authActions';
+import useAuth from '@/hooks/useAuth';
 
 export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { fetchUser } = useAuth();
+
+  const callbackUrl = searchParams.get('callbackUrl') || '/';
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -19,7 +24,8 @@ export default function LoginPage() {
     const result = await login(formData);
 
     if (result.success) {
-      router.push('/');
+      await fetchUser();
+      router.push(callbackUrl);
       router.refresh();
     } else {
       setError(result.error);
@@ -31,7 +37,8 @@ export default function LoginPage() {
     setLoading(true);
     const result = await loginWithGoogle(response.credential);
     if (result.success) {
-      router.push('/');
+      await fetchUser();
+      router.push(callbackUrl);
       router.refresh();
     } else {
       setError(result.error);

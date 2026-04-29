@@ -28,7 +28,7 @@ export default function MainLayout({ children }) {
 
       // Redirect ke login jika mencoba akses halaman internal (bukan home/auth) tanpa login
       if (!userId && !isAuthPage && !isHomePage) {
-        router.push('/auth/login');
+        router.push(`/auth/login?callbackUrl=${encodeURIComponent(pathname)}`);
       }
       // Redirect ke home jika sudah login tapi mencoba akses halaman auth
       else if (userId && isAuthPage) {

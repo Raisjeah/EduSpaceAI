@@ -12,6 +12,7 @@ export function AuthProvider({ children }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const fetchUser = async () => {
+    setIsLoading(true);
     try {
       const userData = await getUser();
       if (userData) {
