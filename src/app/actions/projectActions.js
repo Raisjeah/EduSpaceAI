@@ -22,6 +22,7 @@ export async function createProject(name, userId, agentId) {
 }
 
 export async function getProjects(userId) {
+  if (!userId) return [];
   try {
     await dbConnect();
     const projects = await Project.find({ userId }).sort({ createdAt: -1 }).lean();

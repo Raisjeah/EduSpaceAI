@@ -23,30 +23,30 @@ export default function Sidebar({
   const router = useRouter();
   const { user, searchQuery, fetchUser } = useAuth();
 
-  const fetchHistory = async () => {
-    if (userId) {
-      // Logic: Jika di route project, atau ada projectId di query param (saat di /chat/ID)
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!userId) return;
+
+      // Jalankan fetch secara paralel untuk performa lebih cepat
       const isProjectRoute = pathname.startsWith('/project/');
       const projectIdFromPath = isProjectRoute ? pathname.split('/')[2] : null;
       const projectIdFromQuery = searchParams.get('projectId');
-
       const projectId = projectIdFromPath || projectIdFromQuery;
 
-      const history = await getChatHistory(userId, projectId);
-      setChatGroups(history);
-    }
-  };
+      try {
+        const [history, userProjects] = await Promise.all([
+          getChatHistory(userId, projectId),
+          getProjects(userId)
+        ]);
 
-  const fetchUserProjects = async () => {
-    if (userId) {
-      const userProjects = await getProjects(userId);
-      setProjects(userProjects);
-    }
-  };
+        setChatGroups(history);
+        setProjects(userProjects);
+      } catch (error) {
+        console.error("Gagal memuat data sidebar:", error);
+      }
+    };
 
-  useEffect(() => {
-    fetchHistory();
-    fetchUserProjects();
+    fetchData();
   }, [userId, pathname, searchParams]);
 
   const filteredChatGroups = useMemo(() => {
@@ -110,7 +110,7 @@ export default function Sidebar({
               onClick={() => { setIsProjectModalOpen(true); closeSidebarOnMobile(); }}
               className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#1A1A1A] border border-[#333] hover:bg-[#242424] rounded-xl transition-all text-gray-300"
             >
-              <Briefcase size={14} /> <span className="text-[11px] font-semibold">Proyek Baru</span>
+              <Briefcase size={14} /> <span className="text-[11px] font-semibold">Agent Baru</span>
             </button>
           </div>
 
@@ -131,7 +131,7 @@ export default function Sidebar({
             {/* Projects Section */}
             {projects.length > 0 && (
               <div className="mt-4 mb-2">
-                <div className="px-3 mb-2 text-[10px] font-bold text-gray-500 tracking-[0.1em] uppercase">Workspace Proyek</div>
+                <div className="px-3 mb-2 text-[10px] font-bold text-gray-500 tracking-[0.1em] uppercase">WorkSpace Agents</div>
                 <div className="space-y-1 max-h-[150px] overflow-y-auto custom-scrollbar pr-1">
                   {projects.map(project => {
                     const isPathActive = pathname === `/project/${project._id}`;
@@ -156,7 +156,7 @@ export default function Sidebar({
             )}
 
             <div className="mt-4 mb-3 px-3 text-[10px] font-bold text-gray-500 tracking-[0.1em] uppercase">
-              {isProjectContext ? 'Riwayat Proyek' : 'Riwayat Belajar'}
+              {isProjectContext ? 'Riwayat Agent' : 'Riwayat Belajar'}
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1 pr-2">
