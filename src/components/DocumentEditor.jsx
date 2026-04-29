@@ -1,19 +1,37 @@
 'use client';
 
-import { useState, useTransition } from 'react';
-import { X, FolderOpen, BrainCircuit } from 'lucide-react';
+import { useState, useRef, useEffect, useTransition } from 'react';
+import { X, FolderOpen, BrainCircuit, Send, MessageSquare, Sparkles, ChevronRight, FileText, Eraser } from 'lucide-react';
 import { saveDocument } from '@/app/actions/documentActions';
-import { saveChat } from '@/app/actions/chatActions';
+import { saveChat, sendMessage } from '@/app/actions/chatActions';
 import { extractFileContent } from '@/app/actions/fileActions'; // server action
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
 
 export default function DocumentEditor({ type, userId }) {
   const [content, setContent] = useState('');
   const [fileName, setFileName] = useState('Belum ada file diunggah');
   const [fileType, setFileType] = useState('text/plain');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Chat Integration State
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const [isPending, startTransition] = useTransition();
+  const [activeChatId, setActiveChatId] = useState(null);
+
+  // Selection state
+  const [selection, setSelection] = useState({ text: '', show: false });
+
+  const chatEndRef = useRef(null);
+  const textareaRef = useRef(null);
   const router = useRouter();
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages, isPending]);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -35,57 +53,256 @@ export default function DocumentEditor({ type, userId }) {
   };
 
   const handleAnalyze = async () => {
-    if (!content) return;
-    const chatId = `chat_${Date.now()}`;
+    if (!content || isPending) return;
 
-    setIsLoading(true);
-    try {
-      await saveDocument(userId, fileName, fileType, content);
+    setIsChatOpen(true);
+    const chatId = activeChatId || `chat_${Date.now()}`;
+    if (!activeChatId) setActiveChatId(chatId);
 
-      // Simpan pesan awal ke DB agar ChatView bisa melanjutkannya
-      const prompt = `Tolong analisis dan perbaiki isi dokumen ini (${fileName}):\n\n${content}`;
-      await saveChat('user', prompt, userId, chatId);
+    const initialPrompt = `Tolong analisis dan berikan saran perbaikan untuk isi dokumen ini (${fileName}):\n\n${content}`;
 
-      // Redirect ke chat view dengan flag khusus agar dia tahu harus trigger AI response
-      router.push(`/chat/${chatId}?analyze=true`);
-    } catch (error) {
-      console.error("Gagal memulai analisis:", error);
-    } finally {
-      setIsLoading(false);
+    // Optimistic UI for Chat
+    const userMessage = {
+      role: 'user',
+      text: "Tolong analisis dokumen ini.",
+      _id: Date.now().toString()
+    };
+    setChatMessages(prev => [...prev, userMessage]);
+
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append('userId', userId);
+      formData.append('prompt', initialPrompt);
+      formData.append('chatId', chatId);
+
+      const result = await sendMessage(formData);
+      if (result.success) {
+        setChatMessages(prev => [...prev, {
+          role: 'model',
+          text: result.aiResponse,
+          _id: (Date.now() + 1).toString()
+        }]);
+      }
+    });
+  };
+
+  const handleTextSelection = (e) => {
+    const text = e.target.value.substring(e.target.selectionStart, e.target.selectionEnd);
+    if (text.trim()) {
+      setSelection({
+        text,
+        show: true
+      });
+    } else {
+      setSelection(prev => ({ ...prev, show: false }));
     }
   };
 
+  const handleFloatingAction = (actionType) => {
+    const prompt = actionType === 'paraphrase'
+      ? `Tolong parafrase teks berikut agar lebih ilmiah:\n\n"${selection.text}"`
+      : `Tolong ringkas teks berikut:\n\n"${selection.text}"`;
+
+    setChatInput(prompt);
+    setIsChatOpen(true);
+    setSelection(prev => ({ ...prev, show: false }));
+
+    // Auto-send the action
+    setTimeout(() => {
+      handleSendChat(prompt);
+    }, 100);
+  };
+
+  const handleSendChat = async (overrideInput) => {
+    const textToSend = overrideInput || chatInput;
+    if (!textToSend.trim() || isPending) return;
+
+    setChatInput('');
+    const chatId = activeChatId || `chat_${Date.now()}`;
+    if (!activeChatId) setActiveChatId(chatId);
+
+    const userMessage = {
+      role: 'user',
+      text: textToSend,
+      _id: Date.now().toString()
+    };
+    setChatMessages(prev => [...prev, userMessage]);
+
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append('userId', userId);
+      formData.append('chatId', chatId);
+      // Sertakan konten editor sebagai konteks digabung dengan prompt
+      formData.append('prompt', `[Konteks Editor]:\n${content}\n\nPertanyaan: ${textToSend}`);
+
+      const result = await sendMessage(formData);
+      if (result.success) {
+        setChatMessages(prev => [...prev, {
+          role: 'model',
+          text: result.aiResponse,
+          _id: (Date.now() + 1).toString()
+        }]);
+      }
+    });
+  };
+
   return (
-    <div className="h-full flex flex-col p-6 bg-[#1A1A1A]">
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h2 className="text-lg font-bold text-white flex items-center gap-2 uppercase tracking-wider">
-            <BrainCircuit size={18} className="text-indigo-400" /> Dashboard Editor {type}
-          </h2>
-          <p className="text-[11px] text-gray-500">Unggah file, edit isinya di sini, lalu klik Analisis.</p>
+    <div className="h-full flex bg-[#0F0F0F] overflow-hidden">
+      {/* Main Editor Area */}
+      <div className={`flex-1 flex flex-col p-6 transition-all duration-300 ${isChatOpen ? 'md:mr-0' : ''}`}>
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+              <BrainCircuit size={18} className="text-indigo-400" /> Dashboard Editor {type}
+            </h2>
+            <p className="text-[11px] text-gray-500">Unggah file, edit isinya di sini, lalu klik Analisis.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsChatOpen(!isChatOpen)}
+              className={`p-2 rounded-lg border transition-all ${isChatOpen ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-[#1A1A1A] border-[#333] text-gray-400 hover:text-white'}`}
+              title="Toggle AI Chat"
+            >
+              <MessageSquare size={18} />
+            </button>
+            <Link href="/tools" className="text-gray-400 hover:text-white"><X size={20}/></Link>
+          </div>
         </div>
-        <Link href="/tools" className="text-gray-400 hover:text-white"><X size={20}/></Link>
+
+        <div className="flex gap-2 mb-4 bg-[#1A1A1A] p-2 rounded-xl border border-[#333]">
+          <label className="flex items-center gap-2 bg-[#242424] hover:bg-[#2A2A2A] px-4 py-2 rounded-lg cursor-pointer transition-colors text-[11px] font-bold text-gray-300">
+            <FolderOpen size={14} /> Buka File
+            <input type="file" className="hidden" onChange={handleFileUpload} accept=".txt,.csv,.md,.json,.pdf,.doc,.docx" />
+          </label>
+          <span className="my-auto text-[11px] text-gray-500 px-2 truncate max-w-[200px] font-medium">{fileName}</span>
+          {isLoading && <span className="text-xs text-indigo-400 animate-pulse my-auto">Mengekstrak...</span>}
+          <div className="flex-1"></div>
+          <button
+            onClick={handleAnalyze}
+            disabled={!content || isPending}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors text-[11px] font-bold disabled:opacity-50 shadow-lg shadow-indigo-900/20"
+          >
+            <Sparkles size={14} /> {isChatOpen ? 'Analisis Ulang' : 'Analisis dengan AI'}
+          </button>
+        </div>
+
+        <div className="flex-1 relative flex flex-col">
+          <textarea
+            ref={textareaRef}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            onMouseUp={handleTextSelection}
+            onKeyUp={handleTextSelection}
+            placeholder="Isi dokumen akan muncul di sini. Kamu bisa mengetik dan mengeditnya secara manual sebelum dianalisis oleh Profesor AI..."
+            className="flex-1 bg-[#1A1A1A] border border-[#333] rounded-[1.5rem] p-8 text-[14px] text-gray-300 font-mono leading-relaxed outline-none focus:border-indigo-500/40 resize-none custom-scrollbar shadow-inner"
+          />
+
+          {/* Floating Toolbar */}
+          {selection.show && (
+            <div
+              className="absolute z-50 bg-[#222] border border-[#333] rounded-xl shadow-2xl p-1 flex gap-1 animate-in fade-in zoom-in duration-200"
+              style={{ left: `50%`, top: `20px`, transform: `translateX(-50%)` }}
+            >
+              <button
+                onClick={() => handleFloatingAction('paraphrase')}
+                className="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-600/20 text-indigo-400 hover:text-indigo-300 rounded-lg transition-all text-[11px] font-bold"
+              >
+                <Sparkles size={14} /> Parafrase
+              </button>
+              <div className="w-[1px] bg-[#333] my-1"></div>
+              <button
+                onClick={() => handleFloatingAction('summarize')}
+                className="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-600/20 text-indigo-400 hover:text-indigo-300 rounded-lg transition-all text-[11px] font-bold"
+              >
+                <FileText size={14} /> Ringkas
+              </button>
+              <div className="w-[1px] bg-[#333] my-1"></div>
+              <button
+                onClick={() => setSelection(prev => ({ ...prev, show: false }))}
+                className="p-1.5 hover:bg-[#333] text-gray-500 rounded-lg transition-all"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="flex gap-2 mb-4 bg-[#242424] p-2 rounded-xl border border-[#333]">
-        <label className="flex items-center gap-2 bg-[#333] hover:bg-[#444] px-4 py-2 rounded-lg cursor-pointer transition-colors text-[11px] font-bold">
-          <FolderOpen size={14} /> Buka File
-          <input type="file" className="hidden" onChange={handleFileUpload} accept=".txt,.csv,.md,.json,.pdf,.doc,.docx" />
-        </label>
-        <span className="my-auto text-[11px] text-gray-500 px-2 truncate max-w-[200px]">{fileName}</span>
-        {isLoading && <span className="text-xs text-indigo-400">Mengekstrak...</span>}
-        <div className="flex-1"></div>
-        <button onClick={handleAnalyze} disabled={!content} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors text-[11px] font-bold disabled:opacity-50">
-          <BrainCircuit size={14} /> Analisis dengan AI
-        </button>
-      </div>
+      {/* Integrated Chat Panel */}
+      <div className={`
+        fixed inset-y-0 right-0 w-full md:w-[400px] bg-[#151515] border-l border-[#222] z-40 transform transition-transform duration-300 ease-in-out flex flex-col
+        ${isChatOpen ? 'translate-x-0' : 'translate-x-full'}
+      `}>
+        <div className="p-4 border-b border-[#222] flex items-center justify-between bg-[#1A1A1A]">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
+              <Sparkles size={16} className="text-indigo-400" />
+            </div>
+            <div>
+              <h3 className="text-[13px] font-bold text-white">Dosen Pembimbing AI</h3>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest">Workspace Assistant</p>
+            </div>
+          </div>
+          <button onClick={() => setIsChatOpen(false)} className="text-gray-500 hover:text-white p-1">
+            <ChevronRight size={20} />
+          </button>
+        </div>
 
-      <textarea 
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder="Isi dokumen akan muncul di sini. Kamu bisa mengetik dan mengeditnya secara manual sebelum dianalisis oleh Profesor AI..."
-        className="flex-1 bg-[#242424] border border-[#333] rounded-[1.5rem] p-6 text-[13px] text-gray-300 font-mono leading-relaxed outline-none focus:border-indigo-500/50 resize-none custom-scrollbar"
-      />
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+          {chatMessages.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-center px-6">
+              <div className="w-12 h-12 bg-[#1A1A1A] rounded-2xl flex items-center justify-center mb-4 border border-[#222]">
+                <FileText size={20} className="text-gray-600" />
+              </div>
+              <h4 className="text-sm font-bold text-gray-300 mb-1">Belum Ada Analisis</h4>
+              <p className="text-[11px] text-gray-500">Klik "Analisis dengan AI" atau mulai chat untuk mendapatkan saran akademik.</p>
+            </div>
+          ) : (
+            chatMessages.map((msg, idx) => (
+              <div key={msg._id || idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[90%] p-3 rounded-2xl text-[12px] leading-relaxed ${
+                  msg.role === 'user'
+                  ? 'bg-indigo-600 text-white rounded-tr-none'
+                  : 'bg-[#222] text-gray-200 border border-[#333] rounded-tl-none'
+                }`}>
+                  <div className="prose prose-invert prose-sm max-w-none">
+                    <ReactMarkdown>{msg.text}</ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+          {isPending && (
+            <div className="flex gap-1.5 p-2 items-center">
+              <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce"></div>
+              <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-.3s]"></div>
+              <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-.5s]"></div>
+              <span className="text-[10px] text-gray-500 ml-2 uppercase tracking-tighter">AI sedang berpikir...</span>
+            </div>
+          )}
+          <div ref={chatEndRef} />
+        </div>
+
+        <div className="p-4 bg-[#1A1A1A] border-t border-[#222]">
+          <div className="relative">
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
+              placeholder="Tanya perbaikan dokumen..."
+              className="w-full bg-[#0F0F0F] border border-[#333] rounded-xl py-3 pl-4 pr-12 text-[12px] text-gray-200 outline-none focus:border-indigo-500/50"
+            />
+            <button
+              onClick={handleSendChat}
+              disabled={!chatInput.trim() || isPending}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-indigo-600 rounded-lg text-white disabled:opacity-50"
+            >
+              <Send size={14} />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
