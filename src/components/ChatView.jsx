@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef, useTransition } from 'react';
-import { ChevronDown, Plus, Send, X, FileText, Image as ImageIcon } from 'lucide-react';
+import { ChevronDown, Plus, Send, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket } from 'lucide-react';
 import { sendMessage, getChatDetails } from '@/app/actions/chatActions';
+import { getProjectDetails } from '@/app/actions/projectActions';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -10,16 +11,26 @@ import 'katex/dist/katex.min.css';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export default function ChatView({ userId, activeChatId }) {
+export default function ChatView({ userId, activeChatId, projectId }) {
   const [input, setInput] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [project, setProject] = useState(null);
   const [isPending, startTransition] = useTransition();
   const [isLoadingChat, setIsLoadingChat] = useState(false);
   const chatEndRef = useRef(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const isAnalyzing = searchParams.get('analyze') === 'true';
+
+  // Load project details if projectId exists
+  useEffect(() => {
+    if (projectId) {
+      getProjectDetails(projectId).then(res => setProject(res));
+    } else {
+      setProject(null);
+    }
+  }, [projectId]);
 
   // 1. Load detail chat saat activeChatId berubah
   useEffect(() => {
@@ -66,6 +77,7 @@ export default function ChatView({ userId, activeChatId }) {
       formData.append('userId', userId);
       formData.append('prompt', textToSend);
       if (activeChatId) formData.append('chatId', activeChatId);
+      if (projectId) formData.append('projectId', projectId);
       if (isAutoTrigger) formData.append('skipSave', 'true');
       if (fileToUpload) formData.append('file', fileToUpload);
 
@@ -74,7 +86,10 @@ export default function ChatView({ userId, activeChatId }) {
       if (result.success) {
         if (!activeChatId) {
           // Redirect ke chat yang baru dibuat
-          router.push(`/chat/${result.chatId}`);
+          const targetUrl = projectId
+            ? `/chat/${result.chatId}?projectId=${projectId}`
+            : `/chat/${result.chatId}`;
+          router.push(targetUrl);
         }
 
         // --- TYPEWRITER EFFECT ---
@@ -108,8 +123,42 @@ export default function ChatView({ userId, activeChatId }) {
     });
   };
 
+  const getAgentIcon = (agentId) => {
+    switch (agentId) {
+      case 'deep-search': return <Search size={16} className="text-blue-400" />;
+      case 'researcher': return <BookOpen size={16} className="text-green-400" />;
+      case 'editor': return <Edit3 size={16} className="text-amber-400" />;
+      default: return <Rocket size={16} className="text-indigo-400" />;
+    }
+  };
+
+  const getAgentName = (agentId) => {
+    switch (agentId) {
+      case 'deep-search': return 'Deep Search Agent';
+      case 'researcher': return 'Profesor Riset';
+      case 'editor': return 'Editor Akademik';
+      default: return 'EduSpaceAI';
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#0F0F0F]">
+      {/* Project Header (If in project) */}
+      {project && (
+        <div className="px-6 py-3 border-b border-[#1E1E1E] bg-[#0F0F0F] flex items-center justify-between sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#1A1A1A] border border-[#333] flex items-center justify-center">
+              {getAgentIcon(project.agentId)}
+            </div>
+            <div>
+              <h2 className="text-[12px] font-bold text-white leading-tight">{project.name}</h2>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest">{getAgentName(project.agentId)}</p>
+            </div>
+          </div>
+          <div className="text-[10px] text-gray-500 bg-[#1A1A1A] px-2 py-1 rounded border border-[#333]">Active Project</div>
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
         {isLoadingChat ? (
           <div className="flex-1 flex flex-col items-center justify-center">
@@ -119,11 +168,17 @@ export default function ChatView({ userId, activeChatId }) {
         ) : messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-10">
             <div className="w-16 h-16 bg-indigo-600/20 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30">
-              <span className="text-2xl text-indigo-500">🎓</span>
+              <span className="text-2xl text-indigo-500">
+                {project ? '📂' : '🎓'}
+              </span>
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2 text-center">EduSpaceAI</h1>
+            <h1 className="text-3xl font-bold text-white mb-2 text-center">
+              {project ? project.name : 'EduSpaceAI'}
+            </h1>
             <p className="text-gray-400 mb-10 text-center max-w-sm">
-              Dosen pribadi bertenaga AI yang siap bantu skripsi, tugas, dan belajarmu.
+              {project
+                ? `Sedang menggunakan agen ${getAgentName(project.agentId)} untuk membantumu di project ini.`
+                : 'Dosen pribadi bertenaga AI yang siap bantu skripsi, tugas, dan belajarmu.'}
             </p>
             <div className="w-full max-w-xl text-center">
               <InputBox
@@ -134,10 +189,16 @@ export default function ChatView({ userId, activeChatId }) {
                 setSelectedFile={setSelectedFile}
               />
               <div className="flex flex-wrap justify-center gap-3 mt-8">
-                <Link href="/tools">
-                  <SuggestionChip label="Buka Tools" icon={<Plus size={12}/>} isLink={true} />
-                </Link>
-                <SuggestionChip label="Bimbingan Skripsi" onClick={() => handleSend("Saya butuh bantuan bimbingan skripsi, bisa mulai dari mana?")} />
+                {project?.agentId === 'deep-search' ? (
+                  <SuggestionChip label="Cari berita terbaru AI" onClick={() => handleSend("Apa berita terbaru tentang perkembangan AI minggu ini?")} />
+                ) : (
+                  <>
+                    <Link href="/tools">
+                      <SuggestionChip label="Buka Tools" icon={<Plus size={12}/>} isLink={true} />
+                    </Link>
+                    <SuggestionChip label="Bimbingan Skripsi" onClick={() => handleSend("Saya butuh bantuan bimbingan skripsi, bisa mulai dari mana?")} />
+                  </>
+                )}
                 <SuggestionChip label="Buat Latihan Soal" onClick={() => handleSend("Buatkan 5 soal pilihan ganda tentang Pemrograman Dasar")} />
               </div>
             </div>

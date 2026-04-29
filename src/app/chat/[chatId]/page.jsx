@@ -2,11 +2,15 @@
 
 import ChatView from '@/components/ChatView';
 import useAuth from '@/hooks/useAuth';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 
 export default function ChatPage() {
-  const { userId } = useAuth();
+  const { userId, isLoading } = useAuth();
   const { chatId } = useParams();
+  const searchParams = useSearchParams();
+  const projectId = searchParams.get('projectId');
 
-  return <ChatView userId={userId} activeChatId={chatId} />;
+  if (isLoading) return null;
+
+  return <ChatView userId={userId} activeChatId={chatId} projectId={projectId} />;
 }

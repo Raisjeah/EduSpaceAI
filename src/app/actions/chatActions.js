@@ -1,18 +1,20 @@
 'use server';
 import dbConnect from '@/lib/mongodb';
 import Chat from '@/models/Chat';
+import Project from '@/models/Project';
 import { getGeminiResponse } from '@/lib/gemini';
 import { extractFileContent } from './fileActions';
 
 // 1. Fungsi Simpan Chat
-export async function saveChat(role, text, userId, chatId) {
+export async function saveChat(role, text, userId, chatId, projectId = null) {
   try {
     await dbConnect();
     const newChat = new Chat({ 
       role, 
       text, 
       userId, 
-      chatId: chatId || 'default' 
+      chatId: chatId || 'default',
+      projectId
     });
     await newChat.save();
     return { success: true };
@@ -28,6 +30,7 @@ export async function sendMessage(formData) {
   let prompt = formData.get('prompt') || '';
   const skipSave = formData.get('skipSave') === 'true';
   const file = formData.get('file');
+  const projectId = formData.get('projectId');
   // Ambil chatId dari frontend, jika tidak ada buat baru
   const chatId = formData.get('chatId') || `chat_${Date.now()}`;
 
@@ -35,6 +38,17 @@ export async function sendMessage(formData) {
 
   try {
     let fileParts = [];
+    let agentId = 'default';
+
+    await dbConnect();
+
+    // Jika ada projectId, ambil agentId dari project
+    if (projectId) {
+      const project = await Project.findById(projectId).lean();
+      if (project) {
+        agentId = project.agentId;
+      }
+    }
 
     // Jika ada file yang diupload
     if (file && file.size > 0) {
@@ -57,8 +71,6 @@ export async function sendMessage(formData) {
         }
       }
     }
-
-    await dbConnect();
 
     // Rate Limiting: Max 10 messages per minute
     const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
@@ -91,17 +103,14 @@ export async function sendMessage(formData) {
 
     // C. Simpan pesan User ke Database dulu jika belum ada
     if (!skipSave) {
-      await saveChat('user', prompt, userId, chatId);
+      await saveChat('user', prompt, userId, chatId, projectId);
     }
 
-    // D. Panggil Gemini SDK (Pastikan gemini.js kamu sudah pakai startChat)
-    const aiResponse = await getGeminiResponse(prompt, historyForGemini, fileParts);
+    // D. Panggil Gemini SDK
+    const aiResponse = await getGeminiResponse(prompt, historyForGemini, fileParts, agentId);
 
     // E. Simpan respon AI ke Database
-    await saveChat('model', aiResponse, userId, chatId);
-
-    // PENTING: Jangan gunakan revalidatePath('/') di sini 
-    // agar state di ChatView.jsx tidak ter-reset (Refresh Bug Fix)
+    await saveChat('model', aiResponse, userId, chatId, projectId);
 
     return { 
       success: true, 
@@ -116,11 +125,19 @@ export async function sendMessage(formData) {
 }
 
 // 3. Fungsi List History untuk Sidebar
-export async function getChatHistory(userId) {
+export async function getChatHistory(userId, projectId = null) {
   try {
     await dbConnect();
+    const match = { userId };
+    if (projectId) {
+      match.projectId = projectId;
+    } else {
+      // Jika projectId null, ambil chat yang tidak punya projectId atau projectId null (Global Chat)
+      match.projectId = { $in: [null, undefined] };
+    }
+
     const chats = await Chat.aggregate([
-      { $match: { userId } },
+      { $match: match },
       { $sort: { createdAt: -1 } },
       { $group: {
           _id: "$chatId",

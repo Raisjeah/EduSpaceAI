@@ -5,6 +5,7 @@ const ChatSchema = new mongoose.Schema({
   text: { type: String, required: true },
   userId: { type: String, required: true },
   chatId: { type: String, required: true },
+  projectId: { type: String },
   createdAt: { type: Date, default: Date.now },
 });
 

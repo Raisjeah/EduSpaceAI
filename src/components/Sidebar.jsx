@@ -1,12 +1,14 @@
 'use client';
 
-import { Plus, Wrench, User, Menu, MessageSquare, LogOut } from 'lucide-react';
+import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3 } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 import { getChatHistory } from '@/app/actions/chatActions';
 import { logout } from '@/app/actions/authActions';
+import { getProjects } from '@/app/actions/projectActions';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import useAuth from '@/hooks/useAuth';
+import ProjectModal from './ProjectModal';
 
 export default function Sidebar({ 
   isSidebarOpen, 
@@ -14,21 +16,38 @@ export default function Sidebar({
   userId
 }) {
   const [chatGroups, setChatGroups] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { user, searchQuery, fetchUser } = useAuth();
 
-  // 1. Ambil history yang sudah dikelompokkan berdasarkan chatId dari database
   const fetchHistory = async () => {
     if (userId) {
-      const history = await getChatHistory(userId);
+      // Logic: Jika di route project, atau ada projectId di query param (saat di /chat/ID)
+      const isProjectRoute = pathname.startsWith('/project/');
+      const projectIdFromPath = isProjectRoute ? pathname.split('/')[2] : null;
+      const projectIdFromQuery = searchParams.get('projectId');
+
+      const projectId = projectIdFromPath || projectIdFromQuery;
+
+      const history = await getChatHistory(userId, projectId);
       setChatGroups(history);
+    }
+  };
+
+  const fetchUserProjects = async () => {
+    if (userId) {
+      const userProjects = await getProjects(userId);
+      setProjects(userProjects);
     }
   };
 
   useEffect(() => {
     fetchHistory();
-  }, [userId, pathname]);
+    fetchUserProjects();
+  }, [userId, pathname, searchParams]);
 
   const filteredChatGroups = useMemo(() => {
     if (!searchQuery.trim()) return chatGroups;
@@ -48,117 +67,177 @@ export default function Sidebar({
     router.refresh();
   };
 
+  const getAgentIcon = (agentId) => {
+    switch (agentId) {
+      case 'deep-search': return <Search size={14} className="text-blue-400" />;
+      case 'researcher': return <BookOpen size={14} className="text-green-400" />;
+      case 'editor': return <Edit3 size={14} className="text-amber-400" />;
+      default: return <Rocket size={14} className="text-indigo-400" />;
+    }
+  };
+
+  const isProjectContext = pathname.startsWith('/project/') || searchParams.has('projectId');
+
   return (
-    <aside className={`
-      fixed top-0 left-0 h-full z-50 bg-[#0F0F0F] border-r border-[#1E1E1E]
-      transform transition-transform duration-300 ease-in-out flex-shrink-0
-      ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      w-[260px] md:relative md:translate-x-0 md:w-[260px]
-    `}>
-      <div className="flex flex-col h-full p-4">
-        {/* Header / Brand */}
-        <div className="flex items-center justify-between mb-6 px-2">
-          <Link href="/" className="flex items-center gap-2" onClick={closeSidebarOnMobile}>
-            <span className="font-bold text-[14px] text-white tracking-tight">EduSpaceAI</span>
-          </Link>
-          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-white">
-            <Menu size={18} />
-          </button>
-        </div>
-
-        {/* Button New Chat */}
-        <Link
-          href="/"
-          onClick={closeSidebarOnMobile}
-          className="flex items-center justify-center gap-2 w-full py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all mb-6 text-white shadow-lg shadow-indigo-900/20"
-        >
-          <Plus size={16} /> <span className="text-[12px] font-semibold">Percakapan Baru</span>
-        </Link>
-
-        {/* Navigation */}
-        <nav className="flex-1 flex flex-col min-h-0">
-          <Link
-            href="/tools"
-            onClick={closeSidebarOnMobile}
-            className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all text-[12px] mb-2 ${
-              pathname === '/tools'
-              ? 'bg-[#1A1A1A] text-white'
-              : 'text-gray-400 hover:text-white hover:bg-[#1A1A1A]'
-            }`}
-          >
-            <Wrench size={16} /> <span className="font-medium">Tools & File Editor</span>
-          </Link>
-          
-          <div className="mt-4 mb-3 px-3 text-[10px] font-bold text-gray-500 tracking-[0.1em] uppercase">Riwayat Belajar</div>
-          
-          <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1 pr-2">
-            {filteredChatGroups.length === 0 ? (
-              <div className="px-3 py-4 text-[11px] text-gray-600 italic text-center bg-[#151515] rounded-xl border border-dashed border-[#222]">
-                {searchQuery ? 'Tidak ada hasil pencarian' : 'Belum ada percakapan'}
-              </div>
-            ) : (
-              filteredChatGroups.map((group) => {
-                const isActive = pathname === `/chat/${group._id}`;
-                return (
-                  <Link
-                    key={group._id}
-                    href={`/chat/${group._id}`}
-                    onClick={closeSidebarOnMobile}
-                    className={`group flex items-center gap-3 px-3 py-3 text-[12px] rounded-xl cursor-pointer transition-all border-l-4 ${
-                      isActive
-                      ? 'bg-[#1A1A1A] text-white border-indigo-500'
-                      : 'text-gray-400 hover:text-gray-200 hover:bg-[#151515] border-transparent'
-                    }`}
-                  >
-                    <MessageSquare size={14} className={isActive ? 'text-indigo-400' : 'text-gray-600'} />
-                    <span className="truncate flex-1">{group.text}</span>
-                  </Link>
-                );
-              })
-            )}
+    <>
+      <aside className={`
+        fixed top-0 left-0 h-full z-50 bg-[#0F0F0F] border-r border-[#1E1E1E]
+        transform transition-transform duration-300 ease-in-out flex-shrink-0
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        w-[260px] md:relative md:translate-x-0 md:w-[260px]
+      `}>
+        <div className="flex flex-col h-full p-4">
+          {/* Header / Brand */}
+          <div className="flex items-center justify-between mb-6 px-2">
+            <Link href="/" className="flex items-center gap-2" onClick={closeSidebarOnMobile}>
+              <span className="font-bold text-[14px] text-white tracking-tight">EduSpaceAI</span>
+            </Link>
+            <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-white">
+              <Menu size={18} />
+            </button>
           </div>
-        </nav>
 
-        {/* User Profile or Login Button */}
-        <div className="mt-auto pt-4 border-t border-[#1E1E1E]">
-          {userId ? (
-            <div className="space-y-4 px-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-inner overflow-hidden">
-                    {user?.image ? (
-                      <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <User size={14} className="text-white" />
-                    )}
-                  </div>
-                  <div className="flex flex-col">
-                      <span className="text-[12px] font-bold text-gray-200 truncate max-w-[120px]">{user?.name || 'Anon'}</span>
-                      <span className="text-[9px] text-gray-500">Free Account</span>
-                  </div>
+          {/* Button New Chat / New Project */}
+          <div className="flex flex-col gap-2 mb-6">
+            <Link
+              href="/"
+              onClick={closeSidebarOnMobile}
+              className="flex items-center justify-center gap-2 w-full py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all text-white shadow-lg shadow-indigo-900/20"
+            >
+              <Plus size={16} /> <span className="text-[12px] font-semibold">Percakapan Baru</span>
+            </Link>
+            <button
+              onClick={() => { setIsProjectModalOpen(true); closeSidebarOnMobile(); }}
+              className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#1A1A1A] border border-[#333] hover:bg-[#242424] rounded-xl transition-all text-gray-300"
+            >
+              <Briefcase size={14} /> <span className="text-[11px] font-semibold">Proyek Baru</span>
+            </button>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            <Link
+              href="/tools"
+              onClick={closeSidebarOnMobile}
+              className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all text-[12px] mb-2 ${
+                pathname === '/tools'
+                ? 'bg-[#1A1A1A] text-white'
+                : 'text-gray-400 hover:text-white hover:bg-[#1A1A1A]'
+              }`}
+            >
+              <Wrench size={16} /> <span className="font-medium">Tools & File Editor</span>
+            </Link>
+
+            {/* Projects Section */}
+            {projects.length > 0 && (
+              <div className="mt-4 mb-2">
+                <div className="px-3 mb-2 text-[10px] font-bold text-gray-500 tracking-[0.1em] uppercase">Workspace Proyek</div>
+                <div className="space-y-1 max-h-[150px] overflow-y-auto custom-scrollbar pr-1">
+                  {projects.map(project => {
+                    const isPathActive = pathname === `/project/${project._id}`;
+                    const isQueryActive = searchParams.get('projectId') === project._id;
+                    const isActive = isPathActive || isQueryActive;
+                    return (
+                      <Link
+                        key={project._id}
+                        href={`/project/${project._id}`}
+                        onClick={closeSidebarOnMobile}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[11px] transition-all ${
+                          isActive ? 'bg-indigo-600/10 text-white border-l-2 border-indigo-500' : 'text-gray-400 hover:bg-[#151515] hover:text-gray-200'
+                        }`}
+                      >
+                        {getAgentIcon(project.agentId)}
+                        <span className="truncate">{project.name}</span>
+                      </Link>
+                    )
+                  })}
                 </div>
               </div>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-3 w-full p-3 text-[12px] font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all"
-              >
-                <LogOut size={16} />
-                <span>Keluar</span>
-              </button>
+            )}
+
+            <div className="mt-4 mb-3 px-3 text-[10px] font-bold text-gray-500 tracking-[0.1em] uppercase">
+              {isProjectContext ? 'Riwayat Proyek' : 'Riwayat Belajar'}
             </div>
-          ) : (
-            <div className="px-2">
-              <Link
-                href="/auth/login"
-                onClick={closeSidebarOnMobile}
-                className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#1A1A1A] hover:bg-[#252525] border border-[#2A2A2A] text-gray-200 rounded-xl transition-all text-[12px] font-semibold"
-              >
-                Login / Daftar
-              </Link>
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1 pr-2">
+              {filteredChatGroups.length === 0 ? (
+                <div className="px-3 py-4 text-[11px] text-gray-600 italic text-center bg-[#151515] rounded-xl border border-dashed border-[#222]">
+                  {searchQuery ? 'Tidak ada hasil pencarian' : 'Belum ada percakapan'}
+                </div>
+              ) : (
+                filteredChatGroups.map((group) => {
+                  const isActive = pathname.includes(`/chat/${group._id}`);
+                  // Pertahankan context project saat klik history
+                  const currentProjectId = (pathname.startsWith('/project/') ? pathname.split('/')[2] : null) || searchParams.get('projectId');
+                  const href = `/chat/${group._id}${currentProjectId ? `?projectId=${currentProjectId}` : ''}`;
+
+                  return (
+                    <Link
+                      key={group._id}
+                      href={href}
+                      onClick={closeSidebarOnMobile}
+                      className={`group flex items-center gap-3 px-3 py-3 text-[12px] rounded-xl cursor-pointer transition-all border-l-4 ${
+                        isActive
+                        ? 'bg-[#1A1A1A] text-white border-indigo-500'
+                        : 'text-gray-400 hover:text-gray-200 hover:bg-[#151515] border-transparent'
+                      }`}
+                    >
+                      <MessageSquare size={14} className={isActive ? 'text-indigo-400' : 'text-gray-600'} />
+                      <span className="truncate flex-1">{group.text}</span>
+                    </Link>
+                  );
+                })
+              )}
             </div>
-          )}
+          </nav>
+
+          {/* User Profile or Login Button */}
+          <div className="mt-auto pt-4 border-t border-[#1E1E1E]">
+            {userId ? (
+              <div className="space-y-4 px-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-inner overflow-hidden">
+                      {user?.image ? (
+                        <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <User size={14} className="text-white" />
+                      )}
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-[12px] font-bold text-gray-200 truncate max-w-[120px]">{user?.name || 'Anon'}</span>
+                        <span className="text-[9px] text-gray-500">Free Account</span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-3 w-full p-3 text-[12px] font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all"
+                >
+                  <LogOut size={16} />
+                  <span>Keluar</span>
+                </button>
+              </div>
+            ) : (
+              <div className="px-2">
+                <Link
+                  href="/auth/login"
+                  onClick={closeSidebarOnMobile}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#1A1A1A] hover:bg-[#252525] border border-[#2A2A2A] text-gray-200 rounded-xl transition-all text-[12px] font-semibold"
+                >
+                  Login / Daftar
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+
+      <ProjectModal
+        isOpen={isProjectModalOpen}
+        onClose={() => setIsProjectModalOpen(false)}
+        userId={userId}
+      />
+    </>
   );
 }
