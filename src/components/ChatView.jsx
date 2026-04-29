@@ -17,7 +17,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const [messages, setMessages] = useState([]);
   const [project, setProject] = useState(null);
   const [isPending, startTransition] = useTransition();
-  const [isLoadingChat, setIsLoadingChat] = useState(false);
+  const [isLoadingChat, setIsLoadingChat] = useState(!!activeChatId);
   const chatEndRef = useRef(null);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -36,6 +36,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   useEffect(() => {
     if (activeChatId && userId) {
       setIsLoadingChat(true);
+      setMessages([]); // Clear messages immediately to avoid ghosting
+
       getChatDetails(activeChatId, userId).then(res => {
         setMessages(res);
         setIsLoadingChat(false);
@@ -229,7 +231,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                   <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:-.3s]"></div>
                   <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:-.5s]"></div>
                 </div>
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest animate-pulse">Memproses...</span>
+                <span className="text-[10px] uppercase tracking-widest thinking-text">Thinking...</span>
               </div>
             )}
             <div ref={chatEndRef} />
