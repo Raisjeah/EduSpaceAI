@@ -56,7 +56,7 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
 
     // Gemini Models
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash", // Menggunakan model terbaru yang stabil mendukung tools
+      model: "gemini-2.5-pro", // Menggunakan model terbaru yang stabil mendukung tools
       systemInstruction: config.instruction,
       tools: config.tools || [],
     });
