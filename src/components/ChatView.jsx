@@ -19,6 +19,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const [isPending, startTransition] = useTransition();
   const [isLoadingChat, setIsLoadingChat] = useState(!!activeChatId);
   const chatEndRef = useRef(null);
+  const isNewChatRef = useRef(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const isAnalyzing = searchParams.get('analyze') === 'true';
@@ -35,6 +36,12 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   // 1. Load detail chat saat activeChatId berubah
   useEffect(() => {
     if (activeChatId && userId) {
+      // Jika ini adalah chat yang baru saja dibuat, jangan reload
+      if (isNewChatRef.current) {
+        isNewChatRef.current = false;
+        return;
+      }
+
       setIsLoadingChat(true);
       setMessages([]); // Clear messages immediately to avoid ghosting
 
@@ -54,7 +61,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   }, [activeChatId, userId, isAnalyzing]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    chatEndRef.current?.scrollIntoView({ behavior: "auto" });
   }, [messages, isPending]);
 
   const handleSend = async (overrideInput, isAutoTrigger = false) => {
@@ -87,6 +94,9 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
       if (result.success) {
         if (!activeChatId) {
+          // Flag bahwa ini chat baru agar tidak kena loading state di useEffect
+          isNewChatRef.current = true;
+
           // Redirect ke chat yang baru dibuat
           const targetUrl = projectId
             ? `/chat/${result.chatId}?projectId=${projectId}`
@@ -117,6 +127,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
               m._id === aiMessageId ? { ...m, text: currentText } : m
             ));
             wordIndex++;
+            // Scroll to bottom as text grows
+            chatEndRef.current?.scrollIntoView({ behavior: 'auto' });
           } else {
             clearInterval(interval);
           }
@@ -199,10 +211,10 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             </div>
           </div>
         ) : (
-          <div className="max-w-3xl mx-auto w-full py-8 px-4 space-y-8 flex-1">
+          <div className="max-w-3xl mx-auto w-full pt-8 pb-32 px-4 space-y-8 flex-1">
             {messages.map((msg, idx) => (
-              <div key={msg._id || idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`group relative flex gap-4 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+              <div key={msg._id || idx} className={`w-full flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`group relative flex gap-4 w-fit max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                   <div className={`p-4 rounded-2xl text-[13px] leading-relaxed shadow-sm transition-all ${
                     msg.role === 'user'
                     ? 'bg-indigo-600 text-white rounded-tr-none'
@@ -263,6 +275,15 @@ function SuggestionChip({ label, icon, onClick, isLink }) {
 
 function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile }) {
   const fileInputRef = useRef(null);
+  const textareaRef = useRef(null);
+
+  // Auto-expand textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 200) + 'px';
+    }
+  }, [input]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -289,10 +310,10 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           </button>
         </div>
       )}
-      <div className="relative bg-[#1E1E1E] rounded-2xl p-2 flex items-center border border-[#2A2A2A] focus-within:border-indigo-500/50 transition-all shadow-2xl">
+      <div className="relative bg-[#1E1E1E] rounded-2xl p-2 flex items-end gap-1 border border-[#2A2A2A] focus-within:border-indigo-500/50 transition-all shadow-2xl">
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-indigo-400 transition-colors"
+          className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-indigo-400 transition-colors shrink-0"
         >
           <Plus size={20} />
         </button>
@@ -303,19 +324,20 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           className="hidden"
           accept="image/*,.pdf,.doc,.docx,.txt,.csv"
         />
-        <input
-          type="text"
+        <textarea
+          ref={textareaRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
               handleSend();
             }
           }}
+          rows={1}
           disabled={disabled}
           placeholder="Tanya apa saja ke Dosen AI-mu..."
-          className="flex-1 bg-transparent border-none outline-none px-3 text-[14px] text-gray-200 placeholder-gray-500"
+          className="flex-1 bg-transparent border-none outline-none py-2.5 px-3 text-[14px] text-gray-200 placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
         />
         <button
           onClick={(e) => { e.preventDefault(); handleSend(); }}
