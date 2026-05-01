@@ -144,10 +144,10 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0F0F0F]">
+    <div className="flex flex-col h-full bg-[#0F0F0F] overflow-hidden">
       {/* Project Header (If in project) */}
       {project && (
-        <div className="px-6 py-3 border-b border-[#1E1E1E] bg-[#0F0F0F] flex items-center justify-between sticky top-0 z-10">
+        <div className="px-6 py-3 border-b border-[#1E1E1E] bg-[#0F0F0F] flex items-center justify-between z-10 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#1A1A1A] border border-[#333] flex items-center justify-center">
               {getAgentIcon(project.agentId)}
@@ -161,7 +161,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
+      <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0">
         {isLoadingChat ? (
           <div className="flex-1 flex flex-col items-center justify-center">
             <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -177,20 +177,13 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             <h1 className="text-3xl font-bold text-white mb-2 text-center">
               {project ? project.name : 'EduSpaceAI'}
             </h1>
-            <p className="text-gray-400 mb-10 text-center max-w-sm">
+            <p className="text-gray-400 mb-6 text-center max-w-sm">
               {project
                 ? `Sedang menggunakan agen ${getAgentName(project.agentId)} untuk membantumu di project ini.`
                 : 'Dosen pribadi bertenaga AI yang siap bantu skripsi, tugas, dan belajarmu.'}
             </p>
             <div className="w-full max-w-xl text-center">
-              <InputBox
-                input={input}
-                setInput={setInput}
-                handleSend={() => handleSend()}
-                selectedFile={selectedFile}
-                setSelectedFile={setSelectedFile}
-              />
-              <div className="flex flex-wrap justify-center gap-3 mt-8">
+              <div className="flex flex-wrap justify-center gap-3">
                 {project?.agentId === 'deep-search' ? (
                   <SuggestionChip label="Cari berita terbaru AI" onClick={() => handleSend("Apa berita terbaru tentang perkembangan AI minggu ini?")} />
                 ) : (
@@ -238,20 +231,18 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           </div>
         )}
       </div>
-      {messages.length > 0 && (
-        <div className="p-6 bg-gradient-to-t from-[#0F0F0F] via-[#0F0F0F] to-transparent">
-          <div className="max-w-3xl mx-auto">
-            <InputBox
-              input={input}
-              setInput={setInput}
-              handleSend={() => handleSend()}
-              disabled={isPending}
-              selectedFile={selectedFile}
-              setSelectedFile={setSelectedFile}
-            />
-          </div>
+      <div className="p-6 bg-gradient-to-t from-[#0F0F0F] via-[#0F0F0F] to-transparent shrink-0">
+        <div className="max-w-3xl mx-auto">
+          <InputBox
+            input={input}
+            setInput={setInput}
+            handleSend={() => handleSend()}
+            disabled={isPending}
+            selectedFile={selectedFile}
+            setSelectedFile={setSelectedFile}
+          />
         </div>
-      )}
+      </div>
     </div>
   );
 }
