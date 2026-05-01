@@ -76,10 +76,10 @@ export default function MainLayout({ children }) {
         userId={userId}
       />
 
-      <main className="flex-1 flex flex-col h-full min-w-0 relative">
+      <main className="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden">
         <Header setIsSidebarOpen={setIsSidebarOpen} />
 
-        <div className="flex-1 overflow-hidden relative">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
           {children}
         </div>
       </main>
