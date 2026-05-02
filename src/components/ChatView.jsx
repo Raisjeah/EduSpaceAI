@@ -173,14 +173,14 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
         {isLoadingChat ? (
           <div className="flex-1 flex flex-col items-center justify-center">
             <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
             <p className="text-gray-500 text-sm animate-pulse">Memuat percakapan...</p>
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-10">
+          <div className="flex-1 flex flex-col items-center justify-center px-4">
             <div className="w-16 h-16 bg-indigo-600/20 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30">
               <span className="text-2xl text-indigo-500">
                 {project ? '📂' : '🎓'}
@@ -211,8 +211,9 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             </div>
           </div>
         ) : (
-          <div className="max-w-3xl mx-auto w-full pt-8 pb-32 px-4 space-y-8 flex-1">
-            {messages.map((msg, idx) => (
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <div className="max-w-3xl mx-auto w-full pt-8 pb-[100px] px-4 space-y-8 flex-1">
+              {messages.map((msg, idx) => (
               <div key={msg._id || idx} className={`w-full flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`group relative flex gap-4 w-fit max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                   <div className={`p-4 rounded-2xl text-[13px] leading-relaxed shadow-sm transition-all ${
@@ -239,7 +240,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                 <span className="text-[10px] uppercase tracking-widest thinking-text">Thinking...</span>
               </div>
             )}
-            <div ref={chatEndRef} />
+              <div ref={chatEndRef} />
+            </div>
           </div>
         )}
       </div>

@@ -10,7 +10,7 @@ export default function Header({ setIsSidebarOpen }) {
   const [isSearchActive, setIsSearchActive] = useState(false);
 
   return (
-    <header className="flex justify-between items-center p-4 relative z-10">
+    <header className="flex justify-between items-center p-4 sticky top-0 z-20 bg-[#0F0F0F] border-b border-[#1E1E1E] shrink-0">
       <div className="flex items-center gap-3">
         <button onClick={() => setIsSidebarOpen(true)} className="text-gray-400 hover:text-white transition-colors md:hidden">
           <Menu size={20} />
