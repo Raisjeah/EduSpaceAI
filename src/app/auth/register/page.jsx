@@ -80,7 +80,7 @@ export default function RegisterPage() {
               name="name"
               type="text"
               required
-              className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-600"
+              className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg px-4 py-2 text-base text-white focus:outline-none focus:border-indigo-600"
               placeholder="Masukkan nama Anda"
             />
           </div>
@@ -90,7 +90,7 @@ export default function RegisterPage() {
               name="email"
               type="email"
               required
-              className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-600"
+              className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg px-4 py-2 text-base text-white focus:outline-none focus:border-indigo-600"
               placeholder="nama@email.com"
             />
           </div>
@@ -100,7 +100,7 @@ export default function RegisterPage() {
               name="password"
               type="password"
               required
-              className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-600"
+              className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg px-4 py-2 text-base text-white focus:outline-none focus:border-indigo-600"
               placeholder="••••••••"
             />
           </div>

@@ -194,7 +194,7 @@ export default function DocumentEditor({ type, userId }) {
             onMouseUp={handleTextSelection}
             onKeyUp={handleTextSelection}
             placeholder="Isi dokumen akan muncul di sini. Kamu bisa mengetik dan mengeditnya secara manual sebelum dianalisis oleh Profesor AI..."
-            className="flex-1 bg-[#1A1A1A] border border-[#333] rounded-[1.5rem] p-8 text-[14px] text-gray-300 font-mono leading-relaxed outline-none focus:border-indigo-500/40 resize-none custom-scrollbar shadow-inner"
+            className="flex-1 bg-[#1A1A1A] border border-[#333] rounded-[1.5rem] p-8 text-base text-gray-300 font-mono leading-relaxed outline-none focus:border-indigo-500/40 resize-none custom-scrollbar shadow-inner"
           />
 
           {/* Floating Toolbar */}
@@ -230,7 +230,7 @@ export default function DocumentEditor({ type, userId }) {
 
       {/* Integrated Chat Panel */}
       <div className={`
-        fixed inset-y-0 right-0 w-full md:w-[400px] bg-[#151515] border-l border-[#222] z-40 transform transition-transform duration-300 ease-in-out flex flex-col
+        fixed inset-y-0 right-0 w-full md:w-[400px] bg-[#151515] border-l border-[#222] z-40 transform transition-transform duration-300 ease-in-out flex flex-col h-[100dvh]
         ${isChatOpen ? 'translate-x-0' : 'translate-x-full'}
       `}>
         <div className="p-4 border-b border-[#222] flex items-center justify-between bg-[#1A1A1A]">
@@ -291,7 +291,7 @@ export default function DocumentEditor({ type, userId }) {
               onChange={(e) => setChatInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
               placeholder="Tanya perbaikan dokumen..."
-              className="w-full bg-[#0F0F0F] border border-[#333] rounded-xl py-3 pl-4 pr-12 text-[12px] text-gray-200 outline-none focus:border-indigo-500/50"
+              className="w-full bg-[#0F0F0F] border border-[#333] rounded-xl py-3 pl-4 pr-12 text-base text-gray-200 outline-none focus:border-indigo-500/50"
             />
             <button
               onClick={handleSendChat}

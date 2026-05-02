@@ -61,7 +61,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   }, [activeChatId, userId, isAnalyzing]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "auto" });
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isPending]);
 
   const handleSend = async (overrideInput, isAutoTrigger = false) => {
@@ -128,7 +128,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             ));
             wordIndex++;
             // Scroll to bottom as text grows
-            chatEndRef.current?.scrollIntoView({ behavior: 'auto' });
+            chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
           } else {
             clearInterval(interval);
           }
@@ -159,7 +159,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     <div className="flex flex-col h-full bg-[#0F0F0F] overflow-hidden">
       {/* Project Header (If in project) */}
       {project && (
-        <div className="px-6 py-3 border-b border-[#1E1E1E] bg-[#0F0F0F] flex items-center justify-between z-10 shrink-0">
+        <div className="px-6 py-3 border-b border-[#1E1E1E] bg-[#0F0F0F] flex items-center justify-between z-10 flex-none">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#1A1A1A] border border-[#333] flex items-center justify-center">
               {getAgentIcon(project.agentId)}
@@ -212,7 +212,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <div className="max-w-3xl mx-auto w-full pt-8 pb-[100px] px-4 space-y-8 flex-1">
+            <div className="max-w-3xl mx-auto w-full pt-8 pb-[120px] px-4 space-y-8 flex-1">
               {messages.map((msg, idx) => (
               <div key={msg._id || idx} className={`w-full flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`group relative flex gap-4 w-fit max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -245,7 +245,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           </div>
         )}
       </div>
-      <div className="p-6 bg-gradient-to-t from-[#0F0F0F] via-[#0F0F0F] to-transparent shrink-0">
+      <div className="p-6 bg-gradient-to-t from-[#0F0F0F] via-[#0F0F0F] to-transparent flex-none">
         <div className="max-w-3xl mx-auto">
           <InputBox
             input={input}
@@ -339,7 +339,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           rows={1}
           disabled={disabled}
           placeholder="Tanya apa saja ke Dosen AI-mu..."
-          className="flex-1 bg-transparent border-none outline-none py-2.5 px-3 text-[14px] text-gray-200 placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
+          className="flex-1 bg-transparent border-none outline-none py-2.5 px-3 text-base text-gray-200 placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
         />
         <button
           onClick={(e) => { e.preventDefault(); handleSend(); }}

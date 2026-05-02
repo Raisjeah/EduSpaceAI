@@ -10,7 +10,7 @@ export default function Header({ setIsSidebarOpen }) {
   const [isSearchActive, setIsSearchActive] = useState(false);
 
   return (
-    <header className="flex justify-between items-center p-4 sticky top-0 z-20 bg-[#0F0F0F] border-b border-[#1E1E1E] shrink-0">
+    <header className="flex justify-between items-center p-4 sticky top-0 z-20 bg-[#0F0F0F] border-b border-[#1E1E1E] flex-none">
       <div className="flex items-center gap-3">
         <button onClick={() => setIsSidebarOpen(true)} className="text-gray-400 hover:text-white transition-colors md:hidden">
           <Menu size={20} />
@@ -25,7 +25,7 @@ export default function Header({ setIsSidebarOpen }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari riwayat..."
-              className="w-full bg-[#1A1A1A] border border-[#333] rounded-full py-1.5 px-4 text-[12px] outline-none focus:border-indigo-500/50 transition-colors"
+              className="w-full bg-[#1A1A1A] border border-[#333] rounded-full py-1.5 px-4 text-base outline-none focus:border-indigo-500/50 transition-colors"
               autoFocus={isSearchActive}
             />
           </div>
