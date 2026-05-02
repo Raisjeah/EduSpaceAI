@@ -48,7 +48,7 @@ export default function MainLayout({ children }) {
   }
 
   return (
-    <div className="relative h-screen w-full bg-[#0F0F0F] text-gray-200 overflow-hidden flex">
+    <div className="relative h-dyn-screen w-full bg-[#0F0F0F] text-gray-200 overflow-hidden flex">
 
       {/* 1. TIRAI LOADING (OVERLAY) */}
       {isLoading && (
@@ -76,7 +76,7 @@ export default function MainLayout({ children }) {
         userId={userId}
       />
 
-      <main className="flex-1 flex flex-col h-screen min-w-0 relative overflow-hidden">
+      <main className="flex-1 flex flex-col h-dyn-screen min-w-0 relative overflow-hidden">
         <Header setIsSidebarOpen={setIsSidebarOpen} />
 
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
