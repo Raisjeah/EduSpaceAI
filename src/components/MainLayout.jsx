@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import useAuth from '@/hooks/useAuth';
+import Toast from '@/components/Toast';
 
 export default function MainLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -14,7 +15,7 @@ export default function MainLayout({ children }) {
   const router = useRouter();
 
   // Ambil data auth
-  const { userId, isLoading } = useAuth();
+  const { userId, isLoading, notification, setNotification } = useAuth();
 
   useEffect(() => {
     setHasMounted(true);
@@ -49,6 +50,13 @@ export default function MainLayout({ children }) {
 
   return (
     <div className="relative h-[100dvh] w-full bg-[#0F0F0F] text-gray-200 overflow-hidden flex">
+      {notification && (
+        <Toast
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
 
       {/* Overlay Sidebar untuk Mobile */}
       {isSidebarOpen && (

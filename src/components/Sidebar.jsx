@@ -21,7 +21,7 @@ export default function Sidebar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, searchQuery, fetchUser } = useAuth();
+  const { user, searchQuery, fetchUser, showNotification } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -63,6 +63,7 @@ export default function Sidebar({
   const handleLogout = async () => {
     await logout();
     await fetchUser();
+    showNotification('Keluar');
     router.push('/');
     router.refresh();
   };

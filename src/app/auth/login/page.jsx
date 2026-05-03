@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { fetchUser } = useAuth();
+  const { fetchUser, showNotification } = useAuth();
 
   const callbackUrl = searchParams.get('callbackUrl') || '/';
 
@@ -25,6 +25,7 @@ export default function LoginPage() {
 
     if (result.success) {
       await fetchUser();
+      showNotification('Login berhasil');
       router.push(callbackUrl);
       router.refresh();
     } else {
@@ -38,6 +39,7 @@ export default function LoginPage() {
     const result = await loginWithGoogle(response.credential);
     if (result.success) {
       await fetchUser();
+      showNotification('Login berhasil');
       router.push(callbackUrl);
       router.refresh();
     } else {
