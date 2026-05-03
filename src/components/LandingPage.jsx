@@ -7,27 +7,27 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col h-full overflow-y-auto custom-scrollbar bg-[#0F0F0F] text-gray-200">
       {/* Hero Section */}
-      <section className="relative pt-12 md:pt-20 pb-20 md:pb-32 overflow-hidden">
+      <section className="relative flex-none pt-28 md:pt-36 pb-20 md:pb-32">
         {/* Background Decorative Elements */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 overflow-hidden">
           <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/10 blur-[120px] rounded-full"></div>
           <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 blur-[120px] rounded-full"></div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 text-center">
+        <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-8 animate-fade-in">
             <Sparkles size={14} />
             <span>Asisten Skripsi Berbasis AI Terdepan</span>
           </div>
 
-          <h1 className="text-4xl md:text-7xl font-extrabold tracking-tight text-white mb-6 leading-tight px-2">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight text-white mb-8 leading-tight px-2">
             Selesaikan Skripsi <br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400">
               Lebih Cepat & Cerdas
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed">
             EduSpaceAI hadir sebagai partner akademik pintarmu. Dari riset literatur hingga penyusunan bab, kami bantu setiap langkah perjalanan skripsimu.
           </p>
 
@@ -50,7 +50,7 @@ export default function LandingPage() {
       </section>
 
       {/* Dashboard Preview Section */}
-      <section className="pb-32 px-6">
+      <section className="relative flex-none py-20 md:py-32 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="relative rounded-3xl border border-[#2A2A2A] bg-[#151515] p-4 shadow-2xl shadow-black/50 overflow-hidden group">
             {/* Window Controls */}
@@ -129,7 +129,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features Grid */}
-      <section id="features" className="py-24 bg-[#0A0A0A] border-t border-[#1E1E1E]">
+      <section id="features" className="relative flex-none py-24 bg-[#0A0A0A] border-t border-[#1E1E1E]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <FeatureCard
@@ -157,7 +157,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-[#1E1E1E] px-6 text-center">
+      <footer className="relative flex-none py-12 border-t border-[#1E1E1E] px-6 text-center">
         <div className="flex items-center justify-center gap-2 mb-4">
           <span className="font-bold text-[14px] text-white tracking-tight">EduSpaceAI</span>
         </div>
