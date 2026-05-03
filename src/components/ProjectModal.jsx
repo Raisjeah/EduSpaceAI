@@ -40,29 +40,29 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#1A1A1A] w-full max-w-md rounded-3xl border border-[#333] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div className="flex items-center justify-between p-6 border-b border-[#333]">
-          <h2 className="text-xl font-bold text-white">Buat Agent Baru</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
+      <div className="bg-white dark:bg-[#1A1A1A] w-full max-w-md rounded-3xl border border-slate-200 dark:border-[#333] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 transition-colors">
+        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-[#333]">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Buat Agent Baru</h2>
+          <button onClick={onClose} className="text-slate-400 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors">
             <X size={20} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div>
-            <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nama Agent Workspace</label>
+            <label className="block text-[11px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-2">Nama Agent Workspace</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Misal: Skripsi Bab 1 atau Riset AI"
-              className="w-full bg-[#242424] border border-[#333] rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-indigo-500 transition-all"
+              className="w-full bg-slate-50 dark:bg-[#242424] border border-slate-200 dark:border-[#333] rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-gray-200 focus:outline-none focus:border-indigo-500 transition-all"
               required
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Pilih Agent</label>
+            <label className="block text-[11px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-3">Pilih Agent</label>
             <div className="grid grid-cols-2 gap-3">
               {agents.map((agent) => (
                 <div
@@ -71,15 +71,15 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
                   className={`cursor-pointer p-4 rounded-2xl border transition-all flex flex-col gap-2 ${
                     agentId === agent.id
                     ? 'bg-indigo-600/10 border-indigo-500'
-                    : 'bg-[#242424] border-[#333] hover:border-gray-500'
+                    : 'bg-slate-50 dark:bg-[#242424] border-slate-200 dark:border-[#333] hover:border-slate-400 dark:hover:border-gray-500'
                   }`}
                 >
-                  <div className={`${agentId === agent.id ? 'text-indigo-400' : 'text-gray-400'}`}>
+                  <div className={`${agentId === agent.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-gray-400'}`}>
                     {agent.icon}
                   </div>
                   <div>
-                    <div className="text-[12px] font-bold text-gray-200">{agent.name}</div>
-                    <div className="text-[9px] text-gray-500">{agent.desc}</div>
+                    <div className="text-[12px] font-bold text-slate-800 dark:text-gray-200">{agent.name}</div>
+                    <div className="text-[9px] text-slate-500 dark:text-gray-500">{agent.desc}</div>
                   </div>
                 </div>
               ))}

@@ -169,20 +169,20 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0F0F0F] overflow-hidden">
+    <div className="flex flex-col h-full bg-white dark:bg-[#0F0F0F] overflow-hidden transition-colors duration-200">
       {/* Project Header (If in project) */}
       {project && (
-        <div className="px-6 py-3 border-b border-[#1E1E1E] bg-[#0F0F0F] flex items-center justify-between z-10 flex-none">
+        <div className="px-6 py-3 border-b border-slate-200 dark:border-[#1E1E1E] bg-white dark:bg-[#0F0F0F] flex items-center justify-between z-10 flex-none transition-colors duration-200">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#1A1A1A] border border-[#333] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] flex items-center justify-center">
               {getAgentIcon(project.agentId)}
             </div>
             <div>
-              <h2 className="text-[12px] font-bold text-white leading-tight">{project.name}</h2>
-              <p className="text-[10px] text-gray-500 uppercase tracking-widest">{getAgentName(project.agentId)}</p>
+              <h2 className="text-[12px] font-bold text-slate-900 dark:text-white leading-tight">{project.name}</h2>
+              <p className="text-[10px] text-slate-500 dark:text-gray-500 uppercase tracking-widest">{getAgentName(project.agentId)}</p>
             </div>
           </div>
-          <div className="text-[10px] text-gray-500 bg-[#1A1A1A] px-2 py-1 rounded border border-[#333]">Active Agent Workspace</div>
+          <div className="text-[10px] text-slate-500 dark:text-gray-500 bg-slate-100 dark:bg-[#1A1A1A] px-2 py-1 rounded border border-slate-200 dark:border-[#333]">Active Agent Workspace</div>
         </div>
       )}
 
@@ -190,7 +190,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         {isLoadingChat ? (
           <div className="flex-1 flex flex-col items-center justify-center">
             <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-gray-500 text-sm animate-pulse">Memuat percakapan...</p>
+            <p className="text-slate-500 dark:text-gray-500 text-sm animate-pulse">Memuat percakapan...</p>
           </div>
         ) : messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center px-4">
@@ -199,10 +199,10 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                 {project ? '📂' : '🎓'}
               </span>
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2 text-center">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2 text-center">
               {project ? project.name : 'EduSpaceAI'}
             </h1>
-            <p className="text-gray-400 mb-6 text-center max-w-sm">
+            <p className="text-slate-600 dark:text-gray-400 mb-6 text-center max-w-sm">
               {project
                 ? `Sedang menggunakan agen ${getAgentName(project.agentId)} untuk membantumu di project ini.`
                 : 'Dosen pribadi bertenaga AI yang siap bantu skripsi, tugas, dan belajarmu.'}
@@ -232,9 +232,9 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                   <div className={`p-4 rounded-2xl text-[13px] leading-relaxed shadow-sm transition-all ${
                     msg.role === 'user'
                     ? 'bg-indigo-600 text-white rounded-tr-none'
-                    : 'bg-[#1E1E1E] text-gray-200 border border-[#2A2A2A] rounded-tl-none'
+                    : 'bg-slate-100 dark:bg-[#1E1E1E] text-slate-900 dark:text-gray-200 border border-slate-200 dark:border-[#2A2A2A] rounded-tl-none'
                   }`}>
-                    <div className="markdown-content prose prose-invert max-w-none prose-sm leading-relaxed">
+                    <div className={`markdown-content prose ${msg.role === 'user' ? 'prose-invert' : 'dark:prose-invert'} max-w-none prose-sm leading-relaxed`}>
                       <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                         {msg.text}
                       </ReactMarkdown>
@@ -258,7 +258,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           </div>
         )}
       </div>
-      <div className="p-6 bg-gradient-to-t from-[#0F0F0F] via-[#0F0F0F] to-transparent flex-none">
+      <div className="p-6 bg-gradient-to-t from-white dark:from-[#0F0F0F] via-white dark:via-[#0F0F0F] to-transparent flex-none">
         <div className="max-w-3xl mx-auto">
           <InputBox
             input={input}
@@ -281,7 +281,7 @@ function SuggestionChip({ label, icon, onClick, isLink }) {
   return (
     <Component
       onClick={onClick} 
-      className="flex items-center gap-2 px-4 py-2 bg-[#1E1E1E] border border-[#2A2A2A] rounded-full text-[11px] text-gray-400 hover:text-white hover:border-indigo-500/50 transition-all cursor-pointer"
+      className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[11px] text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:border-indigo-500/50 transition-all cursor-pointer"
     >
       {icon} {label}
     </Component>
@@ -310,25 +310,25 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
   return (
     <div className="flex flex-col w-full">
       {selectedFile && (
-        <div className="flex items-center gap-2 mb-2 ml-2 p-2 bg-[#2A2A2A] rounded-xl w-fit border border-indigo-500/30">
+        <div className="flex items-center gap-2 mb-2 ml-2 p-2 bg-slate-100 dark:bg-[#2A2A2A] rounded-xl w-fit border border-indigo-500/30 transition-colors">
           {selectedFile.type.startsWith('image/') ? (
             <ImageIcon size={16} className="text-indigo-400" />
           ) : (
             <FileText size={16} className="text-indigo-400" />
           )}
-          <span className="text-[11px] text-gray-300 truncate max-w-[150px]">{selectedFile.name}</span>
+          <span className="text-[11px] text-slate-600 dark:text-gray-300 truncate max-w-[150px]">{selectedFile.name}</span>
           <button
             onClick={() => setSelectedFile(null)}
-            className="hover:text-red-400 text-gray-500 transition-colors"
+            className="hover:text-red-400 text-gray-500 dark:text-gray-400 transition-colors"
           >
             <X size={14} />
           </button>
         </div>
       )}
-      <div className="relative bg-[#1E1E1E] rounded-2xl p-2 flex items-end gap-1 border border-[#2A2A2A] focus-within:border-indigo-500/50 transition-all shadow-2xl">
+      <div className="relative bg-slate-100 dark:bg-[#1E1E1E] rounded-2xl p-2 flex items-end gap-1 border border-slate-200 dark:border-[#2A2A2A] focus-within:border-indigo-500/50 transition-all shadow-2xl">
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-indigo-400 transition-colors shrink-0"
+          className="w-10 h-10 flex items-center justify-center text-slate-400 dark:text-gray-500 hover:text-indigo-400 transition-colors shrink-0"
         >
           <Plus size={20} />
         </button>
@@ -352,13 +352,13 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           rows={1}
           disabled={disabled}
           placeholder="Tanya apa saja ke Dosen AI-mu..."
-          className="flex-1 bg-transparent border-none outline-none py-2.5 px-3 text-base text-gray-200 placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
+          className="flex-1 bg-transparent border-none outline-none py-2.5 px-3 text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
         />
         <button
           onClick={(e) => { e.preventDefault(); handleSend(); }}
           disabled={disabled || (!input.trim() && !selectedFile)}
           className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-            (input.trim() || selectedFile) && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40' : 'bg-[#2A2A2A] text-gray-600'
+            (input.trim() || selectedFile) && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40' : 'bg-slate-200 dark:bg-[#2A2A2A] text-slate-400 dark:text-gray-600'
           }`}
         >
           <Send size={18} />

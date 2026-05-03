@@ -5,7 +5,7 @@ import { ArrowRight, GraduationCap, Layout, Shield, Sparkles, Briefcase, Plus } 
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-col h-full overflow-y-auto custom-scrollbar bg-[#0F0F0F] text-gray-200">
+    <div className="flex flex-col h-full overflow-y-auto custom-scrollbar bg-white dark:bg-[#0F0F0F] text-slate-900 dark:text-gray-200 transition-colors duration-200">
       {/* Hero Section */}
       <section className="relative flex-none pt-28 md:pt-36 pb-20 md:pb-32">
         {/* Background Decorative Elements */}
@@ -15,19 +15,19 @@ export default function LandingPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-8 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-semibold mb-8 animate-fade-in transition-colors">
             <Sparkles size={14} />
             <span>Asisten Skripsi Berbasis AI Terdepan</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight text-white mb-8 leading-tight px-2">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-8 leading-tight px-2">
             Selesaikan Skripsi <br />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 dark:from-indigo-400 dark:via-purple-400 dark:to-indigo-400 transition-colors">
               Lebih Cepat & Cerdas
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed">
+          <p className="text-lg md:text-xl text-slate-500 dark:text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed">
             EduSpaceAI hadir sebagai partner akademik pintarmu. Dari riset literatur hingga penyusunan bab, kami bantu setiap langkah perjalanan skripsimu.
           </p>
 
@@ -41,7 +41,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="#features"
-              className="px-8 py-4 bg-[#1A1A1A] hover:bg-[#252525] text-gray-300 rounded-2xl font-bold transition-all border border-[#2A2A2A]"
+              className="px-8 py-4 bg-slate-100 dark:bg-[#1A1A1A] hover:bg-slate-200 dark:hover:bg-[#252525] text-slate-600 dark:text-gray-300 rounded-2xl font-bold transition-all border border-slate-200 dark:border-[#2A2A2A]"
             >
               Pelajari Fitur
             </Link>
@@ -52,7 +52,7 @@ export default function LandingPage() {
       {/* Dashboard Preview Section */}
       <section className="relative flex-none py-20 md:py-32 px-6">
         <div className="max-w-5xl mx-auto">
-          <div className="relative rounded-3xl border border-[#2A2A2A] bg-[#151515] p-4 shadow-2xl shadow-black/50 overflow-hidden group">
+          <div className="relative rounded-3xl border border-slate-200 dark:border-[#2A2A2A] bg-white dark:bg-[#151515] p-4 shadow-2xl shadow-slate-200 dark:shadow-black/50 overflow-hidden group transition-all">
             {/* Window Controls */}
             <div className="flex gap-1.5 mb-4 px-2">
               <div className="w-3 h-3 rounded-full bg-red-500/20 group-hover:bg-red-500/50 transition-colors"></div>
@@ -61,23 +61,23 @@ export default function LandingPage() {
             </div>
 
             {/* Enhanced Dashboard Preview (Cool Banner) */}
-            <div className="aspect-video bg-[#0F0F0F] rounded-xl overflow-hidden flex relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/10 via-transparent to-purple-600/10"></div>
+            <div className="aspect-video bg-slate-50 dark:bg-[#0F0F0F] rounded-xl overflow-hidden flex relative border border-slate-100 dark:border-transparent transition-colors">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/5 dark:from-indigo-600/10 via-transparent to-purple-600/5 dark:to-purple-600/10"></div>
 
-              <div className="w-48 border-r border-[#1E1E1E] p-4 hidden md:block relative z-10 bg-[#0F0F0F]/50 backdrop-blur-sm">
+              <div className="w-48 border-r border-slate-200 dark:border-[#1E1E1E] p-4 hidden md:block relative z-10 bg-white/50 dark:bg-[#0F0F0F]/50 backdrop-blur-sm transition-colors">
                 <div className="h-4 w-24 bg-gradient-to-r from-indigo-500 to-purple-500 rounded mb-8 opacity-50"></div>
                 <div className="space-y-3">
-                  <div className="h-8 w-full bg-indigo-600/20 rounded-lg border border-indigo-500/20 flex items-center px-3">
+                  <div className="h-8 w-full bg-indigo-50 dark:bg-indigo-600/20 rounded-lg border border-indigo-100 dark:border-indigo-500/20 flex items-center px-3">
                     <div className="w-3 h-3 rounded bg-indigo-400 mr-2"></div>
                     <div className="h-1.5 w-12 bg-indigo-400/50 rounded"></div>
                   </div>
-                  <div className="h-8 w-full bg-[#1E1E1E] rounded-lg border border-white/5 flex items-center px-3">
-                    <div className="w-3 h-3 rounded bg-gray-600 mr-2"></div>
-                    <div className="h-1.5 w-16 bg-gray-600 rounded"></div>
+                  <div className="h-8 w-full bg-white dark:bg-[#1E1E1E] rounded-lg border border-slate-200 dark:border-white/5 flex items-center px-3">
+                    <div className="w-3 h-3 rounded bg-slate-300 dark:bg-gray-600 mr-2"></div>
+                    <div className="h-1.5 w-16 bg-slate-200 dark:bg-gray-600 rounded"></div>
                   </div>
-                  <div className="h-8 w-full bg-[#1E1E1E] rounded-lg border border-white/5 flex items-center px-3">
-                    <div className="w-3 h-3 rounded bg-gray-600 mr-2"></div>
-                    <div className="h-1.5 w-10 bg-gray-600 rounded"></div>
+                  <div className="h-8 w-full bg-white dark:bg-[#1E1E1E] rounded-lg border border-slate-200 dark:border-white/5 flex items-center px-3">
+                    <div className="w-3 h-3 rounded bg-slate-300 dark:bg-gray-600 mr-2"></div>
+                    <div className="h-1.5 w-10 bg-slate-200 dark:bg-gray-600 rounded"></div>
                   </div>
                 </div>
               </div>
@@ -87,32 +87,32 @@ export default function LandingPage() {
                   <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
                     <Sparkles size={16} className="text-white" />
                   </div>
-                  <div className="h-4 w-32 bg-white/10 rounded"></div>
+                  <div className="h-4 w-32 bg-slate-200 dark:bg-white/10 rounded"></div>
                 </div>
 
                 <div className="space-y-6 max-w-lg">
-                  <div className="bg-[#1A1A1A] rounded-2xl p-4 border border-white/5 shadow-xl">
+                  <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl p-4 border border-slate-200 dark:border-white/5 shadow-xl transition-colors">
                     <div className="flex items-start gap-4 mb-4">
-                      <div className="w-8 h-8 rounded-full bg-purple-600 flex-shrink-0 flex items-center justify-center text-xs font-bold">A</div>
+                      <div className="w-8 h-8 rounded-full bg-purple-600 flex-shrink-0 flex items-center justify-center text-xs font-bold text-white">A</div>
                       <div className="space-y-2 flex-1">
-                        <div className="h-2 w-full bg-white/10 rounded"></div>
-                        <div className="h-2 w-3/4 bg-white/10 rounded"></div>
+                        <div className="h-2 w-full bg-slate-100 dark:bg-white/10 rounded"></div>
+                        <div className="h-2 w-3/4 bg-slate-100 dark:bg-white/10 rounded"></div>
                       </div>
                     </div>
                     <div className="flex items-start gap-4 flex-row-reverse">
-                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex-shrink-0 flex items-center justify-center text-[10px] font-bold">Edu</div>
-                      <div className="bg-indigo-600/10 rounded-2xl p-4 border border-indigo-500/20 flex-1">
-                        <div className="h-2 w-full bg-indigo-400/30 rounded mb-2"></div>
-                        <div className="h-2 w-5/6 bg-indigo-400/30 rounded mb-2"></div>
-                        <div className="h-2 w-4/6 bg-indigo-400/30 rounded"></div>
+                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white">Edu</div>
+                      <div className="bg-indigo-50 dark:bg-indigo-600/10 rounded-2xl p-4 border border-indigo-100 dark:border-indigo-500/20 flex-1">
+                        <div className="h-2 w-full bg-indigo-200 dark:bg-indigo-400/30 rounded mb-2"></div>
+                        <div className="h-2 w-5/6 bg-indigo-200 dark:bg-indigo-400/30 rounded mb-2"></div>
+                        <div className="h-2 w-4/6 bg-indigo-200 dark:bg-indigo-400/30 rounded"></div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-auto flex items-center gap-4 bg-[#1A1A1A] p-3 rounded-2xl border border-white/5">
-                   <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center"><Plus size={16} className="text-gray-500" /></div>
-                   <div className="flex-1 h-3 bg-white/5 rounded-full"></div>
+                <div className="mt-auto flex items-center gap-4 bg-slate-100 dark:bg-[#1A1A1A] p-3 rounded-2xl border border-slate-200 dark:border-white/5 transition-colors">
+                   <div className="w-8 h-8 rounded-lg bg-white dark:bg-white/5 flex items-center justify-center border border-slate-200 dark:border-transparent"><Plus size={16} className="text-slate-400 dark:text-gray-500" /></div>
+                   <div className="flex-1 h-3 bg-slate-200 dark:bg-white/5 rounded-full"></div>
                    <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20"><ArrowRight size={18} className="text-white" /></div>
                 </div>
               </div>
@@ -129,7 +129,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features Grid */}
-      <section id="features" className="relative flex-none py-24 bg-[#0A0A0A] border-t border-[#1E1E1E]">
+      <section id="features" className="relative flex-none py-24 bg-slate-50 dark:bg-[#0A0A0A] border-t border-slate-200 dark:border-[#1E1E1E] transition-colors">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <FeatureCard
@@ -157,11 +157,11 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative flex-none py-12 border-t border-[#1E1E1E] px-6 text-center">
+      <footer className="relative flex-none py-12 border-t border-slate-200 dark:border-[#1E1E1E] px-6 text-center transition-colors">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <span className="font-bold text-[14px] text-white tracking-tight">EduSpaceAI</span>
+          <span className="font-bold text-[14px] text-slate-900 dark:text-white tracking-tight transition-colors">EduSpaceAI</span>
         </div>
-        <p className="text-gray-500 text-sm italic">
+        <p className="text-slate-500 dark:text-gray-500 text-sm italic transition-colors">
           Bukan sekadar asisten, tapi teman seperjuangan skripsimu.
         </p>
       </footer>
@@ -171,12 +171,12 @@ export default function LandingPage() {
 
 function FeatureCard({ icon, title, description }) {
   return (
-    <div className="p-8 rounded-3xl bg-[#151515] border border-[#2A2A2A] hover:border-indigo-500/30 transition-all group">
-      <div className="w-12 h-12 rounded-2xl bg-[#1E1E1E] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+    <div className="p-8 rounded-3xl bg-white dark:bg-[#151515] border border-slate-200 dark:border-[#2A2A2A] hover:border-indigo-500/30 transition-all group shadow-sm dark:shadow-none">
+      <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-[#1E1E1E] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
         {icon}
       </div>
-      <h3 className="text-xl font-bold text-white mb-3">{title}</h3>
-      <p className="text-gray-400 text-sm leading-relaxed">
+      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{title}</h3>
+      <p className="text-slate-500 dark:text-gray-400 text-sm leading-relaxed">
         {description}
       </p>
     </div>

@@ -147,34 +147,34 @@ export default function DocumentEditor({ type, userId }) {
   };
 
   return (
-    <div className="h-full flex bg-[#0F0F0F] overflow-hidden">
+    <div className="h-full flex bg-white dark:bg-[#0F0F0F] overflow-hidden transition-colors duration-200">
       {/* Main Editor Area */}
       <div className={`flex-1 flex flex-col p-6 transition-all duration-300 ${isChatOpen ? 'md:mr-0' : ''}`}>
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h2 className="text-lg font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 uppercase tracking-wider">
               <BrainCircuit size={18} className="text-indigo-400" /> Dashboard Editor {type}
             </h2>
-            <p className="text-[11px] text-gray-500">Unggah file, edit isinya di sini, lalu klik Analisis.</p>
+            <p className="text-[11px] text-slate-500 dark:text-gray-500">Unggah file, edit isinya di sini, lalu klik Analisis.</p>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsChatOpen(!isChatOpen)}
-              className={`p-2 rounded-lg border transition-all ${isChatOpen ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-[#1A1A1A] border-[#333] text-gray-400 hover:text-white'}`}
+              className={`p-2 rounded-lg border transition-all ${isChatOpen ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-100 dark:bg-[#1A1A1A] border-slate-200 dark:border-[#333] text-slate-400 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
               title="Toggle AI Chat"
             >
               <MessageSquare size={18} />
             </button>
-            <Link href="/tools" className="text-gray-400 hover:text-white"><X size={20}/></Link>
+            <Link href="/tools" className="text-slate-400 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"><X size={20}/></Link>
           </div>
         </div>
 
-        <div className="flex gap-2 mb-4 bg-[#1A1A1A] p-2 rounded-xl border border-[#333]">
-          <label className="flex items-center gap-2 bg-[#242424] hover:bg-[#2A2A2A] px-4 py-2 rounded-lg cursor-pointer transition-colors text-[11px] font-bold text-gray-300">
+        <div className="flex gap-2 mb-4 bg-slate-100 dark:bg-[#1A1A1A] p-2 rounded-xl border border-slate-200 dark:border-[#333]">
+          <label className="flex items-center gap-2 bg-slate-200 dark:bg-[#242424] hover:bg-slate-300 dark:hover:bg-[#2A2A2A] px-4 py-2 rounded-lg cursor-pointer transition-colors text-[11px] font-bold text-slate-600 dark:text-gray-300">
             <FolderOpen size={14} /> Buka File
             <input type="file" className="hidden" onChange={handleFileUpload} accept=".txt,.csv,.md,.json,.pdf,.doc,.docx" />
           </label>
-          <span className="my-auto text-[11px] text-gray-500 px-2 truncate max-w-[200px] font-medium">{fileName}</span>
+          <span className="my-auto text-[11px] text-slate-500 dark:text-gray-500 px-2 truncate max-w-[200px] font-medium">{fileName}</span>
           {isLoading && <span className="text-xs text-indigo-400 animate-pulse my-auto">Mengekstrak...</span>}
           <div className="flex-1"></div>
           <button
@@ -194,32 +194,32 @@ export default function DocumentEditor({ type, userId }) {
             onMouseUp={handleTextSelection}
             onKeyUp={handleTextSelection}
             placeholder="Isi dokumen akan muncul di sini. Kamu bisa mengetik dan mengeditnya secara manual sebelum dianalisis oleh Profesor AI..."
-            className="flex-1 bg-[#1A1A1A] border border-[#333] rounded-[1.5rem] p-8 text-base text-gray-300 font-mono leading-relaxed outline-none focus:border-indigo-500/40 resize-none custom-scrollbar shadow-inner"
+            className="flex-1 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-[1.5rem] p-8 text-base text-slate-700 dark:text-gray-300 font-mono leading-relaxed outline-none focus:border-indigo-500/40 resize-none custom-scrollbar shadow-inner transition-colors"
           />
 
           {/* Floating Toolbar */}
           {selection.show && (
             <div
-              className="absolute z-50 bg-[#222] border border-[#333] rounded-xl shadow-2xl p-1 flex gap-1 animate-in fade-in zoom-in duration-200"
+              className="absolute z-50 bg-white dark:bg-[#222] border border-slate-200 dark:border-[#333] rounded-xl shadow-2xl p-1 flex gap-1 animate-in fade-in zoom-in duration-200"
               style={{ left: `50%`, top: `20px`, transform: `translateX(-50%)` }}
             >
               <button
                 onClick={() => handleFloatingAction('paraphrase')}
-                className="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-600/20 text-indigo-400 hover:text-indigo-300 rounded-lg transition-all text-[11px] font-bold"
+                className="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 rounded-lg transition-all text-[11px] font-bold"
               >
                 <Sparkles size={14} /> Parafrase
               </button>
-              <div className="w-[1px] bg-[#333] my-1"></div>
+              <div className="w-[1px] bg-slate-200 dark:bg-[#333] my-1"></div>
               <button
                 onClick={() => handleFloatingAction('summarize')}
-                className="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-600/20 text-indigo-400 hover:text-indigo-300 rounded-lg transition-all text-[11px] font-bold"
+                className="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 rounded-lg transition-all text-[11px] font-bold"
               >
                 <FileText size={14} /> Ringkas
               </button>
-              <div className="w-[1px] bg-[#333] my-1"></div>
+              <div className="w-[1px] bg-slate-200 dark:bg-[#333] my-1"></div>
               <button
                 onClick={() => setSelection(prev => ({ ...prev, show: false }))}
-                className="p-1.5 hover:bg-[#333] text-gray-500 rounded-lg transition-all"
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-[#333] text-slate-400 dark:text-gray-500 rounded-lg transition-all"
               >
                 <X size={14} />
               </button>
@@ -230,20 +230,20 @@ export default function DocumentEditor({ type, userId }) {
 
       {/* Integrated Chat Panel */}
       <div className={`
-        fixed inset-y-0 right-0 w-full md:w-[400px] bg-[#151515] border-l border-[#222] z-40 transform transition-transform duration-300 ease-in-out flex flex-col h-[100dvh]
+        fixed inset-y-0 right-0 w-full md:w-[400px] bg-slate-50 dark:bg-[#151515] border-l border-slate-200 dark:border-[#222] z-40 transform transition-transform duration-300 ease-in-out flex flex-col h-[100dvh]
         ${isChatOpen ? 'translate-x-0' : 'translate-x-full'}
       `}>
-        <div className="p-4 border-b border-[#222] flex items-center justify-between bg-[#1A1A1A]">
+        <div className="p-4 border-b border-slate-200 dark:border-[#222] flex items-center justify-between bg-white dark:bg-[#1A1A1A]">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
-              <Sparkles size={16} className="text-indigo-400" />
+            <div className="w-8 h-8 rounded-lg bg-indigo-600/10 dark:bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
+              <Sparkles size={16} className="text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
-              <h3 className="text-[13px] font-bold text-white">Dosen Pembimbing AI</h3>
-              <p className="text-[10px] text-gray-500 uppercase tracking-widest">Workspace Assistant</p>
+              <h3 className="text-[13px] font-bold text-slate-900 dark:text-white">Dosen Pembimbing AI</h3>
+              <p className="text-[10px] text-slate-500 dark:text-gray-500 uppercase tracking-widest">Workspace Assistant</p>
             </div>
           </div>
-          <button onClick={() => setIsChatOpen(false)} className="text-gray-500 hover:text-white p-1">
+          <button onClick={() => setIsChatOpen(false)} className="text-slate-400 dark:text-gray-500 hover:text-slate-900 dark:hover:text-white p-1">
             <ChevronRight size={20} />
           </button>
         </div>
@@ -251,11 +251,11 @@ export default function DocumentEditor({ type, userId }) {
         <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar min-h-0">
           {chatMessages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center px-6">
-              <div className="w-12 h-12 bg-[#1A1A1A] rounded-2xl flex items-center justify-center mb-4 border border-[#222]">
-                <FileText size={20} className="text-gray-600" />
+              <div className="w-12 h-12 bg-slate-100 dark:bg-[#1A1A1A] rounded-2xl flex items-center justify-center mb-4 border border-slate-200 dark:border-[#222]">
+                <FileText size={20} className="text-slate-400 dark:text-gray-600" />
               </div>
-              <h4 className="text-sm font-bold text-gray-300 mb-1">Belum Ada Analisis</h4>
-              <p className="text-[11px] text-gray-500">Klik "Analisis dengan AI" atau mulai chat untuk mendapatkan saran akademik.</p>
+              <h4 className="text-sm font-bold text-slate-700 dark:text-gray-300 mb-1">Belum Ada Analisis</h4>
+              <p className="text-[11px] text-slate-500 dark:text-gray-500">Klik "Analisis dengan AI" atau mulai chat untuk mendapatkan saran akademik.</p>
             </div>
           ) : (
             chatMessages.map((msg, idx) => (
@@ -263,9 +263,9 @@ export default function DocumentEditor({ type, userId }) {
                 <div className={`max-w-[90%] p-3 rounded-2xl text-[12px] leading-relaxed ${
                   msg.role === 'user'
                   ? 'bg-indigo-600 text-white rounded-tr-none'
-                  : 'bg-[#222] text-gray-200 border border-[#333] rounded-tl-none'
+                  : 'bg-white dark:bg-[#222] text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-[#333] rounded-tl-none'
                 }`}>
-                  <div className="prose prose-invert prose-sm max-w-none">
+                  <div className={`prose ${msg.role === 'user' ? 'prose-invert' : 'dark:prose-invert'} prose-sm max-w-none`}>
                     <ReactMarkdown>{msg.text}</ReactMarkdown>
                   </div>
                 </div>
@@ -277,13 +277,13 @@ export default function DocumentEditor({ type, userId }) {
               <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce"></div>
               <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-.3s]"></div>
               <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-.5s]"></div>
-              <span className="text-[10px] text-gray-500 ml-2 uppercase tracking-tighter">AI sedang berpikir...</span>
+              <span className="text-[10px] text-slate-500 dark:text-gray-500 ml-2 uppercase tracking-tighter">AI sedang berpikir...</span>
             </div>
           )}
           <div ref={chatEndRef} />
         </div>
 
-        <div className="p-4 bg-[#1A1A1A] border-t border-[#222]">
+        <div className="p-4 bg-white dark:bg-[#1A1A1A] border-t border-slate-200 dark:border-[#222]">
           <div className="relative">
             <input
               type="text"
@@ -291,7 +291,7 @@ export default function DocumentEditor({ type, userId }) {
               onChange={(e) => setChatInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
               placeholder="Tanya perbaikan dokumen..."
-              className="w-full bg-[#0F0F0F] border border-[#333] rounded-xl py-3 pl-4 pr-12 text-base text-gray-200 outline-none focus:border-indigo-500/50"
+              className="w-full bg-slate-50 dark:bg-[#0F0F0F] border border-slate-200 dark:border-[#333] rounded-xl py-3 pl-4 pr-12 text-base text-slate-900 dark:text-gray-200 outline-none focus:border-indigo-500/50 transition-colors"
             />
             <button
               onClick={handleSendChat}
