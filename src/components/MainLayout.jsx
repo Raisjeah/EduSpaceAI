@@ -45,11 +45,11 @@ export default function MainLayout({ children }) {
 
   // Jika di halaman auth, tampilkan children saja tanpa sidebar/header
   if (isAuthPage) {
-    return <div className="min-h-[100dvh] bg-[#0F0F0F] text-gray-200">{children}</div>;
+    return <div className="min-h-[100dvh] bg-white dark:bg-[#0F0F0F] text-slate-900 dark:text-gray-200">{children}</div>;
   }
 
   return (
-    <div className="relative h-[100dvh] w-full bg-[#0F0F0F] text-gray-200 overflow-hidden flex">
+    <div className="relative h-[100dvh] w-full bg-white dark:bg-[#0F0F0F] text-slate-900 dark:text-gray-200 overflow-hidden flex transition-colors duration-200">
       {notification && (
         <Toast
           message={notification.message}

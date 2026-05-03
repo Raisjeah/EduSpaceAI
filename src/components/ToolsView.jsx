@@ -11,22 +11,22 @@ export default function ToolsView() {
   ];
 
   return (
-    <div className="p-8 max-w-4xl mx-auto h-full overflow-y-auto custom-scrollbar">
-      <h2 className="text-2xl font-bold text-white mb-2">Workspace & Tools</h2>
-      <p className="text-[12px] text-gray-400 mb-8">Pilih tipe file untuk masuk ke Dashboard Editor, atau gunakan fitur asisten akademik.</p>
+    <div className="p-8 max-w-4xl mx-auto h-full overflow-y-auto custom-scrollbar transition-colors duration-200">
+      <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Workspace & Tools</h2>
+      <p className="text-[12px] text-slate-500 dark:text-gray-400 mb-8">Pilih tipe file untuk masuk ke Dashboard Editor, atau gunakan fitur asisten akademik.</p>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {tools.map(tool => (
           <Link
             key={tool.id} 
             href={`/editor/${tool.id}`}
-            className="bg-[#242424] p-5 rounded-[1.5rem] border border-[#333] hover:border-indigo-500/50 cursor-pointer transition-all group block"
+            className="bg-slate-50 dark:bg-[#242424] p-5 rounded-[1.5rem] border border-slate-200 dark:border-[#333] hover:border-indigo-500/50 cursor-pointer transition-all group block"
           >
-            <div className="w-12 h-12 rounded-xl bg-[#1A1A1A] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 rounded-xl bg-white dark:bg-[#1A1A1A] border border-slate-100 dark:border-transparent flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-sm">
               {tool.icon}
             </div>
-            <h3 className="font-bold text-gray-200 text-sm mb-2">{tool.title}</h3>
-            <p className="text-[10px] text-gray-500 leading-relaxed">{tool.desc}</p>
+            <h3 className="font-bold text-slate-800 dark:text-gray-200 text-sm mb-2">{tool.title}</h3>
+            <p className="text-[10px] text-slate-500 dark:text-gray-500 leading-relaxed">{tool.desc}</p>
           </Link>
         ))}
       </div>

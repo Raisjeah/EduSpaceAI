@@ -82,18 +82,18 @@ export default function Sidebar({
   return (
     <>
       <aside className={`
-        fixed top-0 left-0 h-full z-50 bg-[#0F0F0F] border-r border-[#1E1E1E]
+        fixed top-0 left-0 h-full z-50 bg-white dark:bg-[#0F0F0F] border-r border-slate-200 dark:border-[#1E1E1E]
         transform transition-transform duration-300 ease-in-out flex-shrink-0
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        w-[260px] md:relative md:translate-x-0 md:w-[260px]
+        w-[260px] md:relative md:translate-x-0 md:w-[260px] transition-colors duration-200
       `}>
         <div className="flex flex-col h-full p-4">
           {/* Header / Brand */}
           <div className="flex items-center justify-between mb-6 px-2">
             <Link href="/" className="flex items-center gap-2" onClick={closeSidebarOnMobile}>
-              <span className="font-bold text-[14px] text-white tracking-tight">EduSpaceAI</span>
+              <span className="font-bold text-[14px] text-slate-900 dark:text-white tracking-tight transition-colors">EduSpaceAI</span>
             </Link>
-            <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-white">
+            <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors">
               <Menu size={18} />
             </button>
           </div>
@@ -109,7 +109,7 @@ export default function Sidebar({
             </Link>
             <button
               onClick={() => { setIsProjectModalOpen(true); closeSidebarOnMobile(); }}
-              className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#1A1A1A] border border-[#333] hover:bg-[#242424] rounded-xl transition-all text-gray-300"
+              className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-100 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] hover:bg-slate-200 dark:hover:bg-[#242424] rounded-xl transition-all text-slate-600 dark:text-gray-300"
             >
               <Briefcase size={14} /> <span className="text-[11px] font-semibold">Agent Baru</span>
             </button>
@@ -122,8 +122,8 @@ export default function Sidebar({
               onClick={closeSidebarOnMobile}
               className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all text-[12px] mb-2 ${
                 pathname === '/tools'
-                ? 'bg-[#1A1A1A] text-white'
-                : 'text-gray-400 hover:text-white hover:bg-[#1A1A1A]'
+                ? 'bg-slate-100 dark:bg-[#1A1A1A] text-slate-900 dark:text-white'
+                : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1A1A1A]'
               }`}
             >
               <Wrench size={16} /> <span className="font-medium">Tools & File Editor</span>
@@ -132,7 +132,7 @@ export default function Sidebar({
             {/* Projects Section */}
             {projects.length > 0 && (
               <div className="mt-4 mb-2">
-                <div className="px-3 mb-2 text-[10px] font-bold text-gray-500 tracking-[0.1em] uppercase">WorkSpace Agents</div>
+                <div className="px-3 mb-2 text-[10px] font-bold text-slate-400 dark:text-gray-500 tracking-[0.1em] uppercase">WorkSpace Agents</div>
                 <div className="space-y-1 max-h-[150px] overflow-y-auto custom-scrollbar pr-1">
                   {projects.map(project => {
                     const isPathActive = pathname === `/project/${project._id}`;
@@ -144,7 +144,7 @@ export default function Sidebar({
                         href={`/project/${project._id}`}
                         onClick={closeSidebarOnMobile}
                         className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[11px] transition-all ${
-                          isActive ? 'bg-indigo-600/10 text-white border-l-2 border-indigo-500' : 'text-gray-400 hover:bg-[#151515] hover:text-gray-200'
+                          isActive ? 'bg-indigo-600/10 text-indigo-600 dark:text-white border-l-2 border-indigo-500' : 'text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-[#151515] hover:text-slate-900 dark:hover:text-gray-200'
                         }`}
                       >
                         {getAgentIcon(project.agentId)}
@@ -156,13 +156,13 @@ export default function Sidebar({
               </div>
             )}
 
-            <div className="mt-4 mb-3 px-3 text-[10px] font-bold text-gray-500 tracking-[0.1em] uppercase">
+            <div className="mt-4 mb-3 px-3 text-[10px] font-bold text-slate-400 dark:text-gray-500 tracking-[0.1em] uppercase">
               {isProjectContext ? 'Riwayat Agent' : 'Riwayat Belajar'}
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1 pr-2">
               {filteredChatGroups.length === 0 ? (
-                <div className="px-3 py-4 text-[11px] text-gray-600 italic text-center bg-[#151515] rounded-xl border border-dashed border-[#222]">
+                <div className="px-3 py-4 text-[11px] text-slate-500 dark:text-gray-600 italic text-center bg-slate-50 dark:bg-[#151515] rounded-xl border border-dashed border-slate-200 dark:border-[#222]">
                   {searchQuery ? 'Tidak ada hasil pencarian' : 'Belum ada percakapan'}
                 </div>
               ) : (
@@ -179,8 +179,8 @@ export default function Sidebar({
                       onClick={closeSidebarOnMobile}
                       className={`group flex items-center gap-3 px-3 py-3 text-[12px] rounded-xl cursor-pointer transition-all border-l-4 ${
                         isActive
-                        ? 'bg-[#1A1A1A] text-white border-indigo-500'
-                        : 'text-gray-400 hover:text-gray-200 hover:bg-[#151515] border-transparent'
+                        ? 'bg-slate-100 dark:bg-[#1A1A1A] text-slate-900 dark:text-white border-indigo-500'
+                        : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200 hover:bg-slate-50 dark:hover:bg-[#151515] border-transparent'
                       }`}
                     >
                       <MessageSquare size={14} className={isActive ? 'text-indigo-400' : 'text-gray-600'} />
@@ -193,7 +193,7 @@ export default function Sidebar({
           </nav>
 
           {/* User Profile or Login Button */}
-          <div className="mt-auto pt-4 border-t border-[#1E1E1E]">
+          <div className="mt-auto pt-4 border-t border-slate-200 dark:border-[#1E1E1E]">
             {userId ? (
               <div className="space-y-4 px-2">
                 <div className="flex items-center justify-between">
@@ -206,14 +206,14 @@ export default function Sidebar({
                       )}
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-[12px] font-bold text-gray-200 truncate max-w-[120px]">{user?.name || 'Anon'}</span>
-                        <span className="text-[9px] text-gray-500">Free Account</span>
+                        <span className="text-[12px] font-bold text-slate-800 dark:text-gray-200 truncate max-w-[120px]">{user?.name || 'Anon'}</span>
+                        <span className="text-[9px] text-slate-400 dark:text-gray-500">Free Account</span>
                     </div>
                   </div>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-3 w-full p-3 text-[12px] font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all"
+                  className="flex items-center gap-3 w-full p-3 text-[12px] font-medium text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-500/5 dark:hover:bg-red-500/10 rounded-xl transition-all"
                 >
                   <LogOut size={16} />
                   <span>Keluar</span>
@@ -224,7 +224,7 @@ export default function Sidebar({
                 <Link
                   href="/auth/login"
                   onClick={closeSidebarOnMobile}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#1A1A1A] hover:bg-[#252525] border border-[#2A2A2A] text-gray-200 rounded-xl transition-all text-[12px] font-semibold"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-100 dark:bg-[#1A1A1A] hover:bg-slate-200 dark:hover:bg-[#252525] border border-slate-200 dark:border-[#2A2A2A] text-slate-700 dark:text-gray-200 rounded-xl transition-all text-[12px] font-semibold"
                 >
                   Login / Daftar
                 </Link>
