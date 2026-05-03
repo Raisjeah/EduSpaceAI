@@ -10,6 +10,11 @@ export function AuthProvider({ children }) {
   const [userId, setUserId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [notification, setNotification] = useState(null);
+
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+  };
 
   const fetchUser = async () => {
     setIsLoading(true);
@@ -47,7 +52,10 @@ export function AuthProvider({ children }) {
       fetchUser,
       updateUserName,
       searchQuery,
-      setSearchQuery
+      setSearchQuery,
+      notification,
+      setNotification,
+      showNotification
     }}>
       {children}
     </AuthContext.Provider>
