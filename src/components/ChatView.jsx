@@ -33,12 +33,24 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     }
   }, [projectId]);
 
+  // Reset isNewChatRef saat berpindah ke chat yang benar-benar berbeda (bukan dari null)
+  useEffect(() => {
+    if (activeChatId) {
+       // Kita biarkan isNewChatRef bertahan sebentar untuk skip loading awal
+       const timeout = setTimeout(() => {
+         isNewChatRef.current = false;
+       }, 1000);
+       return () => clearTimeout(timeout);
+    }
+  }, [activeChatId]);
+
   // 1. Load detail chat saat activeChatId berubah
   useEffect(() => {
     if (activeChatId && userId) {
-      // Jika ini adalah chat yang baru saja dibuat, jangan reload
+      // Jika ini adalah chat yang baru saja dibuat (silent update), jangan reload/reset
       if (isNewChatRef.current) {
-        isNewChatRef.current = false;
+        // Jangan reset isNewChatRef di sini karena activeChatId dari params
+        // mungkin baru akan terupdate di render berikutnya
         return;
       }
 
@@ -97,11 +109,12 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           // Flag bahwa ini chat baru agar tidak kena loading state di useEffect
           isNewChatRef.current = true;
 
-          // Redirect ke chat yang baru dibuat
+          // Silent URL Update: Gunakan history.replaceState agar tidak refresh / loading
           const targetUrl = projectId
             ? `/chat/${result.chatId}?projectId=${projectId}`
             : `/chat/${result.chatId}`;
-          router.push(targetUrl);
+
+          window.history.replaceState(null, '', targetUrl);
         }
 
         // --- TYPEWRITER EFFECT ---
