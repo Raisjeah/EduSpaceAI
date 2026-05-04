@@ -245,11 +245,11 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             ))}
             {isPending && (
               <div className="flex items-center gap-3 px-12 py-2">
-                <div className="flex gap-1.5">
-                  <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:-.3s]"></div>
-                  <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:-.5s]"></div>
-                </div>
+                <img
+                  src="/paper-ball.png"
+                  alt="Thinking..."
+                  className="w-6 h-6 animate-spin object-contain"
+                />
                 <span className="text-[10px] uppercase tracking-widest thinking-text">Thinking...</span>
               </div>
             )}
