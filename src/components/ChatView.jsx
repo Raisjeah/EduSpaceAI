@@ -239,13 +239,13 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             <div className="max-w-3xl mx-auto w-full pt-8 pb-[120px] px-4 space-y-8 flex-1">
               {messages.map((msg, idx) => (
               <div key={msg._id || idx} className={`w-full flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`group relative flex gap-4 w-fit max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                  <div className={`p-4 rounded-2xl text-[13px] leading-relaxed shadow-sm transition-all ${
+                <div className={`group relative flex gap-4 ${msg.role === 'user' ? 'w-fit max-w-[85%] flex-row-reverse' : 'w-full max-w-none flex-row'}`}>
+                  <div className={`leading-relaxed transition-all ${
                     msg.role === 'user'
-                    ? 'bg-indigo-600 text-white rounded-tr-none'
-                    : 'bg-slate-100 dark:bg-[#1E1E1E] text-slate-900 dark:text-gray-200 border border-slate-200 dark:border-[#2A2A2A] rounded-tl-none'
+                    ? 'p-4 rounded-2xl bg-purple-500/10 text-slate-900 dark:text-gray-200 rounded-tr-none'
+                    : 'py-6 w-full'
                   }`}>
-                    <div className={`markdown-content prose ${msg.role === 'user' ? 'prose-invert' : 'dark:prose-invert'} max-w-none prose-sm leading-relaxed`}>
+                    <div className={`markdown-content prose ${msg.role === 'user' ? '' : 'dark:prose-invert'} max-w-none ${msg.role === 'user' ? 'prose-sm' : 'prose-base text-base'} leading-relaxed`}>
                       <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                         {msg.text}
                       </ReactMarkdown>
@@ -256,12 +256,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             ))}
             {isThinking && (
               <div className="flex items-center gap-3 px-12 py-2">
-                <img
-                  src="/paper-ball.png"
-                  alt="Thinking..."
-                  className="w-8 h-8 animate-spin rounded-full object-cover mix-blend-multiply dark:mix-blend-screen"
-                />
-                <span className="text-[10px] uppercase tracking-widest thinking-text">Thinking...</span>
+                <span className="animate-pulse text-purple-600 font-medium tracking-widest">THINKING...</span>
               </div>
             )}
               <div ref={chatEndRef} />
