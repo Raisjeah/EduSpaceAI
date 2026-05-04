@@ -277,7 +277,7 @@ export default function DocumentEditor({ type, userId }) {
               <img
                 src="/paper-ball.png"
                 alt="Thinking..."
-                className="w-6 h-6 animate-spin object-contain"
+                className="w-8 h-8 animate-spin rounded-full object-cover mix-blend-multiply dark:mix-blend-screen"
               />
               <span className="text-[10px] text-slate-500 dark:text-gray-500 uppercase tracking-tighter">AI sedang berpikir...</span>
             </div>
