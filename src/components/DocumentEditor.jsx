@@ -20,6 +20,7 @@ export default function DocumentEditor({ type, userId }) {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [isPending, startTransition] = useTransition();
+  const [isThinking, setIsThinking] = useState(false);
   const [activeChatId, setActiveChatId] = useState(null);
 
   // Selection state
@@ -68,6 +69,7 @@ export default function DocumentEditor({ type, userId }) {
       _id: Date.now().toString()
     };
     setChatMessages(prev => [...prev, userMessage]);
+    setIsThinking(true);
 
     startTransition(async () => {
       const formData = new FormData();
@@ -77,6 +79,7 @@ export default function DocumentEditor({ type, userId }) {
 
       const result = await sendMessage(formData);
       if (result.success) {
+        setIsThinking(false);
         setChatMessages(prev => [...prev, {
           role: 'model',
           text: result.aiResponse,
@@ -127,6 +130,7 @@ export default function DocumentEditor({ type, userId }) {
       _id: Date.now().toString()
     };
     setChatMessages(prev => [...prev, userMessage]);
+    setIsThinking(true);
 
     startTransition(async () => {
       const formData = new FormData();
@@ -137,6 +141,7 @@ export default function DocumentEditor({ type, userId }) {
 
       const result = await sendMessage(formData);
       if (result.success) {
+        setIsThinking(false);
         setChatMessages(prev => [...prev, {
           role: 'model',
           text: result.aiResponse,
@@ -272,12 +277,12 @@ export default function DocumentEditor({ type, userId }) {
               </div>
             ))
           )}
-          {isPending && (
+          {isThinking && (
             <div className="flex gap-3 p-2 items-center">
               <img
                 src="/paper-ball.png"
                 alt="Thinking..."
-                className="w-6 h-6 animate-spin object-contain"
+                className="w-8 h-8 animate-spin rounded-full object-cover mix-blend-multiply dark:mix-blend-screen"
               />
               <span className="text-[10px] text-slate-500 dark:text-gray-500 uppercase tracking-tighter">AI sedang berpikir...</span>
             </div>

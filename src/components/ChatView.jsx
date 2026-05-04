@@ -17,6 +17,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const [messages, setMessages] = useState([]);
   const [project, setProject] = useState(null);
   const [isPending, startTransition] = useTransition();
+  const [isThinking, setIsThinking] = useState(false);
   const [isLoadingChat, setIsLoadingChat] = useState(!!activeChatId);
   const chatEndRef = useRef(null);
   const isNewChatRef = useRef(false);
@@ -33,14 +34,15 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     }
   }, [projectId]);
 
-  // Reset isNewChatRef saat berpindah ke chat yang benar-benar berbeda (bukan dari null)
+  // Reset isNewChatRef saat berpindah ke chat
   useEffect(() => {
     if (activeChatId) {
-       // Kita biarkan isNewChatRef bertahan sebentar untuk skip loading awal
        const timeout = setTimeout(() => {
          isNewChatRef.current = false;
        }, 1000);
        return () => clearTimeout(timeout);
+    } else {
+       isNewChatRef.current = false;
     }
   }, [activeChatId]);
 
@@ -92,6 +94,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
     const fileToUpload = selectedFile;
     setSelectedFile(null);
+    setIsThinking(true);
 
     startTransition(async () => {
       const formData = new FormData();
@@ -109,17 +112,21 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           // Flag bahwa ini chat baru agar tidak kena loading state di useEffect
           isNewChatRef.current = true;
 
-          // Silent URL Update: Gunakan history.replaceState agar tidak refresh / loading
+          // Gunakan router.push agar Next.js aware akan perubahan route
+          // dan Sidebar bisa mengupdate history secara otomatis
           const targetUrl = projectId
             ? `/chat/${result.chatId}?projectId=${projectId}`
             : `/chat/${result.chatId}`;
 
-          window.history.replaceState(null, '', targetUrl);
+          router.push(targetUrl, { scroll: false });
         }
 
         // --- TYPEWRITER EFFECT ---
         const fullResponse = result.aiResponse;
         const aiMessageId = (Date.now() + 1).toString();
+
+        // Matikan animasi thinking tepat saat teks AI akan muncul
+        setIsThinking(false);
 
         // Inisialisasi pesan AI kosong
         setMessages(prev => [...prev, {
@@ -189,7 +196,11 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
         {isLoadingChat ? (
           <div className="flex-1 flex flex-col items-center justify-center">
-            <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <img
+              src="/paper-ball.png"
+              alt="Loading..."
+              className="w-10 h-10 animate-spin rounded-full object-cover mix-blend-multiply dark:mix-blend-screen mb-4"
+            />
             <p className="text-slate-500 dark:text-gray-500 text-sm animate-pulse">Memuat percakapan...</p>
           </div>
         ) : messages.length === 0 ? (
@@ -243,12 +254,12 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                 </div>
               </div>
             ))}
-            {isPending && (
+            {isThinking && (
               <div className="flex items-center gap-3 px-12 py-2">
                 <img
                   src="/paper-ball.png"
                   alt="Thinking..."
-                  className="w-6 h-6 animate-spin object-contain"
+                  className="w-8 h-8 animate-spin rounded-full object-cover mix-blend-multiply dark:mix-blend-screen"
                 />
                 <span className="text-[10px] uppercase tracking-widest thinking-text">Thinking...</span>
               </div>
