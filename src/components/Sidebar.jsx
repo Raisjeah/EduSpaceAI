@@ -23,6 +23,7 @@ export default function Sidebar({
   const router = useRouter();
   const { user, searchQuery, fetchUser, showNotification } = useAuth();
 
+  // Optimistic History Update: Refetch history when route changes
   useEffect(() => {
     const fetchData = async () => {
       if (!userId) return;
