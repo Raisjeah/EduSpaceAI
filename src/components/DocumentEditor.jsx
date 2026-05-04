@@ -273,11 +273,13 @@ export default function DocumentEditor({ type, userId }) {
             ))
           )}
           {isPending && (
-            <div className="flex gap-1.5 p-2 items-center">
-              <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce"></div>
-              <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-.3s]"></div>
-              <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-.5s]"></div>
-              <span className="text-[10px] text-slate-500 dark:text-gray-500 ml-2 uppercase tracking-tighter">AI sedang berpikir...</span>
+            <div className="flex gap-3 p-2 items-center">
+              <img
+                src="/paper-ball.png"
+                alt="Thinking..."
+                className="w-6 h-6 animate-spin object-contain"
+              />
+              <span className="text-[10px] text-slate-500 dark:text-gray-500 uppercase tracking-tighter">AI sedang berpikir...</span>
             </div>
           )}
           <div ref={chatEndRef} />
