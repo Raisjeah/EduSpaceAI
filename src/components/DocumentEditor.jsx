@@ -267,7 +267,7 @@ export default function DocumentEditor({ type, userId }) {
               <div key={msg._id || idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[90%] p-3 rounded-2xl text-[12px] leading-relaxed ${
                   msg.role === 'user'
-                  ? 'bg-indigo-600 text-white rounded-tr-none'
+                  ? 'bg-indigo-500/10 border border-indigo-500/20 backdrop-blur-md bg-gradient-to-br from-indigo-500/10 to-purple-500/10 text-white rounded-tr-none'
                   : 'bg-white dark:bg-[#222] text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-[#333] rounded-tl-none'
                 }`}>
                   <div className={`prose ${msg.role === 'user' ? 'prose-invert' : 'dark:prose-invert'} prose-sm max-w-none`}>
@@ -279,12 +279,7 @@ export default function DocumentEditor({ type, userId }) {
           )}
           {isThinking && (
             <div className="flex gap-3 p-2 items-center">
-              <img
-                src="/paper-ball.png"
-                alt="Thinking..."
-                className="w-8 h-8 animate-spin rounded-full object-cover mix-blend-multiply dark:mix-blend-screen"
-              />
-              <span className="text-[10px] text-slate-500 dark:text-gray-500 uppercase tracking-tighter">AI sedang berpikir...</span>
+              <span className="text-[10px] text-slate-400 animate-[pulse_4s_cubic-bezier(0.4,0,0.6,1)_infinite] uppercase tracking-tighter">AI sedang berpikir...</span>
             </div>
           )}
           <div ref={chatEndRef} />

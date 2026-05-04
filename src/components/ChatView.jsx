@@ -196,11 +196,6 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
         {isLoadingChat ? (
           <div className="flex-1 flex flex-col items-center justify-center">
-            <img
-              src="/paper-ball.png"
-              alt="Loading..."
-              className="w-10 h-10 animate-spin rounded-full object-cover mix-blend-multiply dark:mix-blend-screen mb-4"
-            />
             <p className="text-slate-500 dark:text-gray-500 text-sm animate-pulse">Memuat percakapan...</p>
           </div>
         ) : messages.length === 0 ? (
@@ -242,10 +237,10 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                 <div className={`group relative flex gap-4 ${msg.role === 'user' ? 'w-fit max-w-[85%] flex-row-reverse' : 'w-full max-w-none flex-row'}`}>
                   <div className={`leading-relaxed transition-all ${
                     msg.role === 'user'
-                    ? 'p-4 rounded-2xl bg-purple-500/10 text-slate-900 dark:text-gray-200 rounded-tr-none'
+                    ? 'p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 backdrop-blur-md bg-gradient-to-br from-indigo-500/10 to-purple-500/10 text-white rounded-tr-none'
                     : 'py-6 w-full'
                   }`}>
-                    <div className={`markdown-content prose ${msg.role === 'user' ? '' : 'dark:prose-invert'} max-w-none ${msg.role === 'user' ? 'prose-sm' : 'prose-base text-base'} leading-relaxed`}>
+                    <div className={`markdown-content prose ${msg.role === 'user' ? 'prose-invert' : 'dark:prose-invert'} max-w-none ${msg.role === 'user' ? 'prose-sm' : 'prose-base text-base'} leading-relaxed`}>
                       <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                         {msg.text}
                       </ReactMarkdown>
@@ -256,7 +251,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             ))}
             {isThinking && (
               <div className="flex items-center gap-3 px-12 py-2">
-                <span className="animate-pulse text-purple-600 font-medium tracking-widest">THINKING...</span>
+                <span className="animate-[pulse_4s_cubic-bezier(0.4,0,0.6,1)_infinite] text-slate-400 font-medium tracking-widest">THINKING...</span>
               </div>
             )}
               <div ref={chatEndRef} />
