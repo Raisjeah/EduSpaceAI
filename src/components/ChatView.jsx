@@ -11,16 +11,29 @@ import 'katex/dist/katex.min.css';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
+// Cache untuk transisi dari chat kosong ke chatID baru
+// Membantu menghindari flash "Memuat percakapan..." dan menjaga typewriter effect
+let chatCache = null;
+
 export default function ChatView({ userId, activeChatId, projectId }) {
   const [input, setInput] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => {
+    if (chatCache && chatCache.chatId === activeChatId) {
+      return chatCache.messages;
+    }
+    return [];
+  });
   const [project, setProject] = useState(null);
   const [isPending, startTransition] = useTransition();
   const [isThinking, setIsThinking] = useState(false);
-  const [isLoadingChat, setIsLoadingChat] = useState(!!activeChatId);
+  const [isLoadingChat, setIsLoadingChat] = useState(() => {
+    if (chatCache && chatCache.chatId === activeChatId) {
+      return false;
+    }
+    return !!activeChatId;
+  });
   const chatEndRef = useRef(null);
-  const isNewChatRef = useRef(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const isAnalyzing = searchParams.get('analyze') === 'true';
@@ -34,25 +47,14 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     }
   }, [projectId]);
 
-  // Reset isNewChatRef saat berpindah ke chat
-  useEffect(() => {
-    if (activeChatId) {
-       const timeout = setTimeout(() => {
-         isNewChatRef.current = false;
-       }, 1000);
-       return () => clearTimeout(timeout);
-    } else {
-       isNewChatRef.current = false;
-    }
-  }, [activeChatId]);
-
   // 1. Load detail chat saat activeChatId berubah
   useEffect(() => {
     if (activeChatId && userId) {
-      // Jika ini adalah chat yang baru saja dibuat (silent update), jangan reload/reset
-      if (isNewChatRef.current) {
-        // Jangan reset isNewChatRef di sini karena activeChatId dari params
-        // mungkin baru akan terupdate di render berikutnya
+      // Jika ada di cache, berarti baru saja redirect dari chat baru
+      if (chatCache && chatCache.chatId === activeChatId) {
+        const cachedResponse = chatCache.aiResponse;
+        chatCache = null; // Clear cache
+        runTypewriter(cachedResponse);
         return;
       }
 
@@ -77,6 +79,39 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isPending]);
+
+  const runTypewriter = (fullResponse) => {
+    const aiMessageId = (Date.now() + 1).toString();
+
+    // Matikan animasi thinking tepat saat teks AI akan muncul
+    setIsThinking(false);
+
+    // Inisialisasi pesan AI kosong
+    setMessages(prev => [...prev, {
+      role: 'model',
+      text: '',
+      _id: aiMessageId
+    }]);
+
+    // Simulasi kata demi kata
+    const words = fullResponse.split(' ');
+    let currentText = '';
+    let wordIndex = 0;
+
+    const interval = setInterval(() => {
+      if (wordIndex < words.length) {
+        currentText += (wordIndex === 0 ? '' : ' ') + words[wordIndex];
+        setMessages(prev => prev.map(m =>
+          m._id === aiMessageId ? { ...m, text: currentText } : m
+        ));
+        wordIndex++;
+        // Scroll to bottom as text grows
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        clearInterval(interval);
+      }
+    }, 30); // Kecepatan munculnya kata
+  };
 
   const handleSend = async (overrideInput, isAutoTrigger = false) => {
     const textToSend = overrideInput || input;
@@ -109,50 +144,29 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
       if (result.success) {
         if (!activeChatId) {
-          // Flag bahwa ini chat baru agar tidak kena loading state di useEffect
-          isNewChatRef.current = true;
+          // Simpan hasil ke cache agar saat redirect (halaman remount),
+          // data tidak hilang dan tidak flash loading
+          chatCache = {
+            chatId: result.chatId,
+            messages: [...messages, {
+              role: 'user',
+              text: textToSend || (fileToUpload ? `[File: ${fileToUpload.name}]` : ''),
+              _id: Date.now().toString()
+            }],
+            aiResponse: result.aiResponse,
+            projectId: projectId
+          };
 
-          // Gunakan router.push agar Next.js aware akan perubahan route
-          // dan Sidebar bisa mengupdate history secara otomatis
           const targetUrl = projectId
             ? `/chat/${result.chatId}?projectId=${projectId}`
             : `/chat/${result.chatId}`;
 
           router.push(targetUrl, { scroll: false });
+          return; // Biarkan instansi baru yang menangani typewriter
         }
 
         // --- TYPEWRITER EFFECT ---
-        const fullResponse = result.aiResponse;
-        const aiMessageId = (Date.now() + 1).toString();
-
-        // Matikan animasi thinking tepat saat teks AI akan muncul
-        setIsThinking(false);
-
-        // Inisialisasi pesan AI kosong
-        setMessages(prev => [...prev, {
-          role: 'model',
-          text: '',
-          _id: aiMessageId
-        }]);
-
-        // Simulasi kata demi kata
-        const words = fullResponse.split(' ');
-        let currentText = '';
-        let wordIndex = 0;
-
-        const interval = setInterval(() => {
-          if (wordIndex < words.length) {
-            currentText += (wordIndex === 0 ? '' : ' ') + words[wordIndex];
-            setMessages(prev => prev.map(m =>
-              m._id === aiMessageId ? { ...m, text: currentText } : m
-            ));
-            wordIndex++;
-            // Scroll to bottom as text grows
-            chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-          } else {
-            clearInterval(interval);
-          }
-        }, 30); // Kecepatan munculnya kata
+        runTypewriter(result.aiResponse);
       }
     });
   };
@@ -237,7 +251,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                 <div className={`group relative flex gap-4 ${msg.role === 'user' ? 'w-fit max-w-[85%] flex-row-reverse' : 'w-full max-w-none flex-row'}`}>
                   <div className={`leading-relaxed transition-all ${
                     msg.role === 'user'
-                    ? 'p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 backdrop-blur-md bg-gradient-to-br from-indigo-500/10 to-purple-500/10 text-white rounded-tr-none'
+                    ? 'p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 backdrop-blur-md text-white rounded-tr-none'
                     : 'py-6 w-full'
                   }`}>
                     <div className={`markdown-content prose ${msg.role === 'user' ? 'prose-invert' : 'dark:prose-invert'} max-w-none ${msg.role === 'user' ? 'prose-sm' : 'prose-base text-base'} leading-relaxed`}>
@@ -251,7 +265,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             ))}
             {isThinking && (
               <div className="flex items-center gap-3 px-12 py-2">
-                <span className="animate-[pulse_4s_cubic-bezier(0.4,0,0.6,1)_infinite] text-slate-400 font-medium tracking-widest">THINKING...</span>
+                <span className="text-sm font-medium tracking-[0.2em] text-indigo-400 animate-pulse drop-shadow-[0_0_10px_rgba(129,140,248,0.8)] uppercase">THINKING...</span>
               </div>
             )}
               <div ref={chatEndRef} />

@@ -29,7 +29,6 @@ export default function RegisterPage() {
 
     if (result.success) {
       router.push('/');
-      router.refresh();
     } else {
       setError(result.error);
       setLoading(false);
@@ -41,7 +40,6 @@ export default function RegisterPage() {
     const result = await loginWithGoogle(response.credential);
     if (result.success) {
       router.push('/');
-      router.refresh();
     } else {
       setError(result.error);
       setLoading(false);

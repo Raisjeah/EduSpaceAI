@@ -27,7 +27,6 @@ export default function LoginPage() {
       await fetchUser();
       showNotification('Login berhasil');
       router.push(callbackUrl);
-      router.refresh();
     } else {
       setError(result.error);
       setLoading(false);
@@ -41,7 +40,6 @@ export default function LoginPage() {
       await fetchUser();
       showNotification('Login berhasil');
       router.push(callbackUrl);
-      router.refresh();
     } else {
       setError(result.error);
       setLoading(false);
