@@ -66,7 +66,6 @@ export default function Sidebar({
     await fetchUser();
     showNotification('Keluar');
     router.push('/');
-    router.refresh();
   };
 
   const getAgentIcon = (agentId) => {
