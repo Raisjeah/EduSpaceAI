@@ -4,10 +4,8 @@ import { useState, useEffect, useRef, useTransition } from 'react';
 import { ChevronDown, Plus, Send, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket } from 'lucide-react';
 import { sendMessage, getChatDetails } from '@/app/actions/chatActions';
 import { getProjectDetails } from '@/app/actions/projectActions';
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
+import AiMessage from './AiMessage';
+import ThinkingIndicator from './ThinkingIndicator';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -247,27 +245,17 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             <div className="max-w-3xl mx-auto w-full pt-8 pb-[120px] px-4 space-y-8 flex-1">
               {messages.map((msg, idx) => (
-              <div key={msg._id || idx} className={`w-full flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`group relative flex gap-4 ${msg.role === 'user' ? 'w-fit max-w-[85%] flex-row-reverse' : 'w-full max-w-none flex-row'}`}>
-                  <div className={`leading-relaxed transition-all ${
-                    msg.role === 'user'
-                    ? 'p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 backdrop-blur-md text-white rounded-tr-none'
-                    : 'py-6 w-full'
-                  }`}>
-                    <div className={`markdown-content prose ${msg.role === 'user' ? 'prose-invert' : 'dark:prose-invert'} max-w-none ${msg.role === 'user' ? 'prose-sm' : 'prose-base text-base'} leading-relaxed`}>
-                      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                        {msg.text}
-                      </ReactMarkdown>
-                    </div>
-                  </div>
+                <AiMessage
+                  key={msg._id || idx}
+                  content={msg.text}
+                  isUser={msg.role === 'user'}
+                />
+              ))}
+              {isThinking && (
+                <div className="px-1">
+                  <ThinkingIndicator />
                 </div>
-              </div>
-            ))}
-            {isThinking && (
-              <div className="flex items-center gap-3 px-12 py-2">
-                <span className="text-sm font-medium tracking-[0.2em] text-indigo-400 animate-pulse drop-shadow-[0_0_10px_rgba(129,140,248,0.8)] uppercase">THINKING...</span>
-              </div>
-            )}
+              )}
               <div ref={chatEndRef} />
             </div>
           </div>

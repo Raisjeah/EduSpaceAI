@@ -7,7 +7,8 @@ import { saveChat, sendMessage } from '@/app/actions/chatActions';
 import { extractFileContent } from '@/app/actions/fileActions'; // server action
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import ReactMarkdown from 'react-markdown';
+import AiMessage from './AiMessage';
+import ThinkingIndicator from './ThinkingIndicator';
 
 export default function DocumentEditor({ type, userId }) {
   const [content, setContent] = useState('');
@@ -263,24 +264,18 @@ export default function DocumentEditor({ type, userId }) {
               <p className="text-[11px] text-slate-500 dark:text-gray-500">Klik "Analisis dengan AI" atau mulai chat untuk mendapatkan saran akademik.</p>
             </div>
           ) : (
-            chatMessages.map((msg, idx) => (
-              <div key={msg._id || idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[90%] p-3 rounded-2xl text-[12px] leading-relaxed ${
-                  msg.role === 'user'
-                  ? 'bg-indigo-500/10 border border-indigo-500/20 backdrop-blur-md text-white rounded-tr-none'
-                  : 'bg-white dark:bg-[#222] text-slate-700 dark:text-gray-200 border border-slate-200 dark:border-[#333] rounded-tl-none'
-                }`}>
-                  <div className={`prose ${msg.role === 'user' ? 'prose-invert' : 'dark:prose-invert'} prose-sm max-w-none`}>
-                    <ReactMarkdown>{msg.text}</ReactMarkdown>
-                  </div>
-                </div>
-              </div>
-            ))
+            <div className="space-y-4">
+              {chatMessages.map((msg, idx) => (
+                <AiMessage
+                  key={msg._id || idx}
+                  content={msg.text}
+                  isUser={msg.role === 'user'}
+                />
+              ))}
+            </div>
           )}
           {isThinking && (
-            <div className="flex gap-3 p-2 items-center">
-              <span className="text-sm font-medium tracking-[0.2em] text-indigo-400 animate-pulse drop-shadow-[0_0_10px_rgba(129,140,248,0.8)] uppercase">THINKING...</span>
-            </div>
+            <ThinkingIndicator />
           )}
           <div ref={chatEndRef} />
         </div>
