@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Rocket, Search, BookOpen, Edit3 } from 'lucide-react';
+import { X, Rocket, Search, Globe, Server, Code } from 'lucide-react';
 import { createProject } from '@/app/actions/projectActions';
 import { useRouter } from 'next/navigation';
 
@@ -12,10 +12,11 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
   const router = useRouter();
 
   const agents = [
-    { id: 'default', name: 'EduSpaceAI', desc: 'Dosen Umum', icon: <Rocket size={18} /> },
-    { id: 'deep-search', name: 'Deep Search', desc: 'Ahli Real-time Search', icon: <Search size={18} /> },
-    { id: 'researcher', name: 'Profesor Riset', desc: 'Ahli Metodologi', icon: <BookOpen size={18} /> },
-    { id: 'editor', name: 'Editor Akademik', desc: 'Koreksi Bahasa', icon: <Edit3 size={18} /> },
+    { id: 'default', name: 'PentestAI', desc: 'Asisten Pentest Umum', icon: <Rocket size={18} /> },
+    { id: 'web-agent', name: 'Web Security', desc: 'Ahli OWASP & Web', icon: <Globe size={18} /> },
+    { id: 'os-agent', name: 'OS & Infrastructure', desc: 'Ahli OS & Server', icon: <Server size={18} /> },
+    { id: 'code-agent', name: 'Secure Code', desc: 'Audit Kode Sumber', icon: <Code size={18} /> },
+    { id: 'recon-agent', name: 'Recon & Network', desc: 'Ahli OSINT & Scan', icon: <Search size={18} /> },
   ];
 
   const handleSubmit = async (e) => {
@@ -55,7 +56,7 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Misal: Skripsi Bab 1 atau Riset AI"
+              placeholder="Misal: Target Audit atau Recon Network"
               className="w-full bg-slate-50 dark:bg-[#242424] border border-slate-200 dark:border-[#333] rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-gray-200 focus:outline-none focus:border-indigo-500 transition-all"
               required
             />

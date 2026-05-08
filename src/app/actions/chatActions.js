@@ -4,6 +4,7 @@ import Chat from '@/models/Chat';
 import Project from '@/models/Project';
 import { getGeminiResponse } from '@/lib/gemini';
 import { extractFileContent } from './fileActions';
+import { parsePentestCommand } from '@/lib/utils';
 
 // 1. Fungsi Simpan Chat
 export async function saveChat(role, text, userId, chatId, projectId = null) {
@@ -39,6 +40,17 @@ export async function sendMessage(formData) {
   try {
     let fileParts = [];
     let agentId = 'default';
+    let forceNewTarget = false;
+    let pentestTarget = '';
+
+    let promptForGemini = prompt;
+    const pentestCmd = parsePentestCommand(prompt);
+    if (pentestCmd) {
+      forceNewTarget = true;
+      pentestTarget = pentestCmd.target;
+      // Modifikasi prompt untuk memberikan instruksi eksplisit ke AI mengenai target baru
+      promptForGemini = `[COMMAND: ai-pentest] Target: ${pentestTarget}\n\nUser: ${prompt}`;
+    }
 
     await dbConnect();
 
@@ -88,9 +100,14 @@ export async function sendMessage(formData) {
     }
 
     // A. Ambil History untuk Konteks AI (Memory)
-    const previousMessages = await Chat.find({ userId, chatId })
-      .sort({ createdAt: 1 })
-      .lean();
+    let previousMessages = [];
+
+    // Jika ada perintah ai-pentest baru, kita JANGAN ambil history lama agar tidak "bebal"
+    if (!forceNewTarget) {
+      previousMessages = await Chat.find({ userId, chatId })
+        .sort({ createdAt: 1 })
+        .lean();
+    }
 
     // B. Format History agar Sesuai dengan SDK (@google/generative-ai)
     // Jika skipSave true, berarti prompt sudah ada di DB (pesan terakhir), jangan masukkan ke history
@@ -107,7 +124,7 @@ export async function sendMessage(formData) {
     }
 
     // D. Panggil Gemini SDK
-    const aiResponse = await getGeminiResponse(prompt, historyForGemini, fileParts, agentId);
+    const aiResponse = await getGeminiResponse(promptForGemini, historyForGemini, fileParts, agentId);
 
     // E. Simpan respon AI ke Database
     await saveChat('model', aiResponse, userId, chatId, projectId);
@@ -120,7 +137,7 @@ export async function sendMessage(formData) {
 
   } catch (error) {
     console.error("Error di sendMessage:", error);
-    return { success: false, error: "Dosen AI sedang gangguan." };
+    return { success: false, error: "PentestAI sedang gangguan." };
   }
 }
 

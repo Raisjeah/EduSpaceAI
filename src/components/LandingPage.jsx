@@ -16,19 +16,19 @@ export default function LandingPage() {
 
         <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-semibold mb-8 animate-fade-in transition-colors">
-            <Sparkles size={14} />
-            <span>Asisten Skripsi Berbasis AI Terdepan</span>
+            <Shield size={14} />
+            <span>Asisten Keamanan Siber Berbasis AI</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-8 leading-tight px-2">
-            Selesaikan Skripsi <br />
+            Automasi Pentest <br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 dark:from-indigo-400 dark:via-purple-400 dark:to-indigo-400 transition-colors">
-              Lebih Cepat & Cerdas
+              Cepat, Tepat & Profesional
             </span>
           </h1>
 
           <p className="text-lg md:text-xl text-slate-500 dark:text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed">
-            EduSpaceAI hadir sebagai partner akademik pintarmu. Dari riset literatur hingga penyusunan bab, kami bantu setiap langkah perjalanan skripsimu.
+            PentestAI hadir sebagai partner ethical hacking Anda. Dari reconnaissance hingga audit kode, kami bantu setiap langkah pengujian keamanan sistem Anda.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -100,7 +100,7 @@ export default function LandingPage() {
                       </div>
                     </div>
                     <div className="flex items-start gap-4 flex-row-reverse">
-                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white">Edu</div>
+                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white">Pen</div>
                       <div className="bg-indigo-50 dark:bg-indigo-600/10 rounded-2xl p-4 border border-indigo-100 dark:border-indigo-500/20 flex-1">
                         <div className="h-2 w-full bg-indigo-200 dark:bg-indigo-400/30 rounded mb-2"></div>
                         <div className="h-2 w-5/6 bg-indigo-200 dark:bg-indigo-400/30 rounded mb-2"></div>
@@ -133,24 +133,24 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <FeatureCard
-              icon={<GraduationCap className="text-indigo-500" />}
-              title="Bimbingan Akademik"
-              description="Diskusi topik penelitian dan draf bab dengan AI yang memahami metodologi penelitian."
+              icon={<Search className="text-indigo-500" />}
+              title="Reconnaissance"
+              description="Pengumpulan informasi target, pemindaian port, dan analisis attack surface secara otomatis."
             />
             <FeatureCard
-              icon={<Briefcase className="text-orange-500" />}
-              title="Workspace Agents"
-              description="Buat workspace khusus dengan agen AI spesialis seperti Deep Search, Researcher, atau Editor."
+              icon={<Globe className="text-orange-500" />}
+              title="Web Security"
+              description="Pengujian kerentanan aplikasi web berdasarkan standar OWASP Top 10."
             />
             <FeatureCard
-              icon={<Layout className="text-purple-500" />}
-              title="Tools Editor"
-              description="Dilengkapi dengan alat pendukung pengerjaan dokumen yang intuitif dan efisien."
+              icon={<Code className="text-purple-500" />}
+              title="Secure Code Audit"
+              description="Audit kode sumber untuk menemukan bug keamanan sebelum masuk ke produksi."
             />
             <FeatureCard
               icon={<Shield className="text-blue-500" />}
-              title="Privasi Terjamin"
-              description="Data penelitian dan dokumenmu aman bersama kami dengan enkripsi tingkat tinggi."
+              title="Ethical Standard"
+              description="Seluruh proses pengujian mengikuti etika dan standar profesional keamanan siber."
             />
           </div>
         </div>
@@ -159,10 +159,10 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="relative flex-none py-12 border-t border-slate-200 dark:border-[#1E1E1E] px-6 text-center transition-colors">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <span className="font-bold text-[14px] text-slate-900 dark:text-white tracking-tight transition-colors">EduSpaceAI</span>
+          <span className="font-bold text-[14px] text-slate-900 dark:text-white tracking-tight transition-colors">PentestAI</span>
         </div>
         <p className="text-slate-500 dark:text-gray-500 text-sm italic transition-colors">
-          Bukan sekadar asisten, tapi teman seperjuangan skripsimu.
+          Partner Ethical Hacking terpercaya untuk infrastruktur Anda.
         </p>
       </footer>
     </div>

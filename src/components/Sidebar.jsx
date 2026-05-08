@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3 } from 'lucide-react';
+import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, Globe, Server, Code } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 import { getChatHistory } from '@/app/actions/chatActions';
 import { logout } from '@/app/actions/authActions';
@@ -70,9 +70,10 @@ export default function Sidebar({
 
   const getAgentIcon = (agentId) => {
     switch (agentId) {
-      case 'deep-search': return <Search size={14} className="text-blue-400" />;
-      case 'researcher': return <BookOpen size={14} className="text-green-400" />;
-      case 'editor': return <Edit3 size={14} className="text-amber-400" />;
+      case 'web-agent': return <Globe size={14} className="text-blue-400" />;
+      case 'os-agent': return <Server size={14} className="text-green-400" />;
+      case 'code-agent': return <Code size={14} className="text-amber-400" />;
+      case 'recon-agent': return <Search size={14} className="text-purple-400" />;
       default: return <Rocket size={14} className="text-indigo-400" />;
     }
   };
@@ -91,7 +92,7 @@ export default function Sidebar({
           {/* Header / Brand */}
           <div className="flex items-center justify-between mb-6 px-2">
             <Link href="/" className="flex items-center gap-2" onClick={closeSidebarOnMobile}>
-              <span className="font-bold text-[14px] text-slate-900 dark:text-white tracking-tight transition-colors">EduSpaceAI</span>
+              <span className="font-bold text-[14px] text-slate-900 dark:text-white tracking-tight transition-colors">PentestAI</span>
             </Link>
             <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors">
               <Menu size={18} />

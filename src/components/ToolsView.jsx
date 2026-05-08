@@ -6,8 +6,8 @@ export default function ToolsView() {
     { id: 'pdf', title: 'Edit & Analisis PDF', icon: <FileText size={24} className="text-red-400" />, desc: 'Ekstrak teks PDF ke dalam editor lalu analisis.' },
     { id: 'doc', title: 'Edit & Analisis DOC', icon: <BookOpen size={24} className="text-blue-400" />, desc: 'Buka dokumen teks, edit manual, minta saran AI.' },
     { id: 'xls', title: 'Data Excel / CSV', icon: <FileSpreadsheet size={24} className="text-green-400" />, desc: 'Upload CSV, edit data, dan buat kesimpulan.' },
-    { id: 'skripsi', title: 'Asisten Skripsi', icon: <BrainCircuit size={24} className="text-indigo-400" />, desc: 'AI akan bertindak sebagai Dosen Pembimbing.' },
-    { id: 'soal', title: 'Generator Soal', icon: <Edit3 size={24} className="text-amber-400" />, desc: 'Buat soal kuis dari materi yang kamu miliki.' },
+    { id: 'pentest', title: 'Pentest Mode', icon: <BrainCircuit size={24} className="text-indigo-400" />, desc: 'AI akan bertindak sebagai Lead Pentester Anda.' },
+    { id: 'report', title: 'Generator Laporan', icon: <Edit3 size={24} className="text-amber-400" />, desc: 'Buat draf laporan temuan dari log atau hasil scan.' },
   ];
 
   return (

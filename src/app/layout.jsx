@@ -8,8 +8,8 @@ import Script from 'next/script'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'EduSpaceAI',
-  description: 'Platform belajar dengan AI',
+  title: 'PentestAI',
+  description: 'AI-Powered Professional Penetration Testing Assistant',
   icons: {
     icon: '/favicon.png',
   },

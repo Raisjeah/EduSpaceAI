@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useTransition } from 'react';
-import { ChevronDown, Plus, Send, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket } from 'lucide-react';
+import { ChevronDown, Plus, Send, X, FileText, Image as ImageIcon, Briefcase, Search, Globe, Server, Code, Rocket } from 'lucide-react';
 import { sendMessage, getChatDetails } from '@/app/actions/chatActions';
 import { getProjectDetails } from '@/app/actions/projectActions';
 import AiMessage from './AiMessage';
@@ -171,19 +171,21 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
   const getAgentIcon = (agentId) => {
     switch (agentId) {
-      case 'deep-search': return <Search size={16} className="text-blue-400" />;
-      case 'researcher': return <BookOpen size={16} className="text-green-400" />;
-      case 'editor': return <Edit3 size={16} className="text-amber-400" />;
+      case 'web-agent': return <Globe size={16} className="text-blue-400" />;
+      case 'os-agent': return <Server size={16} className="text-green-400" />;
+      case 'code-agent': return <Code size={16} className="text-amber-400" />;
+      case 'recon-agent': return <Search size={16} className="text-purple-400" />;
       default: return <Rocket size={16} className="text-indigo-400" />;
     }
   };
 
   const getAgentName = (agentId) => {
     switch (agentId) {
-      case 'deep-search': return 'Deep Search Agent';
-      case 'researcher': return 'Profesor Riset';
-      case 'editor': return 'Editor Akademik';
-      default: return 'EduSpaceAI';
+      case 'web-agent': return 'Web Security Agent';
+      case 'os-agent': return 'OS & Infrastructure Agent';
+      case 'code-agent': return 'Secure Code Agent';
+      case 'recon-agent': return 'Recon & Network Agent';
+      default: return 'PentestAI';
     }
   };
 
@@ -218,26 +220,26 @@ export default function ChatView({ userId, activeChatId, projectId }) {
               </span>
             </div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2 text-center">
-              {project ? project.name : 'EduSpaceAI'}
+              {project ? project.name : 'PentestAI'}
             </h1>
             <p className="text-slate-600 dark:text-gray-400 mb-6 text-center max-w-sm">
               {project
                 ? `Sedang menggunakan agen ${getAgentName(project.agentId)} untuk membantumu di project ini.`
-                : 'Dosen pribadi bertenaga AI yang siap bantu skripsi, tugas, dan belajarmu.'}
+                : 'Asisten Pentest AI profesional. Siap melakukan reconnaissance, audit kode, dan analisis kerentanan.'}
             </p>
             <div className="w-full max-w-xl text-center">
               <div className="flex flex-wrap justify-center gap-3">
-                {project?.agentId === 'deep-search' ? (
-                  <SuggestionChip label="Cari berita terbaru AI" onClick={() => handleSend("Apa berita terbaru tentang perkembangan AI minggu ini?")} />
+                {project?.agentId === 'recon-agent' ? (
+                  <SuggestionChip label="ai-pentest google.com" onClick={() => handleSend("ai-pentest google.com")} />
                 ) : (
                   <>
                     <Link href="/tools">
                       <SuggestionChip label="Buka Tools" icon={<Plus size={12}/>} isLink={true} />
                     </Link>
-                    <SuggestionChip label="Bimbingan Skripsi" onClick={() => handleSend("Saya butuh bantuan bimbingan skripsi, bisa mulai dari mana?")} />
+                    <SuggestionChip label="Scan Target Baru" onClick={() => handleSend("ai-pentest [input_target_disini]")} />
                   </>
                 )}
-                <SuggestionChip label="Buat Latihan Soal" onClick={() => handleSend("Buatkan 5 soal pilihan ganda tentang Pemrograman Dasar")} />
+                <SuggestionChip label="Audit Snippet Kode" onClick={() => handleSend("Tolong audit snippet kode berikut untuk kerentanan keamanan:")} />
               </div>
             </div>
           </div>
@@ -354,7 +356,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           }}
           rows={1}
           disabled={disabled}
-          placeholder="Tanya apa saja ke Dosen AI-mu..."
+          placeholder="Input target atau tanya PentestAI..."
           className="flex-1 bg-transparent border-none outline-none py-2.5 px-3 text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
         />
         <button
