@@ -33,6 +33,16 @@ export default function Header({ setIsSidebarOpen }) {
 
         <div className="flex items-center gap-4 text-gray-400">
           {userId && (
+            <Link
+              href="/pricing"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-500 text-xs font-bold hover:bg-amber-500/20 transition-all"
+            >
+              <Sparkles size={14} />
+              {user?.current_plan === 'FREE' ? 'Upgrade Pro' : user?.current_plan}
+            </Link>
+          )}
+
+          {userId && (
             <button
               onClick={() => {
                 setIsSearchActive(!isSearchActive);
