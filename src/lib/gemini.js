@@ -1,6 +1,10 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import Anthropic from "@anthropic-ai/sdk";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
 const AGENT_CONFIGS = {
   default: {
@@ -50,13 +54,18 @@ const AGENT_CONFIGS = {
   }
 };
 
-export async function getGeminiResponse(prompt, history = [], fileParts = [], agentId = 'default') {
+export async function getGeminiResponse(prompt, history = [], fileParts = [], agentId = 'default', modelName = "gemini-2.5-flash") {
   try {
     const config = AGENT_CONFIGS[agentId] || AGENT_CONFIGS.default;
 
+    // Claude Model Routing
+    if (modelName.includes('claude')) {
+      return getClaudeResponse(prompt, history, fileParts, config.instruction);
+    }
+
     // Gemini Models
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash", // Menggunakan model terbaru yang stabil mendukung tools
+      model: modelName,
       systemInstruction: config.instruction,
       tools: config.tools || [],
     });
@@ -73,15 +82,44 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
     const result = await chat.sendMessage([prompt, ...fileParts]);
     const response = await result.response;
 
-    // Jika menggunakan googleSearch, groundingMetadata mungkin tersedia
-    // Tapi untuk output teks sederhana, response.text() sudah cukup.
     return response.text();
 
   } catch (error) {
-    console.error("Gemini SDK Error:", error);
+    console.error("AI SDK Error:", error);
     if (error.message.includes("quota")) {
       return "⚠️ Kuota API habis. Coba lagi nanti atau ganti API Key.";
     }
     return "⚠️ Terjadi kesalahan pada koneksi Dosen AI. Silakan coba lagi.";
+  }
+}
+
+async function getClaudeResponse(prompt, history, fileParts, systemInstruction) {
+  try {
+    const messages = history.map(msg => ({
+      role: msg.role === 'user' ? 'user' : 'assistant',
+      content: msg.parts[0].text
+    }));
+
+    // Handle files for Claude (simplified for now, Claude supports images/docs differently)
+    let content = [];
+    if (fileParts.length > 0) {
+      // Logic for adding images/docs to Claude content array
+      // This would need more detailed implementation based on Claude SDK specifics
+    }
+    content.push({ type: 'text', text: prompt });
+
+    messages.push({ role: 'user', content });
+
+    const response = await anthropic.messages.create({
+      model: "claude-3-5-sonnet-latest",
+      max_tokens: 4096,
+      system: systemInstruction,
+      messages: messages,
+    });
+
+    return response.content[0].text;
+  } catch (error) {
+    console.error("Claude SDK Error:", error);
+    throw error;
   }
 }

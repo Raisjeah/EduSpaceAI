@@ -6,6 +6,7 @@ import { sendMessage, getChatDetails } from '@/app/actions/chatActions';
 import { getProjectDetails } from '@/app/actions/projectActions';
 import AiMessage from './AiMessage';
 import ThinkingIndicator from './ThinkingIndicator';
+import UpgradeModal from './UpgradeModal';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -25,6 +26,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const [project, setProject] = useState(null);
   const [isPending, startTransition] = useTransition();
   const [isThinking, setIsThinking] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState({ isOpen: false, feature: '' });
   const [isLoadingChat, setIsLoadingChat] = useState(() => {
     if (chatCache && chatCache.chatId === activeChatId) {
       return false;
@@ -165,6 +167,13 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
         // --- TYPEWRITER EFFECT ---
         runTypewriter(result.aiResponse);
+      } else {
+        setIsThinking(false);
+        if (result.error?.includes('Batas')) {
+          setUpgradeModal({ isOpen: true, feature: 'Pesan Harian' });
+        } else if (result.error?.includes('Premium')) {
+          setUpgradeModal({ isOpen: true, feature: 'Upload File' });
+        }
       }
     });
   };
@@ -189,6 +198,11 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-[#0F0F0F] overflow-hidden transition-colors duration-200">
+      <UpgradeModal
+        isOpen={upgradeModal.isOpen}
+        onClose={() => setUpgradeModal({ ...upgradeModal, isOpen: false })}
+        featureName={upgradeModal.feature}
+      />
       {/* Project Header (If in project) */}
       {project && (
         <div className="px-6 py-3 border-b border-slate-200 dark:border-[#1E1E1E] bg-white dark:bg-[#0F0F0F] flex items-center justify-between z-10 flex-none transition-colors duration-200">

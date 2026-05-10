@@ -6,6 +6,9 @@ import os from 'os';
 import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 import ExcelJS from 'exceljs';
+import dbConnect from '@/lib/mongodb';
+import { getFileSizeLimit } from '@/lib/subscription';
+import { getSessionUser } from '@/lib/session';
 
 async function saveTempFile(file) {
   const bytes = await file.arrayBuffer();
@@ -21,6 +24,14 @@ export async function extractFileContent(formData) {
   try {
     const file = formData.get('file');
     if (!file) return { error: 'No file provided' };
+
+    await dbConnect();
+    const user = await getSessionUser();
+    const limit = getFileSizeLimit(user?.current_plan || 'FREE');
+
+    if (file.size > limit) {
+       return { error: `Ukuran file melebihi batas paket Anda (${limit / (1024 * 1024)}MB). Silakan upgrade paket Anda.` };
+    }
 
     const fileType = file.type;
     const fileName = file.name.toLowerCase();
@@ -72,10 +83,8 @@ export async function extractFileContent(formData) {
       throw new Error('Tipe file tidak didukung. Gunakan PDF, Word, Excel, atau Teks.');
     }
 
-    // PEMBERSIHAN AKHIR: Hapus spasi horizontal berlebih, tetap pertahankan newline
     const cleanedText = text.replace(/[^\S\r\n]+/g, ' ').trim();
 
-    // HAPUS FILE SEMENTARA SETELAH SELESAI
     if (fs.existsSync(filePath)) await fs.promises.unlink(filePath);
 
     return { 
@@ -86,7 +95,6 @@ export async function extractFileContent(formData) {
 
   } catch (error) {
     console.error("Extraction error:", error);
-    // Pastikan file dihapus jika error
     if (filePath && fs.existsSync(filePath)) await fs.promises.unlink(filePath);
     return { error: error.message || 'Gagal mengekstrak file.' };
   }

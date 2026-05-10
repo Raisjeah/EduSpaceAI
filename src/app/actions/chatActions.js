@@ -2,8 +2,11 @@
 import dbConnect from '@/lib/mongodb';
 import Chat from '@/models/Chat';
 import Project from '@/models/Project';
+import UserMemory from '@/models/UserMemory';
 import { getGeminiResponse } from '@/lib/gemini';
 import { extractFileContent } from './fileActions';
+import { checkUsageLimit, getModelByPlan, TIERS } from '@/lib/subscription';
+import { getSessionUser } from '@/lib/session';
 
 // 1. Fungsi Simpan Chat
 export async function saveChat(role, text, userId, chatId, projectId = null) {
@@ -24,23 +27,34 @@ export async function saveChat(role, text, userId, chatId, projectId = null) {
   }
 }
 
-// 2. Fungsi Kirim Pesan (Versi SDK Friendly)
+// 2. Fungsi Kirim Pesan
 export async function sendMessage(formData) {
-  const userId = formData.get('userId');
   let prompt = formData.get('prompt') || '';
   const skipSave = formData.get('skipSave') === 'true';
   const file = formData.get('file');
   const projectId = formData.get('projectId');
-  // Ambil chatId dari frontend, jika tidak ada buat baru
   const chatId = formData.get('chatId') || `chat_${Date.now()}`;
 
   if (!prompt && !file) return { error: "Prompt kosong!" };
 
   try {
+    await dbConnect();
+    const user = await getSessionUser();
+    if (!user) return { success: false, error: "Sesi berakhir. Silakan login kembali." };
+
+    const userId = user._id.toString();
+
+    // A. Check Usage Limit
+    const usage = await checkUsageLimit(user);
+    if (!usage.allowed) {
+      return {
+        success: false,
+        error: `Batas pesan harian tercapai (${usage.limit} pesan/hari). Silakan upgrade ke paket yang lebih tinggi.`
+      };
+    }
+
     let fileParts = [];
     let agentId = 'default';
-
-    await dbConnect();
 
     // Jika ada projectId, ambil agentId dari project
     if (projectId) {
@@ -50,10 +64,13 @@ export async function sendMessage(formData) {
       }
     }
 
-    // Jika ada file yang diupload
+    // B. Handle File Upload
     if (file && file.size > 0) {
+      if (user.current_plan === TIERS.FREE) {
+        return { success: false, error: "Upload file hanya tersedia untuk pengguna Premium." };
+      }
+
       if (file.type.startsWith('image/')) {
-        // Handle Image
         const bytes = await file.arrayBuffer();
         const base64Data = Buffer.from(bytes).toString('base64');
         fileParts.push({
@@ -64,36 +81,46 @@ export async function sendMessage(formData) {
         });
         if (!prompt) prompt = "Tolong jelaskan gambar ini.";
       } else {
-        // Handle Document (PDF, DOCX, etc.)
+        // fileActions will handle size check with getSessionUser internally or we can pass it
+        formData.append('userId', userId);
         const extractionResult = await extractFileContent(formData);
         if (extractionResult.success) {
           prompt = `[Konteks Dokumen: ${extractionResult.fileName}]\n${extractionResult.content}\n\nPertanyaan: ${prompt || 'Tolong ringkas dokumen ini.'}`;
+        } else {
+          return { success: false, error: extractionResult.error };
         }
       }
     }
 
-    // Rate Limiting: Max 10 messages per minute
-    const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
-    const messageCount = await Chat.countDocuments({
-      userId,
-      role: 'user',
-      createdAt: { $gte: oneMinuteAgo }
-    });
+    // C. Long-term Memory for ULTRA
+    if (user.current_plan === TIERS.ULTRA) {
+      const memories = await UserMemory.find({ user_id: userId }).limit(5).sort({ created_at: -1 }).lean();
+      if (memories.length > 0) {
+        const memoryContext = memories.map(m => `[Memory: ${m.title}]\n${m.content}`).join('\n\n');
+        prompt = `[Konteks Memori Proyek]\n${memoryContext}\n\n${prompt}`;
+      }
 
-    if (messageCount >= 10) {
-      return {
-        success: false,
-        error: "Batas pesan tercapai (10 pesan/menit). Silakan tunggu sebentar."
-      };
+      // Logic to automatically save memory for ULTRA
+      if (prompt.toLowerCase().includes("simpan ini ke memori") || prompt.toLowerCase().includes("ingat ini")) {
+        const memoryContent = prompt.replace(/simpan ini ke memori|ingat ini/gi, '').trim();
+        if (memoryContent) {
+           await UserMemory.create({
+             user_id: userId,
+             title: `Memory ${new Date().toLocaleDateString()}`,
+             content: memoryContent
+           });
+        }
+      }
     }
 
-    // A. Ambil History untuk Konteks AI (Memory)
+    // D. Model Routing
+    const modelName = getModelByPlan(user.current_plan);
+
+    // E. History
     const previousMessages = await Chat.find({ userId, chatId })
       .sort({ createdAt: 1 })
       .lean();
 
-    // B. Format History agar Sesuai dengan SDK (@google/generative-ai)
-    // Jika skipSave true, berarti prompt sudah ada di DB (pesan terakhir), jangan masukkan ke history
     const historyMessages = skipSave ? previousMessages.slice(0, -1) : previousMessages;
 
     const historyForGemini = historyMessages.map(msg => ({
@@ -101,15 +128,13 @@ export async function sendMessage(formData) {
       parts: [{ text: msg.text }]
     }));
 
-    // C. Simpan pesan User ke Database dulu jika belum ada
     if (!skipSave) {
       await saveChat('user', prompt, userId, chatId, projectId);
     }
 
-    // D. Panggil Gemini SDK
-    const aiResponse = await getGeminiResponse(prompt, historyForGemini, fileParts, agentId);
+    // F. Get AI Response
+    const aiResponse = await getGeminiResponse(prompt, historyForGemini, fileParts, agentId, modelName);
 
-    // E. Simpan respon AI ke Database
     await saveChat('model', aiResponse, userId, chatId, projectId);
 
     return { 
@@ -133,7 +158,6 @@ export async function getChatHistory(userId, projectId = null) {
     if (projectId) {
       match.projectId = projectId;
     } else {
-      // Jika projectId null, ambil chat yang tidak punya projectId atau projectId null (Global Chat)
       match.projectId = { $in: [null, undefined] };
     }
 
