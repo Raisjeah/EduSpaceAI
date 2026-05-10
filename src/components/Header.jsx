@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu, Search, User, X } from 'lucide-react';
+import { Menu, Search, User, X, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';
