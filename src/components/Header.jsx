@@ -13,12 +13,12 @@ export default function Header({ setIsSidebarOpen }) {
     <header className="flex justify-between items-center p-4 sticky top-0 z-20 bg-white dark:bg-[#0F0F0F] border-b border-slate-200 dark:border-[#1E1E1E] flex-none transition-colors duration-200">
       <div className="flex items-center gap-3">
         {!userId ? (
-          <Link href="/" className="flex items-center gap-2">
-             <div className="w-8 h-8 rounded-lg bg-[#0F0F0F] flex items-center justify-center overflow-hidden">
+          <Link href="/" className="flex items-center gap-2 group">
+             <div className="w-9 h-9 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-110">
                 <img
                   src="/logo.png"
                   alt="EduSpaceAI Logo"
-                  className="w-full h-full object-cover object-top scale-150"
+                  className="w-full h-full object-contain dark:invert-0 invert transition-all duration-300"
                 />
               </div>
               <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white hidden sm:block">EduSpaceAI</span>

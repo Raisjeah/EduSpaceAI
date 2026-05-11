@@ -14,11 +14,11 @@ export default function Footer() {
           {/* Brand & Mission */}
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 rounded-lg bg-[#0F0F0F] flex items-center justify-center overflow-hidden">
+              <div className="w-9 h-9 flex items-center justify-center overflow-hidden">
                 <img
                   src="/logo.png"
                   alt="EduSpaceAI Logo"
-                  className="w-full h-full object-cover object-top scale-150"
+                  className="w-full h-full object-contain dark:invert-0 invert transition-all duration-300"
                 />
               </div>
               <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">EduSpaceAI</span>

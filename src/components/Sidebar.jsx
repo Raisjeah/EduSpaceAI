@@ -90,12 +90,12 @@ export default function Sidebar({
         <div className="flex flex-col h-full p-4">
           {/* Header / Brand */}
           <div className="flex items-center justify-between mb-6 px-2">
-            <Link href="/" className="flex items-center gap-2" onClick={closeSidebarOnMobile}>
-              <div className="w-6 h-6 rounded bg-[#0F0F0F] flex items-center justify-center overflow-hidden">
+            <Link href="/" className="flex items-center gap-2 group" onClick={closeSidebarOnMobile}>
+              <div className="w-7 h-7 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-110">
                 <img
                   src="/logo.png"
                   alt="EduSpaceAI Logo"
-                  className="w-full h-full object-cover object-top scale-150"
+                  className="w-full h-full object-contain dark:invert-0 invert transition-all duration-300"
                 />
               </div>
               <span className="font-bold text-[14px] text-slate-900 dark:text-white tracking-tight transition-colors">EduSpaceAI</span>
