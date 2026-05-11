@@ -27,9 +27,10 @@ export default function MainLayout({ children }) {
       const isAuthPage = pathname.startsWith('/auth');
       const isHomePage = pathname === '/';
       const isPricingPage = pathname === '/pricing';
+      const isLegalPage = pathname === '/terms' || pathname === '/privacy';
 
-      // Redirect ke login jika mencoba akses halaman internal (bukan home/auth/pricing) tanpa login
-      if (!userId && !isAuthPage && !isHomePage && !isPricingPage) {
+      // Redirect ke login jika mencoba akses halaman internal (bukan home/auth/pricing/legal) tanpa login
+      if (!userId && !isAuthPage && !isHomePage && !isPricingPage && !isLegalPage) {
         router.push(`/auth/login?callbackUrl=${encodeURIComponent(pathname)}`);
       }
       // Redirect ke home jika sudah login tapi mencoba akses halaman auth
