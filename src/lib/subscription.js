@@ -10,10 +10,10 @@ export const TIERS = {
 };
 
 export const MODELS = {
-  [TIERS.FREE]: 'gemini-2.5-flash',
-  [TIERS.CLASSIC]: 'gemini-2.5-pro',
-  [TIERS.PRO]: 'gemini-3.1-pro',
-  [TIERS.ULTRA]: 'claude-3-5-sonnet-latest', // Adjusted to common Claude SDK naming
+  [TIERS.FREE]: 'gemini-1.5-flash',
+  [TIERS.CLASSIC]: 'gemini-1.5-pro',
+  [TIERS.PRO]: 'gemini-1.5-pro',
+  [TIERS.ULTRA]: 'claude-3-5-sonnet-latest',
 };
 
 export function getModelByPlan(userPlan) {
@@ -58,10 +58,13 @@ export async function getDailyUsage(userId) {
 
 export async function checkUsageLimit(user) {
   await dbConnect();
-  const planDoc = await Plan.findOne({ name: user.current_plan || 'FREE' }).lean();
+  let planDoc = await Plan.findOne({ name: user.current_plan || 'FREE' }).lean();
   const currentUsage = await getDailyUsage(user._id);
 
-  if (!planDoc) return { allowed: false, limit: 0, current: currentUsage };
+  // Fallback to FREE if plan not found in DB
+  if (!planDoc) {
+    planDoc = { name: 'FREE', message_limit: 20 };
+  }
 
   return {
     allowed: currentUsage < planDoc.message_limit,

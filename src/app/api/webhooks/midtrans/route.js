@@ -32,8 +32,11 @@ export async function POST(req) {
     const subscription = await Subscription.findOne({ midtrans_order_id: order_id });
 
     if (!subscription) {
+      console.warn(`[Midtrans Webhook] Subscription not found for order_id: ${order_id}`);
       return NextResponse.json({ message: 'Subscription not found' }, { status: 404 });
     }
+
+    console.log(`[Midtrans Webhook] Processing ${transaction_status} for order: ${order_id}`);
 
     // Update Subscription Status
     subscription.payment_status = transaction_status;
@@ -47,6 +50,10 @@ export async function POST(req) {
 
         // Activate Subscription for User
         const plan = await Plan.findById(subscription.plan_id);
+        if (!plan) {
+           throw new Error(`Plan not found for ID: ${subscription.plan_id}`);
+        }
+
         const expiredAt = new Date();
         expiredAt.setDate(expiredAt.getDate() + (plan.duration || 30));
 
@@ -58,6 +65,8 @@ export async function POST(req) {
           plan_expired_at: expiredAt,
           is_active: true,
         });
+
+        console.log(`[Midtrans Webhook] User ${subscription.user_id} upgraded to ${plan.name} until ${expiredAt}`);
       }
     } else if (
       transaction_status === 'cancel' ||
