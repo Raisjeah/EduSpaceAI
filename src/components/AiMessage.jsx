@@ -7,7 +7,7 @@ import rehypeKatex from 'rehype-katex';
 import { ThumbsUp, ThumbsDown, Copy, Check } from 'lucide-react';
 import 'katex/dist/katex.min.css';
 
-export default function AiMessage({ content, isUser = false }) {
+export default function AiMessage({ content, isUser = false, isTyping = false }) {
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
@@ -49,8 +49,9 @@ export default function AiMessage({ content, isUser = false }) {
           </div>
         </div>
 
-        {/* Action Bar */}
-        <div className="flex items-center gap-2 mt-4 ml-0.5">
+        {/* Action Bar - Only show when not typing */}
+        {!isTyping && (
+        <div className="flex items-center gap-2 mt-4 ml-0.5 animate-in fade-in duration-500">
           <button
             onClick={() => { setLiked(!liked); if (!liked) setDisliked(false); }}
             className={`p-1.5 rounded-lg transition-colors ${liked ? 'text-indigo-500 bg-indigo-500/10' : 'text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-[#1E1E1E]'}`}
@@ -80,6 +81,7 @@ export default function AiMessage({ content, isUser = false }) {
             )}
           </button>
         </div>
+        )}
       </div>
     </div>
   );

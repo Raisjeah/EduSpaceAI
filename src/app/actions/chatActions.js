@@ -5,7 +5,7 @@ import Project from '@/models/Project';
 import UserMemory from '@/models/UserMemory';
 import { getGeminiResponse } from '@/lib/gemini';
 import { extractFileContent } from './fileActions';
-import { checkUsageLimit, getModelByPlan, TIERS, checkFeatureAccess } from '@/lib/subscription';
+import { checkUsageLimit, getModelByPlan, TIERS, checkFeatureAccess, isModelAllowed } from '@/lib/subscription';
 import { getSessionUser } from '@/lib/session';
 
 // 1. Fungsi Simpan Chat
@@ -34,6 +34,7 @@ export async function sendMessage(formData) {
   const file = formData.get('file');
   const projectId = formData.get('projectId');
   const chatId = formData.get('chatId') || `chat_${Date.now()}`;
+  const requestedModel = formData.get('modelId');
 
   if (!prompt && !file) return { error: "Prompt kosong!" };
 
@@ -120,8 +121,13 @@ export async function sendMessage(formData) {
       }
     }
 
-    // D. Model Routing
-    const modelName = getModelByPlan(user.current_plan);
+    // D. Model Routing & Validation
+    let modelName = requestedModel || getModelByPlan(user.current_plan);
+
+    // Ensure user has access to the requested model
+    if (requestedModel && !isModelAllowed(user.current_plan, requestedModel)) {
+       modelName = getModelByPlan(user.current_plan);
+    }
 
     // E. History
     const previousMessages = await Chat.find({ userId, chatId })
