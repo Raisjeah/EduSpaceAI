@@ -60,9 +60,9 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
 
     // Mapping model IDs to SDK expected names
     let actualModel = modelName;
-    if (modelName === 'gemini-2.5-flash') actualModel = 'gemini-2.0-flash-exp'; // Assuming exp or similar if 2.5 is just label
-    if (modelName === 'gemini-2.5-pro') actualModel = 'gemini-2.0-pro-exp-02-05';
-    if (modelName === 'gemini-3.1-pro') actualModel = 'gemini-2.0-pro-exp-02-05'; // Fallback if 3.1 is future label
+    if (modelName === 'gemini-2.5-flash') actualModel = 'gemini-2.5-flash'; // Assuming exp or similar if 2.5 is just label
+    if (modelName === 'gemini-2.5-pro') actualModel = 'gemini-2.5-pro';
+    if (modelName === 'gemini-3.1-pro') actualModel = 'gemini-3.1-pro'; // Fallback if 3.1 is future label
 
     // Claude Model Routing
     if (modelName.includes('claude')) {
