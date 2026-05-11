@@ -14,8 +14,12 @@ export default function Header({ setIsSidebarOpen }) {
       <div className="flex items-center gap-3">
         {!userId ? (
           <Link href="/" className="flex items-center gap-2">
-             <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">E</span>
+             <div className="w-8 h-8 rounded-lg bg-[#0F0F0F] flex items-center justify-center overflow-hidden">
+                <img
+                  src="/logo.png"
+                  alt="EduSpaceAI Logo"
+                  className="w-full h-full object-cover object-top scale-150"
+                />
               </div>
               <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white hidden sm:block">EduSpaceAI</span>
           </Link>
