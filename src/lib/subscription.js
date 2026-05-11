@@ -13,11 +13,32 @@ export const MODELS = {
   [TIERS.FREE]: 'gemini-2.5-flash',
   [TIERS.CLASSIC]: 'gemini-2.5-pro',
   [TIERS.PRO]: 'gemini-3.1-pro',
-  [TIERS.ULTRA]: 'claude-4-6-sonnet-latest',
+  [TIERS.ULTRA]: 'claude-4-6-sonnet',
+};
+
+export const MODEL_PERMISSIONS = {
+  'gemini-2.5-flash': TIERS.FREE,
+  'gemini-2.5-pro': TIERS.CLASSIC,
+  'gemini-3.1-pro': TIERS.PRO,
+  'claude-4-6-sonnet': TIERS.ULTRA,
 };
 
 export function getModelByPlan(userPlan) {
   return MODELS[userPlan] || MODELS[TIERS.FREE];
+}
+
+export function isModelAllowed(userPlan, modelId) {
+  const requiredTier = MODEL_PERMISSIONS[modelId];
+  if (!requiredTier) return false;
+
+  const tierHierarchy = {
+    [TIERS.FREE]: 0,
+    [TIERS.CLASSIC]: 1,
+    [TIERS.PRO]: 2,
+    [TIERS.ULTRA]: 3,
+  };
+
+  return tierHierarchy[userPlan || TIERS.FREE] >= tierHierarchy[requiredTier];
 }
 
 export async function checkFeatureAccess(user, feature) {

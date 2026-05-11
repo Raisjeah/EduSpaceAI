@@ -176,6 +176,7 @@ export async function getUser() {
       name: user.name,
       email: user.email,
       image: user.image,
+      current_plan: user.current_plan,
     };
   } catch (error) {
     return null;

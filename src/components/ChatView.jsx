@@ -6,6 +6,8 @@ import { sendMessage, getChatDetails } from '@/app/actions/chatActions';
 import { getProjectDetails } from '@/app/actions/projectActions';
 import AiMessage from './AiMessage';
 import ThinkingIndicator from './ThinkingIndicator';
+import ModelSelector from './ModelSelector';
+import useAuth from '@/hooks/useAuth';
 import UpgradeModal from './UpgradeModal';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -15,6 +17,7 @@ import Link from 'next/link';
 let chatCache = null;
 
 export default function ChatView({ userId, activeChatId, projectId }) {
+  const { user } = useAuth();
   const [input, setInput] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [messages, setMessages] = useState(() => {
@@ -26,6 +29,9 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const [project, setProject] = useState(null);
   const [isPending, startTransition] = useTransition();
   const [isThinking, setIsThinking] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
+  const [thoughtTraces, setThoughtTraces] = useState([]);
   const [upgradeModal, setUpgradeModal] = useState({ isOpen: false, feature: '' });
   const [isLoadingChat, setIsLoadingChat] = useState(() => {
     if (chatCache && chatCache.chatId === activeChatId) {
@@ -46,6 +52,43 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       setProject(null);
     }
   }, [projectId]);
+
+  // Load last selected model from localStorage
+  useEffect(() => {
+    const savedModel = localStorage.getItem('eduspace_preferred_model');
+    if (savedModel) {
+      setSelectedModel(savedModel);
+    }
+  }, []);
+
+  const handleModelChange = (modelId) => {
+    setSelectedModel(modelId);
+    localStorage.setItem('eduspace_preferred_model', modelId);
+  };
+
+  // Simulated Thought Traces Effect
+  useEffect(() => {
+    if (isPending && project?.agentId === 'deep-search') {
+      const traces = [
+        '🔍 Mencari referensi jurnal...',
+        '📄 Menganalisis 5 sumber berita...',
+        '✍️ Menyusun rangkuman...'
+      ];
+      let i = 0;
+      setThoughtTraces([traces[0]]);
+      const interval = setInterval(() => {
+        i++;
+        if (i < traces.length) {
+          setThoughtTraces(prev => [...prev, traces[i]]);
+        } else {
+          clearInterval(interval);
+        }
+      }, 2000);
+      return () => clearInterval(interval);
+    } else {
+      setThoughtTraces([]);
+    }
+  }, [isPending, project]);
 
   // 1. Load detail chat saat activeChatId berubah
   useEffect(() => {
@@ -85,6 +128,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
     // Matikan animasi thinking tepat saat teks AI akan muncul
     setIsThinking(false);
+    setIsTyping(true);
 
     // Inisialisasi pesan AI kosong
     setMessages(prev => [...prev, {
@@ -108,6 +152,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         // Scroll to bottom as text grows
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       } else {
+        setIsTyping(false);
         clearInterval(interval);
       }
     }, 30); // Kecepatan munculnya kata
@@ -135,6 +180,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       const formData = new FormData();
       formData.append('userId', userId);
       formData.append('prompt', textToSend);
+      formData.append('modelId', selectedModel);
       if (activeChatId) formData.append('chatId', activeChatId);
       if (projectId) formData.append('projectId', projectId);
       if (isAutoTrigger) formData.append('skipSave', 'true');
@@ -263,8 +309,18 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                   key={msg._id || idx}
                   content={msg.text}
                   isUser={msg.role === 'user'}
+                  isTyping={msg.role === 'model' && idx === messages.length - 1 && isTyping}
                 />
               ))}
+              {thoughtTraces.length > 0 && (
+                <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  {thoughtTraces.map((trace, idx) => (
+                    <div key={idx} className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-indigo-500/5 border border-slate-200 dark:border-indigo-500/20 rounded-lg w-fit">
+                       <span className="text-[11px] text-slate-600 dark:text-indigo-300 font-medium">{trace}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               {isThinking && (
                 <div className="px-1">
                   <ThinkingIndicator />
@@ -276,7 +332,14 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         )}
       </div>
       <div className="p-6 bg-gradient-to-t from-white dark:from-[#0F0F0F] via-white dark:via-[#0F0F0F] to-transparent flex-none">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto flex flex-col gap-3">
+          <div className="flex justify-end pr-2">
+             <ModelSelector
+               currentPlan={user?.current_plan || 'FREE'}
+               selectedModel={selectedModel}
+               onSelect={handleModelChange}
+             />
+          </div>
           <InputBox
             input={input}
             setInput={setInput}

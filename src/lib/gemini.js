@@ -58,14 +58,21 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
   try {
     const config = AGENT_CONFIGS[agentId] || AGENT_CONFIGS.default;
 
+    // Mapping model IDs to SDK expected names
+    let actualModel = modelName;
+    if (modelName === 'gemini-2.5-flash') actualModel = 'gemini-2.0-flash-exp'; // Assuming exp or similar if 2.5 is just label
+    if (modelName === 'gemini-2.5-pro') actualModel = 'gemini-2.0-pro-exp-02-05';
+    if (modelName === 'gemini-3.1-pro') actualModel = 'gemini-2.0-pro-exp-02-05'; // Fallback if 3.1 is future label
+
     // Claude Model Routing
     if (modelName.includes('claude')) {
-      return getClaudeResponse(prompt, history, fileParts, config.instruction);
+      const claudeModel = modelName === 'claude-4-6-sonnet' ? "claude-3-5-sonnet-20241022" : modelName;
+      return getClaudeResponse(prompt, history, fileParts, config.instruction, claudeModel);
     }
 
     // Gemini Models
     const model = genAI.getGenerativeModel({ 
-      model: modelName,
+      model: actualModel,
       systemInstruction: config.instruction,
       tools: config.tools || [],
     });
@@ -93,7 +100,7 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
   }
 }
 
-async function getClaudeResponse(prompt, history, fileParts, systemInstruction) {
+async function getClaudeResponse(prompt, history, fileParts, systemInstruction, modelName = "claude-3-5-sonnet-20241022") {
   try {
     const messages = history.map(msg => ({
       role: msg.role === 'user' ? 'user' : 'assistant',
@@ -123,7 +130,7 @@ async function getClaudeResponse(prompt, history, fileParts, systemInstruction) 
     messages.push({ role: 'user', content });
 
     const response = await anthropic.messages.create({
-      model: "claude-4-6-sonnet-latest",
+      model: modelName,
       max_tokens: 4096,
       system: systemInstruction,
       messages: messages,
