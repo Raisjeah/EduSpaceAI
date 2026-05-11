@@ -14,6 +14,11 @@ const snap = new midtransClient.Snap({
 
 export async function createTransaction(planName) {
   try {
+    const validPlans = ['CLASSIC', 'PRO', 'ULTRA'];
+    if (!validPlans.includes(planName)) {
+      throw new Error('Paket tidak valid.');
+    }
+
     await dbConnect();
     const user = await getSessionUser();
 
@@ -25,7 +30,7 @@ export async function createTransaction(planName) {
     const plan = await Plan.findOne({ name: planName }).lean();
 
     if (!plan) {
-      throw new Error('Plan not found');
+      throw new Error('Data paket tidak ditemukan di database.');
     }
 
     const orderId = `SUBS-${Date.now()}-${userId.substring(0, 5)}`;
@@ -44,7 +49,7 @@ export async function createTransaction(planName) {
        }
     }
 
-    const amount = Math.round(finalPrice * 15000);
+    const amount = Math.round(finalPrice);
 
     const parameter = {
       transaction_details: {
@@ -52,7 +57,7 @@ export async function createTransaction(planName) {
         gross_amount: amount,
       },
       customer_details: {
-        first_name: user.name,
+        first_name: user.name || 'User',
         email: user.email,
       },
       item_details: [{

@@ -54,7 +54,7 @@ const AGENT_CONFIGS = {
   }
 };
 
-export async function getGeminiResponse(prompt, history = [], fileParts = [], agentId = 'default', modelName = "gemini-2.5-flash") {
+export async function getGeminiResponse(prompt, history = [], fileParts = [], agentId = 'default', modelName = "gemini-1.5-flash") {
   try {
     const config = AGENT_CONFIGS[agentId] || AGENT_CONFIGS.default;
 
@@ -100,12 +100,24 @@ async function getClaudeResponse(prompt, history, fileParts, systemInstruction) 
       content: msg.parts[0].text
     }));
 
-    // Handle files for Claude (simplified for now, Claude supports images/docs differently)
     let content = [];
+
+    // Handle images for Claude
     if (fileParts.length > 0) {
-      // Logic for adding images/docs to Claude content array
-      // This would need more detailed implementation based on Claude SDK specifics
+      for (const part of fileParts) {
+        if (part.inlineData) {
+          content.push({
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: part.inlineData.mimeType,
+              data: part.inlineData.data,
+            },
+          });
+        }
+      }
     }
+
     content.push({ type: 'text', text: prompt });
 
     messages.push({ role: 'user', content });

@@ -12,7 +12,7 @@ const plans = [
     price: '0',
     icon: <ShieldCheck className="text-slate-400" />,
     features: [
-      'Gemini 2.5 Flash',
+      'Gemini 1.5 Flash',
       '20 pesan / hari',
       'Konteks pendek',
       'Tanpa upload file',
@@ -23,10 +23,10 @@ const plans = [
   {
     id: 'classic',
     name: 'CLASSIC',
-    price: '3.99',
+    price: '50.000',
     icon: <Zap className="text-blue-500" />,
     features: [
-      'Gemini 2.5 Pro',
+      'Gemini 1.5 Pro',
       '150 pesan / hari',
       'Upload File & Gambar',
       'Chat Memory (7 hari)',
@@ -37,10 +37,10 @@ const plans = [
   {
     id: 'pro',
     name: 'PRO',
-    price: '7.99',
+    price: '100.000',
     icon: <Sparkles className="text-purple-500" />,
     features: [
-      'Gemini 3.1 Pro',
+      'Gemini 1.5 Pro',
       '500 pesan / hari',
       'Advanced AI Agent',
       'Workspace Tools',
@@ -52,7 +52,7 @@ const plans = [
   {
     id: 'ultra',
     name: 'ULTRA',
-    price: '14.99',
+    price: '200.000',
     promo: 'DISKON 70% Bulan Pertama',
     icon: <Crown className="text-amber-500" />,
     features: [
@@ -68,7 +68,7 @@ const plans = [
 ];
 
 export default function PricingPage() {
-  const { userId, user, showNotification } = useAuth();
+  const { userId, user, showNotification, fetchUser } = useAuth();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -101,7 +101,7 @@ export default function PricingPage() {
         window.snap.pay(result.snapToken, {
           onSuccess: function(result) {
             showNotification('Pembayaran Berhasil!');
-            window.location.reload();
+            fetchUser(); // Update user state without reload
           },
           onPending: function(result) {
             showNotification('Menunggu pembayaran...');
@@ -164,7 +164,8 @@ export default function PricingPage() {
             </div>
 
             <div className="mb-6">
-              <span className="text-3xl font-extrabold text-slate-900 dark:text-white">${plan.price}</span>
+              <span className="text-slate-900 dark:text-white text-sm font-bold mr-1">Rp</span>
+              <span className="text-3xl font-extrabold text-slate-900 dark:text-white">{plan.price}</span>
               <span className="text-slate-500 dark:text-gray-500 text-sm">/bulan</span>
             </div>
 

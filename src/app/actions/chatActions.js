@@ -5,7 +5,7 @@ import Project from '@/models/Project';
 import UserMemory from '@/models/UserMemory';
 import { getGeminiResponse } from '@/lib/gemini';
 import { extractFileContent } from './fileActions';
-import { checkUsageLimit, getModelByPlan, TIERS } from '@/lib/subscription';
+import { checkUsageLimit, getModelByPlan, TIERS, checkFeatureAccess } from '@/lib/subscription';
 import { getSessionUser } from '@/lib/session';
 
 // 1. Fungsi Simpan Chat
@@ -66,11 +66,17 @@ export async function sendMessage(formData) {
 
     // B. Handle File Upload
     if (file && file.size > 0) {
-      if (user.current_plan === TIERS.FREE) {
-        return { success: false, error: "Upload file hanya tersedia untuk pengguna Premium." };
+      const isImage = file.type.startsWith('image/');
+      const hasAccess = await checkFeatureAccess(user, isImage ? 'image_upload' : 'file_upload');
+
+      if (!hasAccess) {
+        return {
+          success: false,
+          error: isImage ? "Upload gambar hanya tersedia untuk pengguna Premium." : "Upload file hanya tersedia untuk pengguna Premium."
+        };
       }
 
-      if (file.type.startsWith('image/')) {
+      if (isImage) {
         const bytes = await file.arrayBuffer();
         const base64Data = Buffer.from(bytes).toString('base64');
         fileParts.push({
@@ -92,8 +98,9 @@ export async function sendMessage(formData) {
       }
     }
 
-    // C. Long-term Memory for ULTRA
-    if (user.current_plan === TIERS.ULTRA) {
+    // C. Long-term Memory retrieval
+    const hasMemoryAccess = await checkFeatureAccess(user, 'long_memory');
+    if (hasMemoryAccess) {
       const memories = await UserMemory.find({ user_id: userId }).limit(5).sort({ created_at: -1 }).lean();
       if (memories.length > 0) {
         const memoryContext = memories.map(m => `[Memory: ${m.title}]\n${m.content}`).join('\n\n');

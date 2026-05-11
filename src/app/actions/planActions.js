@@ -2,8 +2,16 @@
 
 import dbConnect from '@/lib/mongodb';
 import Plan from '@/models/Plan';
+import { getSessionUser } from '@/lib/session';
 
 export async function seedPlans() {
+  const adminUser = await getSessionUser();
+  // Basic security: only authenticated users can seed.
+  // In a real app, you'd check for an 'admin' role.
+  if (!adminUser) {
+    throw new Error('Unauthorized');
+  }
+
   const plans = [
     {
       name: 'FREE',
@@ -18,7 +26,7 @@ export async function seedPlans() {
     },
     {
       name: 'CLASSIC',
-      price: 3.99,
+      price: 50000,
       duration: 30,
       message_limit: 150,
       image_upload: true,
@@ -29,7 +37,7 @@ export async function seedPlans() {
     },
     {
       name: 'PRO',
-      price: 7.99,
+      price: 100000,
       duration: 30,
       message_limit: 500,
       image_upload: true,
@@ -40,7 +48,7 @@ export async function seedPlans() {
     },
     {
       name: 'ULTRA',
-      price: 14.99,
+      price: 200000,
       duration: 30,
       message_limit: 2000,
       image_upload: true,
