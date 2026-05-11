@@ -35,7 +35,7 @@ export default function UpgradeModal({ isOpen, onClose, featureName, limit }) {
           <div className="space-y-3">
             <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-gray-300">
               <CheckCircle2 size={18} className="text-indigo-500" />
-              <span>Model AI Tercanggih (Gemini 3.1 & Claude)</span>
+              <span>Model AI Tercanggih (Gemini 3.1 & Claude 4.6)</span>
             </div>
             <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-gray-300">
               <CheckCircle2 size={18} className="text-indigo-500" />

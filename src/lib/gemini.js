@@ -54,7 +54,7 @@ const AGENT_CONFIGS = {
   }
 };
 
-export async function getGeminiResponse(prompt, history = [], fileParts = [], agentId = 'default', modelName = "gemini-1.5-flash") {
+export async function getGeminiResponse(prompt, history = [], fileParts = [], agentId = 'default', modelName = "gemini-2.5-flash") {
   try {
     const config = AGENT_CONFIGS[agentId] || AGENT_CONFIGS.default;
 
@@ -123,7 +123,7 @@ async function getClaudeResponse(prompt, history, fileParts, systemInstruction) 
     messages.push({ role: 'user', content });
 
     const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-latest",
+      model: "claude-4-6-sonnet-latest",
       max_tokens: 4096,
       system: systemInstruction,
       messages: messages,

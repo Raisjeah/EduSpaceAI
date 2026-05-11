@@ -12,7 +12,7 @@ const plans = [
     price: '0',
     icon: <ShieldCheck className="text-slate-400" />,
     features: [
-      'Gemini 1.5 Flash',
+      'Gemini 2.5 Flash',
       '20 pesan / hari',
       'Konteks pendek',
       'Tanpa upload file',
@@ -26,7 +26,7 @@ const plans = [
     price: '50.000',
     icon: <Zap className="text-blue-500" />,
     features: [
-      'Gemini 1.5 Pro',
+      'Gemini 2.5 Pro',
       '150 pesan / hari',
       'Upload File & Gambar',
       'Chat Memory (7 hari)',
@@ -40,7 +40,7 @@ const plans = [
     price: '100.000',
     icon: <Sparkles className="text-purple-500" />,
     features: [
-      'Gemini 1.5 Pro',
+      'Gemini 3.1 Pro',
       '500 pesan / hari',
       'Advanced AI Agent',
       'Workspace Tools',
@@ -56,7 +56,7 @@ const plans = [
     promo: 'DISKON 70% Bulan Pertama',
     icon: <Crown className="text-amber-500" />,
     features: [
-      'Claude 3.5 Sonnet',
+      'Claude 4.6 Sonnet',
       'Unlimited Fair Usage',
       'Long-term Project Memory',
       'Smart Project Tracking',

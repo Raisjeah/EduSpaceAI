@@ -10,10 +10,10 @@ export const TIERS = {
 };
 
 export const MODELS = {
-  [TIERS.FREE]: 'gemini-1.5-flash',
-  [TIERS.CLASSIC]: 'gemini-1.5-pro',
-  [TIERS.PRO]: 'gemini-1.5-pro',
-  [TIERS.ULTRA]: 'claude-3-5-sonnet-latest',
+  [TIERS.FREE]: 'gemini-2.5-flash',
+  [TIERS.CLASSIC]: 'gemini-2.5-pro',
+  [TIERS.PRO]: 'gemini-3.1-pro',
+  [TIERS.ULTRA]: 'claude-4-6-sonnet-latest',
 };
 
 export function getModelByPlan(userPlan) {
