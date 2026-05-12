@@ -52,8 +52,9 @@ const Mermaid = ({ chart }) => {
     <div
       ref={chartRef}
       className="mermaid-container w-full overflow-x-auto flex justify-center bg-white dark:bg-[#1A1A1A] p-6 rounded-2xl border border-slate-200 dark:border-[#333] shadow-sm my-4 transition-colors"
-      dangerouslySetInnerHTML={{ __html: svg }}
-    />
+    >
+      <div dangerouslySetInnerHTML={{ __html: svg }} />
+    </div>
   );
 };
 

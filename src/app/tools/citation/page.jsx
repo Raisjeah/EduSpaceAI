@@ -88,8 +88,17 @@ export default function CitationPage() {
               disabled={!input.trim() || isPending}
               className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-indigo-900/20 flex items-center justify-center gap-2"
             >
-              {isPending ? <RefreshCcw size={20} className="animate-spin" /> : <Send size={20} />}
-              {isPending ? 'Sedang Memproses...' : 'Generate Sitasi'}
+              {isPending ? (
+                <>
+                  <RefreshCcw size={20} className="animate-spin" />
+                  <span>Sedang Memproses...</span>
+                </>
+              ) : (
+                <>
+                  <Send size={20} />
+                  <span>Generate Sitasi</span>
+                </>
+              )}
             </button>
           </div>
 
