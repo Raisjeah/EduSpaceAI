@@ -49,10 +49,11 @@ export default function MainLayout({ children }) {
   const isHomePage = pathname === '/';
   const isPricingPage = pathname === '/pricing';
   const isLegalPage = pathname === '/terms' || pathname === '/privacy';
+  const isChatRoute = pathname.startsWith('/chat') || pathname.startsWith('/project');
   const isPublicPage = isAuthPage || isHomePage || isPricingPage || isLegalPage;
 
-  // Loading state untuk halaman internal
-  if (isLoading && !isPublicPage) {
+  // Loading state untuk halaman internal (Kecuali Chat/Project agar Sidebar tetap muncul)
+  if (isLoading && !isPublicPage && !isChatRoute) {
     return (
       <div className="flex h-[100dvh] w-full items-center justify-center bg-white dark:bg-[#0F0F0F]">
         <div className="flex flex-col items-center gap-4">

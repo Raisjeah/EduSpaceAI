@@ -10,7 +10,7 @@ export default function ChatPage() {
   const searchParams = useSearchParams();
   const projectId = searchParams.get('projectId');
 
-  if (isLoading) return null;
-
+  // Jangan return null agar Sidebar & Header di MainLayout tetap sinkron
+  // ChatView sudah menangani loading state internalnya sendiri
   return <ChatView userId={userId} activeChatId={chatId} projectId={projectId} />;
 }
