@@ -48,7 +48,7 @@ export default function LandingPage() {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-sm font-semibold mb-8 transition-colors"
           >
             <Sparkles size={16} />
-            <span>Asisten Riset Akademik AI Terdepan</span>
+            <span>EduSpaceAI v1.2 - Asisten Riset Akademik AI Terdepan</span>
           </motion.div>
 
           <motion.h1
@@ -139,7 +139,10 @@ export default function LandingPage() {
                 <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-6 text-indigo-500">
                   <Search size={24} />
                 </div>
-                <h3 className="text-2xl md:text-3xl font-bold mb-4">Deep Search</h3>
+                <h3 className="text-2xl md:text-3xl font-bold mb-4 flex items-center gap-3">
+                  Deep Search
+                  <span className="px-2 py-0.5 text-[10px] bg-indigo-600 text-white rounded-full uppercase tracking-wider animate-pulse">New</span>
+                </h3>
                 <p className="text-slate-500 dark:text-gray-400 text-lg max-w-md mb-8">
                   Melakukan pencarian mendalam ke berbagai sumber jurnal dan referensi akademik untuk memberikan jawaban yang akurat dan berbasis data.
                 </p>
@@ -158,7 +161,10 @@ export default function LandingPage() {
               <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center mb-6 text-purple-500">
                 <Zap size={24} />
               </div>
-              <h3 className="text-xl font-bold mb-3">Multi-model Switching</h3>
+              <h3 className="text-xl font-bold mb-3 flex items-center gap-2">
+                Multi-model Switching
+                <span className="px-2 py-0.5 text-[9px] bg-purple-600 text-white rounded-full uppercase tracking-wider">New</span>
+              </h3>
               <p className="text-slate-500 dark:text-gray-400 text-sm">
                 Pindah antar model AI terbaik (Gemini & Claude) sesuai dengan kebutuhan analisis Anda secara instan.
               </p>

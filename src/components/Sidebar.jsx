@@ -57,8 +57,8 @@ export default function Sidebar({
     );
   }, [chatGroups, searchQuery]);
 
-  const closeSidebarOnMobile = () => {
-    if (window.innerWidth < 768) setIsSidebarOpen(false);
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
   };
 
   const handleLogout = async () => {
@@ -85,12 +85,12 @@ export default function Sidebar({
         fixed top-0 left-0 h-full z-50 bg-white dark:bg-[#0F0F0F] border-r border-slate-200 dark:border-[#1E1E1E]
         transform transition-transform duration-300 ease-in-out flex-shrink-0
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        w-[260px] md:relative md:translate-x-0 md:w-[260px] transition-colors duration-200
+        w-[280px] transition-colors duration-200
       `}>
         <div className="flex flex-col h-full p-4">
           {/* Header / Brand */}
           <div className="flex items-center justify-between mb-6 px-2">
-            <Link href="/" className="flex items-center gap-2" onClick={closeSidebarOnMobile}>
+            <Link href="/" className="flex items-center gap-2" onClick={closeSidebar}>
               <div className="w-10 h-10 flex items-center justify-center">
                 <img
                   src="/logo.png"
@@ -100,7 +100,7 @@ export default function Sidebar({
               </div>
               <span className="font-bold text-[14px] text-slate-900 dark:text-white tracking-tight transition-colors">EduSpaceAI</span>
             </Link>
-            <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+            <button onClick={() => setIsSidebarOpen(false)} className="text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors">
               <Menu size={18} />
             </button>
           </div>
@@ -109,13 +109,13 @@ export default function Sidebar({
           <div className="flex flex-col gap-2 mb-6">
             <Link
               href="/"
-              onClick={closeSidebarOnMobile}
+              onClick={closeSidebar}
               className="flex items-center justify-center gap-2 w-full py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all text-white shadow-lg shadow-indigo-900/20"
             >
               <Plus size={16} /> <span className="text-[12px] font-semibold">Percakapan Baru</span>
             </Link>
             <button
-              onClick={() => { setIsProjectModalOpen(true); closeSidebarOnMobile(); }}
+              onClick={() => { setIsProjectModalOpen(true); closeSidebar(); }}
               className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-100 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] hover:bg-slate-200 dark:hover:bg-[#242424] rounded-xl transition-all text-slate-600 dark:text-gray-300"
             >
               <Briefcase size={14} /> <span className="text-[11px] font-semibold">Agent Baru</span>
@@ -126,7 +126,7 @@ export default function Sidebar({
           <nav className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <Link
               href="/tools"
-              onClick={closeSidebarOnMobile}
+              onClick={closeSidebar}
               className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all text-[12px] mb-2 ${
                 pathname === '/tools'
                 ? 'bg-slate-100 dark:bg-[#1A1A1A] text-slate-900 dark:text-white'
@@ -149,7 +149,7 @@ export default function Sidebar({
                       <Link
                         key={project._id}
                         href={`/project/${project._id}`}
-                        onClick={closeSidebarOnMobile}
+                        onClick={closeSidebar}
                         className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[11px] transition-all ${
                           isActive ? 'bg-indigo-600/10 text-indigo-600 dark:text-white border-l-2 border-indigo-500' : 'text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-[#151515] hover:text-slate-900 dark:hover:text-gray-200'
                         }`}
@@ -183,7 +183,7 @@ export default function Sidebar({
                     <Link
                       key={group._id}
                       href={href}
-                      onClick={closeSidebarOnMobile}
+                      onClick={closeSidebar}
                       className={`group flex items-center gap-3 px-3 py-3 text-[12px] rounded-xl cursor-pointer transition-all border-l-4 ${
                         isActive
                         ? 'bg-slate-100 dark:bg-[#1A1A1A] text-slate-900 dark:text-white border-indigo-500'
@@ -230,7 +230,7 @@ export default function Sidebar({
               <div className="px-2">
                 <Link
                   href="/auth/login"
-                  onClick={closeSidebarOnMobile}
+                  onClick={closeSidebar}
                   className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-100 dark:bg-[#1A1A1A] hover:bg-slate-200 dark:hover:bg-[#252525] border border-slate-200 dark:border-[#2A2A2A] text-slate-700 dark:text-gray-200 rounded-xl transition-all text-[12px] font-semibold"
                 >
                   Login / Daftar
