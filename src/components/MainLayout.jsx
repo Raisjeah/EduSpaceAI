@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
+import LoadingScreen from '@/components/LoadingScreen';
 import useAuth from '@/hooks/useAuth';
 import Toast from '@/components/Toast';
 
@@ -49,19 +50,9 @@ export default function MainLayout({ children }) {
   const isHomePage = pathname === '/';
   const isPricingPage = pathname === '/pricing';
   const isLegalPage = pathname === '/terms' || pathname === '/privacy';
-  const isChatRoute = pathname.startsWith('/chat') || pathname.startsWith('/project');
-  const isPublicPage = isAuthPage || isHomePage || isPricingPage || isLegalPage;
-
-  // Loading state untuk halaman internal (Kecuali Chat/Project agar Sidebar tetap muncul)
-  if (isLoading && !isPublicPage && !isChatRoute) {
-    return (
-      <div className="flex h-[100dvh] w-full items-center justify-center bg-white dark:bg-[#0F0F0F]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-slate-500 dark:text-gray-400 font-medium animate-pulse text-sm">Menyiapkan EduSpaceAI...</p>
-        </div>
-      </div>
-    );
+  // Loading state - harus menutupi SEMUA hal tanpa terkecuali jika isLoading true
+  if (isLoading) {
+    return <LoadingScreen />;
   }
 
   // Jika di halaman auth, tampilkan children saja tanpa sidebar/header
