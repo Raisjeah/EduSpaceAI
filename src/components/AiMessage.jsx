@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { ThumbsUp, ThumbsDown, Copy, Check } from 'lucide-react';
+import Mermaid from './Mermaid';
 import 'katex/dist/katex.min.css';
 
 export default function AiMessage({ content, isUser = false, isTyping = false }) {
@@ -28,7 +29,22 @@ export default function AiMessage({ content, isUser = false, isTyping = false })
         <div className="w-fit max-w-[85%] flex flex-row-reverse gap-4">
           <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 backdrop-blur-md text-white rounded-tr-none leading-relaxed transition-all">
             <div className="markdown-content prose prose-invert prose-sm max-w-none leading-relaxed">
-              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+              <ReactMarkdown
+                remarkPlugins={[remarkMath]}
+                rehypePlugins={[rehypeKatex]}
+                components={{
+                  code({ node, inline, className, children, ...props }) {
+                    const match = /language-(\w+)/.exec(className || '');
+                    return !inline && match && match[1] === 'mermaid' ? (
+                      <Mermaid chart={String(children).replace(/\n$/, '')} />
+                    ) : (
+                      <code className={className} {...props}>
+                        {children}
+                      </code>
+                    );
+                  }
+                }}
+              >
                 {content}
               </ReactMarkdown>
             </div>
@@ -43,7 +59,22 @@ export default function AiMessage({ content, isUser = false, isTyping = false })
       <div className="w-full max-w-none flex flex-col">
         <div className="py-6 w-full leading-relaxed transition-all">
           <div className="markdown-content prose dark:prose-invert prose-base text-base max-w-none leading-relaxed">
-            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+            <ReactMarkdown
+              remarkPlugins={[remarkMath]}
+              rehypePlugins={[rehypeKatex]}
+              components={{
+                code({ node, inline, className, children, ...props }) {
+                  const match = /language-(\w+)/.exec(className || '');
+                  return !inline && match && match[1] === 'mermaid' ? (
+                    <Mermaid chart={String(children).replace(/\n$/, '')} />
+                  ) : (
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  );
+                }
+              }}
+            >
               {content}
             </ReactMarkdown>
           </div>

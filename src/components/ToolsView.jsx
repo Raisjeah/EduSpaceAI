@@ -1,13 +1,15 @@
-import { FileText, BookOpen, FileSpreadsheet, BrainCircuit, Edit3 } from 'lucide-react';
+import { FileText, BookOpen, FileSpreadsheet, BrainCircuit, Edit3, Share2, Quote } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ToolsView() {
   const tools = [
-    { id: 'pdf', title: 'Edit & Analisis PDF', icon: <FileText size={24} className="text-red-400" />, desc: 'Ekstrak teks PDF ke dalam editor lalu analisis.' },
-    { id: 'doc', title: 'Edit & Analisis DOC', icon: <BookOpen size={24} className="text-blue-400" />, desc: 'Buka dokumen teks, edit manual, minta saran AI.' },
-    { id: 'xls', title: 'Data Excel / CSV', icon: <FileSpreadsheet size={24} className="text-green-400" />, desc: 'Upload CSV, edit data, dan buat kesimpulan.' },
-    { id: 'skripsi', title: 'Asisten Skripsi', icon: <BrainCircuit size={24} className="text-indigo-400" />, desc: 'AI akan bertindak sebagai Dosen Pembimbing.' },
-    { id: 'soal', title: 'Generator Soal', icon: <Edit3 size={24} className="text-amber-400" />, desc: 'Buat soal kuis dari materi yang kamu miliki.' },
+    { id: 'pdf', title: 'Edit & Analisis PDF', icon: <FileText size={24} className="text-red-400" />, desc: 'Ekstrak teks PDF ke dalam editor lalu analisis.', type: 'editor' },
+    { id: 'doc', title: 'Edit & Analisis DOC', icon: <BookOpen size={24} className="text-blue-400" />, desc: 'Buka dokumen teks, edit manual, minta saran AI.', type: 'editor' },
+    { id: 'xls', title: 'Data Excel / CSV', icon: <FileSpreadsheet size={24} className="text-green-400" />, desc: 'Upload CSV, edit data, dan buat kesimpulan.', type: 'editor' },
+    { id: 'skripsi', title: 'Asisten Skripsi', icon: <BrainCircuit size={24} className="text-indigo-400" />, desc: 'AI akan bertindak sebagai Dosen Pembimbing.', type: 'editor' },
+    { id: 'soal', title: 'Generator Soal', icon: <Edit3 size={24} className="text-amber-400" />, desc: 'Buat kuis dari materi yang kamu miliki.', type: 'editor' },
+    { id: 'visualizer', title: 'Concept Mapper', icon: <Share2 size={24} className="text-purple-400" />, desc: 'Ubah teks menjadi diagram visual (Flowchart/Mindmap).', type: 'editor' },
+    { id: 'citation', title: 'Citation Generator', icon: <Quote size={24} className="text-pink-400" />, desc: 'Buat sitasi otomatis (APA, MLA, IEEE, dll) dari sumber.', type: 'tool', link: '/tools/citation' },
   ];
 
   return (
@@ -19,7 +21,7 @@ export default function ToolsView() {
         {tools.map(tool => (
           <Link
             key={tool.id} 
-            href={`/editor/${tool.id}`}
+            href={tool.type === 'editor' ? `/editor/${tool.id}` : tool.link}
             className="bg-slate-50 dark:bg-[#242424] p-5 rounded-[1.5rem] border border-slate-200 dark:border-[#333] hover:border-indigo-500/50 cursor-pointer transition-all group block"
           >
             <div className="w-12 h-12 rounded-xl bg-white dark:bg-[#1A1A1A] border border-slate-100 dark:border-transparent flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-sm">
