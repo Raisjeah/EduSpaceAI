@@ -8,7 +8,6 @@ export default function ProjectPage() {
   const { userId, isLoading } = useAuth();
   const { projectId } = useParams();
 
-  if (isLoading) return null;
-
+  // Biarkan ChatView menangani loading state-nya sendiri
   return <ChatView userId={userId} projectId={projectId} />;
 }

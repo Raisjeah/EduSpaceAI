@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef, useTransition } from 'react';
-import { ChevronDown, Plus, Send, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDown, Plus, Send, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File } from 'lucide-react';
 import { sendMessage, getChatDetails } from '@/app/actions/chatActions';
 import { getProjectDetails } from '@/app/actions/projectActions';
 import AiMessage from './AiMessage';
@@ -37,7 +38,9 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     if (chatCache && chatCache.chatId === activeChatId) {
       return false;
     }
-    return !!activeChatId;
+    // Jika ada activeChatId tapi tidak ada di cache, berarti ini load chat lama
+    // Kita set false dulu, biar logic useEffect yang handle loading-nya jika memang butuh
+    return false;
   });
   const chatEndRef = useRef(null);
   const router = useRouter();
@@ -101,8 +104,10 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         return;
       }
 
-      setIsLoadingChat(true);
-      setMessages([]); // Clear messages immediately to avoid ghosting
+      // Hanya tampilkan loading jika messages memang kosong (bukan dari cache)
+      if (messages.length === 0) {
+        setIsLoadingChat(true);
+      }
 
       getChatDetails(activeChatId, userId).then(res => {
         setMessages(res);
@@ -369,8 +374,23 @@ function SuggestionChip({ label, icon, onClick, isLink }) {
 }
 
 function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile }) {
+  const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
   const textareaRef = useRef(null);
+  const actionSheetRef = useRef(null);
+
+  // Close action sheet when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (actionSheetRef.current && !actionSheetRef.current.contains(event.target)) {
+        setIsActionSheetOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Auto-expand textarea
   useEffect(() => {
@@ -383,42 +403,128 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Create a preview URL if it's an image
+      if (file.type.startsWith('image/')) {
+        file.preview = URL.createObjectURL(file);
+      }
       setSelectedFile(file);
+      setIsActionSheetOpen(false);
     }
   };
 
   return (
-    <div className="flex flex-col w-full">
-      {selectedFile && (
-        <div className="flex items-center gap-2 mb-2 ml-2 p-2 bg-slate-100 dark:bg-[#2A2A2A] rounded-xl w-fit border border-indigo-500/30 transition-colors">
-          {selectedFile.type.startsWith('image/') ? (
-            <ImageIcon size={16} className="text-indigo-400" />
-          ) : (
-            <FileText size={16} className="text-indigo-400" />
-          )}
-          <span className="text-[11px] text-slate-600 dark:text-gray-300 truncate max-w-[150px]">{selectedFile.name}</span>
-          <button
-            onClick={() => setSelectedFile(null)}
-            className="hover:text-red-400 text-gray-500 dark:text-gray-400 transition-colors"
+    <div className="flex flex-col w-full relative">
+      <AnimatePresence>
+        {isActionSheetOpen && (
+          <motion.div
+            ref={actionSheetRef}
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            className="absolute bottom-full left-0 mb-4 w-56 bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2A2A2A] rounded-2xl shadow-2xl p-2 z-50 backdrop-blur-xl bg-white/90 dark:bg-[#1A1A1A]/90"
           >
-            <X size={14} />
-          </button>
-        </div>
-      )}
+            <div className="flex flex-col gap-1">
+              <button
+                onClick={() => cameraInputRef.current?.click()}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-[#252525] rounded-xl transition-all text-left group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center text-pink-500 group-hover:scale-110 transition-transform">
+                  <Camera size={18} />
+                </div>
+                <span className="text-sm font-medium text-slate-700 dark:text-gray-200">Kamera</span>
+              </button>
+
+              <button
+                onClick={() => galleryInputRef.current?.click()}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-[#252525] rounded-xl transition-all text-left group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                  <ImageIcon size={18} />
+                </div>
+                <span className="text-sm font-medium text-slate-700 dark:text-gray-200">Galeri</span>
+              </button>
+
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-[#252525] rounded-xl transition-all text-left group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
+                  <FileText size={18} />
+                </div>
+                <span className="text-sm font-medium text-slate-700 dark:text-gray-200">Dokumen/File</span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {selectedFile && (
+          <motion.div
+            initial={{ opacity: 0, y: 5, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 5, scale: 0.9 }}
+            className="flex items-center gap-3 mb-3 ml-1 p-2 bg-slate-50 dark:bg-[#1A1A1A] rounded-2xl w-fit border border-slate-200 dark:border-[#2A2A2A] shadow-sm group"
+          >
+            {selectedFile.preview ? (
+              <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 dark:border-[#333]">
+                <img src={selectedFile.preview} alt="preview" className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500 border border-indigo-500/20">
+                <FileText size={20} />
+              </div>
+            )}
+            <div className="flex flex-col min-w-0 pr-2">
+              <span className="text-[11px] font-semibold text-slate-700 dark:text-gray-200 truncate max-w-[150px]">{selectedFile.name}</span>
+              <span className="text-[9px] text-slate-400 dark:text-gray-500 uppercase">{(selectedFile.size / 1024).toFixed(0)} KB • {selectedFile.type.split('/')[1] || 'FILE'}</span>
+            </div>
+            <button
+              onClick={() => setSelectedFile(null)}
+              className="w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 dark:bg-[#2A2A2A] text-slate-500 dark:text-gray-400 hover:bg-red-500 hover:text-white transition-all shadow-sm"
+            >
+              <X size={12} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="relative bg-slate-100 dark:bg-[#1E1E1E] rounded-2xl p-2 flex items-end gap-1 border border-slate-200 dark:border-[#2A2A2A] focus-within:border-indigo-500/50 transition-all shadow-2xl">
         <button
-          onClick={() => fileInputRef.current?.click()}
-          className="w-10 h-10 flex items-center justify-center text-slate-400 dark:text-gray-500 hover:text-indigo-400 transition-colors shrink-0"
+          onClick={() => setIsActionSheetOpen(!isActionSheetOpen)}
+          className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
+            isActionSheetOpen
+            ? 'bg-indigo-600 text-white rotate-45'
+            : 'text-slate-400 dark:text-gray-500 hover:text-indigo-400'
+          }`}
         >
           <Plus size={20} />
         </button>
+
+        {/* Hidden Inputs */}
+        <input
+          type="file"
+          ref={cameraInputRef}
+          onChange={handleFileChange}
+          className="hidden"
+          accept="image/*"
+          capture="environment"
+        />
+        <input
+          type="file"
+          ref={galleryInputRef}
+          onChange={handleFileChange}
+          className="hidden"
+          accept="image/*,video/*"
+        />
         <input
           type="file"
           ref={fileInputRef}
           onChange={handleFileChange}
           className="hidden"
-          accept="image/*,.pdf,.doc,.docx,.txt,.csv"
+          accept=".pdf,.doc,.docx,.txt,.csv"
         />
+
         <textarea
           ref={textareaRef}
           value={input}
