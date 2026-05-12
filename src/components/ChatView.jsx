@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useTransition } from 'react';
+import { useChat } from '@/context/ChatContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Plus, Send, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File } from 'lucide-react';
 import { sendMessage, getChatDetails } from '@/app/actions/chatActions';
@@ -13,35 +14,34 @@ import UpgradeModal from './UpgradeModal';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-// Cache untuk transisi dari chat kosong ke chatID baru
-// Membantu menghindari flash "Memuat percakapan..." dan menjaga typewriter effect
-let chatCache = null;
-
 export default function ChatView({ userId, activeChatId, projectId }) {
   const { user } = useAuth();
+  const {
+    chatData,
+    setChatMessages,
+    setChatStatus,
+    runTypewriter,
+    migrateNewChatToId,
+    clearChat
+  } = useChat();
+
+  const currentChat = chatData[activeChatId || 'new'] || { messages: [], isThinking: false, isTyping: false };
+  const messages = currentChat.messages;
+  const isThinking = currentChat.isThinking;
+  const isTyping = currentChat.isTyping;
+
+  const setMessages = (msgs) => setChatMessages(activeChatId, msgs);
+  const setIsThinking = (val) => setChatStatus(activeChatId, { isThinking: val });
+  const setIsTyping = (val) => setChatStatus(activeChatId, { isTyping: val });
+
   const [input, setInput] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
-  const [messages, setMessages] = useState(() => {
-    if (chatCache && chatCache.chatId === activeChatId) {
-      return chatCache.messages;
-    }
-    return [];
-  });
   const [project, setProject] = useState(null);
   const [isPending, startTransition] = useTransition();
-  const [isThinking, setIsThinking] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
   const [thoughtTraces, setThoughtTraces] = useState([]);
   const [upgradeModal, setUpgradeModal] = useState({ isOpen: false, feature: '' });
-  const [isLoadingChat, setIsLoadingChat] = useState(() => {
-    if (chatCache && chatCache.chatId === activeChatId) {
-      return false;
-    }
-    // Jika ada activeChatId tapi tidak ada di cache, berarti ini load chat lama
-    // Kita set false dulu, biar logic useEffect yang handle loading-nya jika memang butuh
-    return false;
-  });
+  const [isLoadingChat, setIsLoadingChat] = useState(false);
   const chatEndRef = useRef(null);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -96,21 +96,18 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   // 1. Load detail chat saat activeChatId berubah
   useEffect(() => {
     if (activeChatId && userId) {
-      // Jika ada di cache, berarti baru saja redirect dari chat baru
-      if (chatCache && chatCache.chatId === activeChatId) {
-        const cachedResponse = chatCache.aiResponse;
-        chatCache = null; // Clear cache
-        runTypewriter(cachedResponse);
-        return;
-      }
-
-      // Hanya tampilkan loading jika messages memang kosong (bukan dari cache)
+      // Hanya tampilkan loading jika messages memang kosong
+      // (Bisa jadi sudah ada pesan optimis, jadi jangan flash loading)
       if (messages.length === 0) {
         setIsLoadingChat(true);
       }
 
       getChatDetails(activeChatId, userId).then(res => {
-        setMessages(res);
+        // Jangan menimpa jika sedang ada proses pengetikan AI (mencegah jumpy UI)
+        setChatMessages(activeChatId, prev => {
+          if (prev.length > 0 && (isTyping || isThinking)) return prev;
+          return res;
+        });
         setIsLoadingChat(false);
 
         // Jika dari mode analisa, trigger AI untuk pesan terakhir
@@ -119,7 +116,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         }
       });
     } else if (!activeChatId) {
-      setMessages([]);
+      // Jika di halaman home (/), pastikan state 'new' bersih
+      clearChat('new');
       setIsLoadingChat(false);
     }
   }, [activeChatId, userId, isAnalyzing]);
@@ -128,40 +126,6 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isPending]);
 
-  const runTypewriter = (fullResponse) => {
-    const aiMessageId = (Date.now() + 1).toString();
-
-    // Matikan animasi thinking tepat saat teks AI akan muncul
-    setIsThinking(false);
-    setIsTyping(true);
-
-    // Inisialisasi pesan AI kosong
-    setMessages(prev => [...prev, {
-      role: 'model',
-      text: '',
-      _id: aiMessageId
-    }]);
-
-    // Simulasi kata demi kata
-    const words = fullResponse.split(' ');
-    let currentText = '';
-    let wordIndex = 0;
-
-    const interval = setInterval(() => {
-      if (wordIndex < words.length) {
-        currentText += (wordIndex === 0 ? '' : ' ') + words[wordIndex];
-        setMessages(prev => prev.map(m =>
-          m._id === aiMessageId ? { ...m, text: currentText } : m
-        ));
-        wordIndex++;
-        // Scroll to bottom as text grows
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        setIsTyping(false);
-        clearInterval(interval);
-      }
-    }, 30); // Kecepatan munculnya kata
-  };
 
   const handleSend = async (overrideInput, isAutoTrigger = false) => {
     const textToSend = overrideInput || input;
@@ -195,29 +159,16 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
       if (result.success) {
         if (!activeChatId) {
-          // Simpan hasil ke cache agar saat redirect (halaman remount),
-          // data tidak hilang dan tidak flash loading
-          chatCache = {
-            chatId: result.chatId,
-            messages: [...messages, {
-              role: 'user',
-              text: textToSend || (fileToUpload ? `[File: ${fileToUpload.name}]` : ''),
-              _id: Date.now().toString()
-            }],
-            aiResponse: result.aiResponse,
-            projectId: projectId
-          };
-
+          migrateNewChatToId(result.chatId);
           const targetUrl = projectId
             ? `/chat/${result.chatId}?projectId=${projectId}`
             : `/chat/${result.chatId}`;
 
           router.push(targetUrl, { scroll: false });
-          return; // Biarkan instansi baru yang menangani typewriter
         }
 
         // --- TYPEWRITER EFFECT ---
-        runTypewriter(result.aiResponse);
+        runTypewriter(result.aiResponse, !activeChatId ? result.chatId : activeChatId);
       } else {
         setIsThinking(false);
         if (result.error?.includes('Batas')) {
