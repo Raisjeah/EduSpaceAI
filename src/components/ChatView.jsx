@@ -168,7 +168,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         }
 
         // --- TYPEWRITER EFFECT ---
-        runTypewriter(result.aiResponse, !activeChatId ? result.chatId : activeChatId);
+        runTypewriter(!activeChatId ? result.chatId : activeChatId, result.aiResponse);
       } else {
         setIsThinking(false);
         if (result.error?.includes('Batas')) {
