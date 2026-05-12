@@ -48,8 +48,13 @@ export default function MainLayout({ children }) {
   const isAuthPage = pathname.startsWith('/auth');
 
   const isHomePage = pathname === '/';
+  const isChatPage = pathname.startsWith('/chat');
   const isPricingPage = pathname === '/pricing';
   const isLegalPage = pathname === '/terms' || pathname === '/privacy';
+
+  // Key untuk AnimatePresence agar transisi dari "/" ke "/chat/:id" tidak re-render layout
+  const layoutKey = (isHomePage || isChatPage) ? 'chat-view' : pathname;
+
   // Loading state - harus menutupi SEMUA hal tanpa terkecuali jika isLoading true
   if (isLoading) {
     return <LoadingScreen />;
@@ -90,7 +95,7 @@ export default function MainLayout({ children }) {
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
           <AnimatePresence mode="wait">
             <motion.div
-              key={pathname}
+              key={layoutKey}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}

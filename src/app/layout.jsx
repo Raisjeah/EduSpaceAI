@@ -2,6 +2,7 @@ import '@/styles/globals.css'
 import { Inter } from 'next/font/google'
 import MainLayout from '@/components/MainLayout'
 import { AuthProvider } from '@/context/AuthContext'
+import { ChatProvider } from '@/context/ChatContext'
 import ThemeProvider from '@/components/ThemeProvider'
 import Script from 'next/script'
 
@@ -21,7 +22,9 @@ export default function RootLayout({ children }) {
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
           <AuthProvider>
-            <MainLayout>{children}</MainLayout>
+            <ChatProvider>
+              <MainLayout>{children}</MainLayout>
+            </ChatProvider>
           </AuthProvider>
         </ThemeProvider>
         <Script src="https://accounts.google.com/gsi/client" strategy="beforeInteractive" />
