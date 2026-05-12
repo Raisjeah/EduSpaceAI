@@ -24,7 +24,7 @@ export default function Header({ setIsSidebarOpen }) {
               <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white hidden sm:block">EduSpaceAI</span>
           </Link>
         ) : (
-          <button onClick={() => setIsSidebarOpen(true)} className="text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors md:hidden">
+          <button onClick={() => setIsSidebarOpen(true)} className="text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors">
             <Menu size={20} />
           </button>
         )}

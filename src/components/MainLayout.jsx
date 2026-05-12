@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import useAuth from '@/hooks/useAuth';
@@ -23,8 +24,9 @@ export default function MainLayout({ children }) {
 
   // Handle Redirection
   useEffect(() => {
-    if (hasMounted && !isLoading) {
-      const isAuthPage = pathname.startsWith('/auth');
+    if (!hasMounted || isLoading) return;
+
+    const isAuthPage = pathname.startsWith('/auth');
       const isHomePage = pathname === '/';
       const isPricingPage = pathname === '/pricing';
       const isLegalPage = pathname === '/terms' || pathname === '/privacy';
@@ -37,13 +39,29 @@ export default function MainLayout({ children }) {
       else if (userId && isAuthPage) {
         router.push('/');
       }
-    }
   }, [userId, isLoading, pathname, router, hasMounted]);
 
   // Mencegah Hydration Error
   if (!hasMounted) return null;
 
   const isAuthPage = pathname.startsWith('/auth');
+
+  const isHomePage = pathname === '/';
+  const isPricingPage = pathname === '/pricing';
+  const isLegalPage = pathname === '/terms' || pathname === '/privacy';
+  const isPublicPage = isAuthPage || isHomePage || isPricingPage || isLegalPage;
+
+  // Loading state untuk halaman internal
+  if (isLoading && !isPublicPage) {
+    return (
+      <div className="flex h-[100dvh] w-full items-center justify-center bg-white dark:bg-[#0F0F0F]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-slate-500 dark:text-gray-400 font-medium animate-pulse text-sm">Menyiapkan EduSpaceAI...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Jika di halaman auth, tampilkan children saja tanpa sidebar/header
   if (isAuthPage) {
@@ -60,10 +78,10 @@ export default function MainLayout({ children }) {
         />
       )}
 
-      {/* Overlay Sidebar untuk Mobile */}
+      {/* Overlay Sidebar */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -78,7 +96,18 @@ export default function MainLayout({ children }) {
         <Header setIsSidebarOpen={setIsSidebarOpen} />
 
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
-          {children}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className="flex-1 flex flex-col min-h-0"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
     </div>
