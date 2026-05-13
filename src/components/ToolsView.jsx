@@ -13,11 +13,11 @@ export default function ToolsView() {
   ];
 
   return (
-    <div className="p-8 max-w-4xl mx-auto h-full overflow-y-auto custom-scrollbar transition-colors duration-200">
+    <div className="p-4 md:p-8 max-w-4xl mx-auto h-full overflow-y-auto custom-scrollbar transition-colors duration-200">
       <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Workspace & Tools</h2>
       <p className="text-[12px] text-slate-500 dark:text-gray-400 mb-8">Pilih tipe file untuk masuk ke Dashboard Editor, atau gunakan fitur asisten akademik.</p>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {tools.map(tool => (
           <Link
             key={tool.id} 

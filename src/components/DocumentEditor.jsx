@@ -155,15 +155,15 @@ export default function DocumentEditor({ type, userId }) {
   return (
     <div className="h-full flex bg-white dark:bg-[#0F0F0F] overflow-hidden transition-colors duration-200">
       {/* Main Editor Area */}
-      <div className={`flex-1 flex flex-col p-6 transition-all duration-300 ${isChatOpen ? 'md:mr-0' : ''}`}>
+      <div className={`flex-1 flex flex-col p-3 md:p-6 transition-all duration-300 ${isChatOpen ? 'md:mr-0' : ''}`}>
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 uppercase tracking-wider">
-              <BrainCircuit size={18} className="text-indigo-400" /> Dashboard Editor {type}
+            <h2 className="text-base md:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 uppercase tracking-wider">
+              <BrainCircuit size={18} className="text-indigo-400" /> <span className="truncate">Editor {type}</span>
             </h2>
-            <p className="text-[11px] text-slate-500 dark:text-gray-500">Unggah file, edit isinya di sini, lalu klik Analisis.</p>
+            <p className="text-[10px] md:text-[11px] text-slate-500 dark:text-gray-500">Unggah file, edit, lalu klik Analisis.</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <button
               onClick={() => setIsChatOpen(!isChatOpen)}
               className={`p-2 rounded-lg border transition-all ${isChatOpen ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-100 dark:bg-[#1A1A1A] border-slate-200 dark:border-[#333] text-slate-400 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
@@ -175,24 +175,25 @@ export default function DocumentEditor({ type, userId }) {
           </div>
         </div>
 
-        <div className="flex gap-2 mb-4 bg-slate-100 dark:bg-[#1A1A1A] p-2 rounded-xl border border-slate-200 dark:border-[#333]">
-          <label className="flex items-center gap-2 bg-slate-200 dark:bg-[#242424] hover:bg-slate-300 dark:hover:bg-[#2A2A2A] px-4 py-2 rounded-lg cursor-pointer transition-colors text-[11px] font-bold text-slate-600 dark:text-gray-300">
-            <FolderOpen size={14} /> Buka File
-            <input type="file" className="hidden" onChange={handleFileUpload} accept=".txt,.csv,.md,.json,.pdf,.doc,.docx" />
-          </label>
-          <span className="my-auto text-[11px] text-slate-500 dark:text-gray-500 px-2 truncate max-w-[200px] font-medium">{fileName}</span>
-          {isLoading && <span className="text-xs text-indigo-400 animate-pulse my-auto">Mengekstrak...</span>}
-          <div className="flex-1"></div>
+        <div className="flex flex-col sm:flex-row gap-2 mb-4 bg-slate-100 dark:bg-[#1A1A1A] p-2 rounded-xl border border-slate-200 dark:border-[#333]">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <label className="flex items-center gap-2 bg-slate-200 dark:bg-[#242424] hover:bg-slate-300 dark:hover:bg-[#2A2A2A] px-3 md:px-4 py-2 rounded-lg cursor-pointer transition-colors text-[11px] font-bold text-slate-600 dark:text-gray-300 shrink-0">
+              <FolderOpen size={14} /> Buka File
+              <input type="file" className="hidden" onChange={handleFileUpload} accept=".txt,.csv,.md,.json,.pdf,.doc,.docx" />
+            </label>
+            <span className="text-[11px] text-slate-500 dark:text-gray-500 px-1 truncate font-medium">{fileName}</span>
+            {isLoading && <span className="text-[10px] text-indigo-400 animate-pulse shrink-0">Mengekstrak...</span>}
+          </div>
           <button
             onClick={handleAnalyze}
             disabled={!content || isPending}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors text-[11px] font-bold disabled:opacity-50 shadow-lg shadow-indigo-900/20"
+            className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors text-[11px] font-bold disabled:opacity-50 shadow-lg shadow-indigo-900/20"
           >
-            <Sparkles size={14} /> {isChatOpen ? 'Analisis Ulang' : 'Analisis dengan AI'}
+            <Sparkles size={14} /> <span>{isChatOpen ? 'Analisis Ulang' : 'Analisis dengan AI'}</span>
           </button>
         </div>
 
-        <div className="flex-1 relative flex flex-col">
+        <div className="flex-1 relative flex flex-col min-h-0">
           <textarea
             ref={textareaRef}
             value={content}
@@ -200,7 +201,7 @@ export default function DocumentEditor({ type, userId }) {
             onMouseUp={handleTextSelection}
             onKeyUp={handleTextSelection}
             placeholder="Isi dokumen akan muncul di sini. Kamu bisa mengetik dan mengeditnya secara manual sebelum dianalisis oleh Profesor AI..."
-            className="flex-1 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-[1.5rem] p-8 text-base text-slate-700 dark:text-gray-300 font-mono leading-relaxed outline-none focus:border-indigo-500/40 resize-none custom-scrollbar shadow-inner transition-colors"
+            className="flex-1 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-[1.5rem] p-4 md:p-8 text-sm md:text-base text-slate-700 dark:text-gray-300 font-mono leading-relaxed outline-none focus:border-indigo-500/40 resize-none custom-scrollbar shadow-inner transition-colors"
           />
 
           {/* Floating Toolbar */}
