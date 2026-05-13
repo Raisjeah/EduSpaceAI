@@ -25,14 +25,18 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     clearChat
   } = useChat();
 
-  const currentChat = chatData[activeChatId || 'new'] || { messages: [], isThinking: false, isTyping: false };
+  // Local state to track chatId after migration for first message
+  const [internalId, setInternalId] = useState(null);
+  const currentId = activeChatId || internalId || 'new';
+
+  const currentChat = chatData[currentId] || { messages: [], isThinking: false, isTyping: false };
   const messages = currentChat.messages;
   const isThinking = currentChat.isThinking;
   const isTyping = currentChat.isTyping;
 
-  const setMessages = (msgs) => setChatMessages(activeChatId, msgs);
-  const setIsThinking = (val) => setChatStatus(activeChatId, { isThinking: val });
-  const setIsTyping = (val) => setChatStatus(activeChatId, { isTyping: val });
+  const setMessages = (msgs) => setChatMessages(currentId, msgs);
+  const setIsThinking = (val) => setChatStatus(currentId, { isThinking: val });
+  const setIsTyping = (val) => setChatStatus(currentId, { isTyping: val });
 
   const [input, setInput] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
@@ -96,6 +100,9 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   // 1. Load detail chat saat activeChatId berubah
   useEffect(() => {
     if (activeChatId && userId) {
+      // Clear internal bridge once we are on the real route
+      setInternalId(null);
+
       // Hanya tampilkan loading jika messages memang kosong
       // (Bisa jadi sudah ada pesan optimis, jadi jangan flash loading)
       if (messages.length === 0) {
@@ -116,11 +123,13 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         }
       });
     } else if (!activeChatId) {
-      // Jika di halaman home (/), pastikan state 'new' bersih
-      clearChat('new');
+      // Jika di halaman home (/), pastikan state 'new' bersih HANYA jika tidak sedang pending
+      if (!isPending && !internalId) {
+        clearChat('new');
+      }
       setIsLoadingChat(false);
     }
-  }, [activeChatId, userId, isAnalyzing]);
+  }, [activeChatId, userId, isAnalyzing, isPending, internalId]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -150,7 +159,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       formData.append('userId', userId);
       formData.append('prompt', textToSend);
       formData.append('modelId', selectedModel);
-      if (activeChatId) formData.append('chatId', activeChatId);
+      if (currentId !== 'new') formData.append('chatId', currentId);
       if (projectId) formData.append('projectId', projectId);
       if (isAutoTrigger) formData.append('skipSave', 'true');
       if (fileToUpload) formData.append('file', fileToUpload);
@@ -158,8 +167,10 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       const result = await sendMessage(formData);
 
       if (result.success) {
-        if (!activeChatId) {
+        if (!activeChatId && currentId === 'new') {
           migrateNewChatToId(result.chatId);
+          setInternalId(result.chatId);
+
           const targetUrl = projectId
             ? `/chat/${result.chatId}?projectId=${projectId}`
             : `/chat/${result.chatId}`;
@@ -168,7 +179,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         }
 
         // --- TYPEWRITER EFFECT ---
-        runTypewriter(!activeChatId ? result.chatId : activeChatId, result.aiResponse);
+        runTypewriter(result.chatId, result.aiResponse);
       } else {
         setIsThinking(false);
         if (result.error?.includes('Batas')) {
