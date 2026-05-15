@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useTransition } from 'react';
+import { motion } from 'framer-motion';
 import { X, FolderOpen, BrainCircuit, Send, MessageSquare, Sparkles, ChevronRight, FileText, Eraser } from 'lucide-react';
 import { saveDocument } from '@/app/actions/documentActions';
 import { saveChat, sendMessage } from '@/app/actions/chatActions';
@@ -182,7 +183,6 @@ export default function DocumentEditor({ type, userId }) {
               <input type="file" className="hidden" onChange={handleFileUpload} accept=".txt,.csv,.md,.json,.pdf,.doc,.docx" />
             </label>
             <span className="text-[11px] text-slate-500 dark:text-gray-500 px-1 truncate font-medium">{fileName}</span>
-            {isLoading && <span className="text-[10px] text-indigo-400 animate-pulse shrink-0">Mengekstrak...</span>}
           </div>
           <button
             onClick={handleAnalyze}
@@ -194,6 +194,22 @@ export default function DocumentEditor({ type, userId }) {
         </div>
 
         <div className="flex-1 relative flex flex-col min-h-0">
+          {isLoading && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 dark:bg-[#0F0F0F]/80 backdrop-blur-sm rounded-[1.5rem] border border-indigo-500/20">
+              <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-2xl shadow-xl border border-slate-200 dark:border-[#333] flex flex-col items-center">
+                <ThinkingIndicator />
+                <p className="text-xs font-bold text-slate-600 dark:text-gray-300 mt-2">Mengekstrak & Menganalisis File...</p>
+                <div className="w-48 h-1 bg-slate-100 dark:bg-[#222] rounded-full mt-4 overflow-hidden">
+                  <motion.div
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '100%' }}
+                    transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                    className="w-full h-full bg-indigo-600"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
           <textarea
             ref={textareaRef}
             value={content}
@@ -271,6 +287,7 @@ export default function DocumentEditor({ type, userId }) {
                   key={msg._id || idx}
                   content={msg.text}
                   isUser={msg.role === 'user'}
+                  onApply={msg.role === 'model' ? (text) => setContent(text) : null}
                 />
               ))}
             </div>

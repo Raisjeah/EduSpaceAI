@@ -8,7 +8,7 @@ import { ThumbsUp, ThumbsDown, Copy, Check } from 'lucide-react';
 import Mermaid from './Mermaid';
 import 'katex/dist/katex.min.css';
 
-export default function AiMessage({ content, isUser = false, isTyping = false }) {
+export default function AiMessage({ content, isUser = false, isTyping = false, onApply }) {
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
@@ -111,6 +111,15 @@ export default function AiMessage({ content, isUser = false, isTyping = false })
               <Copy size={16} />
             )}
           </button>
+
+          {onApply && (
+            <button
+              onClick={() => onApply(content)}
+              className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all text-[10px] font-bold shadow-lg shadow-indigo-900/20"
+            >
+              <Check size={14} /> Terapkan ke Editor
+            </button>
+          )}
         </div>
         )}
       </div>
