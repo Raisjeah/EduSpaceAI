@@ -141,6 +141,18 @@ export default function Sidebar({
             >
               <Briefcase size={14} /> <span className="text-[11px] font-semibold">Agent Baru</span>
             </button>
+
+            {/* Search Input In Sidebar */}
+            <div className="relative mt-2">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari history..."
+                className="w-full bg-slate-100 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-xl py-2 pl-9 pr-4 text-[12px] text-slate-900 dark:text-white outline-none focus:border-indigo-500/50 transition-colors"
+              />
+            </div>
           </div>
 
           {/* Navigation */}

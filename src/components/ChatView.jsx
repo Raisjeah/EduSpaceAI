@@ -22,7 +22,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     setChatStatus,
     runTypewriter,
     migrateNewChatToId,
-    clearChat
+    clearChat,
+    setActiveChatTitle
   } = useChat();
 
   // Local state to track chatId after migration for first message
@@ -117,6 +118,14 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         });
         setIsLoadingChat(false);
 
+        // Set Header Title based on first message
+        if (res.length > 0) {
+          const firstUserMsg = res.find(m => m.role === 'user');
+          if (firstUserMsg) {
+            setActiveChatTitle(firstUserMsg.text.substring(0, 40) + (firstUserMsg.text.length > 40 ? '...' : ''));
+          }
+        }
+
         // Jika dari mode analisa, trigger AI untuk pesan terakhir
         if (isAnalyzing && res.length > 0 && res[res.length - 1].role === 'user') {
           handleSend(res[res.length - 1].text, true);
@@ -127,9 +136,10 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       if (!isPending && !internalId) {
         clearChat('new');
       }
+      setActiveChatTitle('EduSpaceAI');
       setIsLoadingChat(false);
     }
-  }, [activeChatId, userId, isAnalyzing, isPending, internalId]);
+  }, [activeChatId, userId, isAnalyzing, isPending, internalId, setActiveChatTitle]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -148,6 +158,11 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       };
       setMessages(prev => [...prev, userMessage]);
       setInput('');
+
+      // If it's the very first message, set the title
+      if (messages.length === 0) {
+         setActiveChatTitle(userMessage.text.substring(0, 40) + (userMessage.text.length > 40 ? '...' : ''));
+      }
     }
 
     const fileToUpload = selectedFile;
@@ -320,7 +335,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <div className="max-w-3xl mx-auto w-full pt-8 pb-[120px] px-4 space-y-8 flex-1">
+            <div className="max-w-4xl mx-auto w-full pt-4 md:pt-8 pb-[100px] md:pb-[120px] px-4 space-y-8 flex-1">
               {messages.map((msg, idx) => (
                 <AiMessage
                   key={msg._id || idx}
@@ -348,8 +363,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           </div>
         )}
       </div>
-      <div className="p-6 bg-gradient-to-t from-white dark:from-[#0F0F0F] via-white dark:via-[#0F0F0F] to-transparent flex-none">
-        <div className="max-w-3xl mx-auto flex flex-col gap-3">
+      <div className="p-4 md:p-6 bg-gradient-to-t from-white dark:from-[#0F0F0F] via-white dark:via-[#0F0F0F] to-transparent flex-none">
+        <div className="max-w-4xl mx-auto flex flex-col gap-3">
           <div className="flex justify-end pr-2">
              <ModelSelector
                currentPlan={user?.current_plan || 'FREE'}

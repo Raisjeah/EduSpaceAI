@@ -66,7 +66,7 @@ export default function MainLayout({ children }) {
   }
 
   return (
-    <div className="relative h-[100dvh] w-full bg-white dark:bg-[#0F0F0F] text-slate-900 dark:text-gray-200 overflow-hidden flex transition-colors duration-200">
+    <div className="relative h-[100dvh] w-full bg-white dark:bg-[#0F0F0F] text-slate-900 dark:text-gray-200 overflow-x-hidden flex transition-colors duration-200">
       {notification && (
         <Toast
           message={notification.message}
