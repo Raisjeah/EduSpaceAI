@@ -77,6 +77,27 @@ export default function Sidebar({
     }
   };
 
+  const getAgentTheme = (agentId) => {
+    switch (agentId) {
+      case 'deep-search': return {
+        active: 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500',
+        hover: 'hover:bg-blue-50 dark:hover:bg-blue-900/10'
+      };
+      case 'researcher': return {
+        active: 'bg-green-600/10 text-green-600 dark:text-green-400 border-green-500',
+        hover: 'hover:bg-green-50 dark:hover:bg-green-900/10'
+      };
+      case 'editor': return {
+        active: 'bg-amber-600/10 text-amber-600 dark:text-amber-400 border-amber-500',
+        hover: 'hover:bg-amber-50 dark:hover:bg-amber-900/10'
+      };
+      default: return {
+        active: 'bg-indigo-600/10 text-indigo-600 dark:text-white border-indigo-500',
+        hover: 'hover:bg-indigo-50 dark:hover:bg-indigo-900/10'
+      };
+    }
+  };
+
   const isProjectContext = pathname.startsWith('/project/') || searchParams.has('projectId');
 
   return (
@@ -145,13 +166,16 @@ export default function Sidebar({
                     const isPathActive = pathname === `/project/${project._id}`;
                     const isQueryActive = searchParams.get('projectId') === project._id;
                     const isActive = isPathActive || isQueryActive;
+                    const theme = getAgentTheme(project.agentId);
                     return (
                       <Link
                         key={project._id}
                         href={`/project/${project._id}`}
                         onClick={closeSidebar}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[11px] transition-all ${
-                          isActive ? 'bg-indigo-600/10 text-indigo-600 dark:text-white border-l-2 border-indigo-500' : 'text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-[#151515] hover:text-slate-900 dark:hover:text-gray-200'
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[11px] transition-all border-l-2 ${
+                          isActive
+                          ? theme.active
+                          : `text-slate-500 dark:text-gray-400 ${theme.hover} hover:text-slate-900 dark:hover:text-gray-200 border-transparent`
                         }`}
                       >
                         {getAgentIcon(project.agentId)}

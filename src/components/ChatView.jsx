@@ -209,6 +209,37 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     }
   };
 
+  const getAgentTheme = (agentId) => {
+    switch (agentId) {
+      case 'deep-search': return {
+        bg: 'bg-blue-50 dark:bg-blue-900/10',
+        border: 'border-blue-200 dark:border-blue-800/30',
+        accent: 'bg-blue-500',
+        text: 'text-blue-600 dark:text-blue-400'
+      };
+      case 'researcher': return {
+        bg: 'bg-green-50 dark:bg-green-900/10',
+        border: 'border-green-200 dark:border-green-800/30',
+        accent: 'bg-green-500',
+        text: 'text-green-600 dark:text-green-400'
+      };
+      case 'editor': return {
+        bg: 'bg-amber-50 dark:bg-amber-900/10',
+        border: 'border-amber-200 dark:border-amber-800/30',
+        accent: 'bg-amber-500',
+        text: 'text-amber-600 dark:text-amber-400'
+      };
+      default: return {
+        bg: 'bg-indigo-50 dark:bg-indigo-900/10',
+        border: 'border-indigo-200 dark:border-indigo-800/30',
+        accent: 'bg-indigo-500',
+        text: 'text-indigo-600 dark:text-indigo-400'
+      };
+    }
+  };
+
+  const agentTheme = project ? getAgentTheme(project.agentId) : getAgentTheme('default');
+
   return (
     <div className="flex flex-col h-full bg-white dark:bg-[#0F0F0F] overflow-hidden transition-colors duration-200">
       <UpgradeModal
@@ -218,17 +249,17 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       />
       {/* Project Header (If in project) */}
       {project && (
-        <div className="px-6 py-3 border-b border-slate-200 dark:border-[#1E1E1E] bg-white dark:bg-[#0F0F0F] flex items-center justify-between z-10 flex-none transition-colors duration-200">
+        <div className={`px-6 py-3 border-b ${agentTheme.border} ${agentTheme.bg} flex items-center justify-between z-10 flex-none transition-colors duration-200`}>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] flex items-center justify-center">
+            <div className={`w-8 h-8 rounded-lg ${agentTheme.bg} border ${agentTheme.border} flex items-center justify-center`}>
               {getAgentIcon(project.agentId)}
             </div>
             <div>
               <h2 className="text-[12px] font-bold text-slate-900 dark:text-white leading-tight">{project.name}</h2>
-              <p className="text-[10px] text-slate-500 dark:text-gray-500 uppercase tracking-widest">{getAgentName(project.agentId)}</p>
+              <p className={`text-[10px] ${agentTheme.text} uppercase tracking-widest font-semibold`}>{getAgentName(project.agentId)}</p>
             </div>
           </div>
-          <div className="text-[10px] text-slate-500 dark:text-gray-500 bg-slate-100 dark:bg-[#1A1A1A] px-2 py-1 rounded border border-slate-200 dark:border-[#333]">Active Agent Workspace</div>
+          <div className={`text-[10px] ${agentTheme.text} ${agentTheme.bg} px-2 py-1 rounded border ${agentTheme.border} font-bold`}>Active Agent Workspace</div>
         </div>
       )}
 
@@ -252,20 +283,39 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                 ? `Sedang menggunakan agen ${getAgentName(project.agentId)} untuk membantumu di project ini.`
                 : 'Dosen pribadi bertenaga AI yang siap bantu skripsi, tugas, dan belajarmu.'}
             </p>
-            <div className="w-full max-w-xl text-center">
-              <div className="flex flex-wrap justify-center gap-3">
-                {project?.agentId === 'deep-search' ? (
-                  <SuggestionChip label="Cari berita terbaru AI" onClick={() => handleSend("Apa berita terbaru tentang perkembangan AI minggu ini?")} />
-                ) : (
-                  <>
+            <div className="w-full max-w-2xl text-center">
+              {project?.agentId === 'deep-search' ? (
+                <div className="flex flex-wrap justify-center gap-3">
+                   <SuggestionChip theme={agentTheme} label="Cari berita terbaru AI" onClick={() => handleSend("Apa berita terbaru tentang perkembangan AI minggu ini?")} />
+                   <SuggestionChip theme={agentTheme} label="Tren Teknologi 2025" onClick={() => handleSend("Apa tren teknologi utama yang diprediksi untuk tahun 2025?")} />
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest">Akademik & Skripsi</p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <SuggestionChip theme={agentTheme} label="Bimbingan Skripsi" onClick={() => handleSend("Saya butuh bantuan bimbingan skripsi, bisa mulai dari mana?")} />
+                      <SuggestionChip theme={agentTheme} label="Cek Judul Skripsi" onClick={() => handleSend("Bantu saya review judul skripsi: [Sebutkan judulmu]")} />
+                      <SuggestionChip theme={agentTheme} label="Cari Rumusan Masalah" onClick={() => handleSend("Bantu saya membuat rumusan masalah untuk topik: [Sebutkan topik]")} />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest">Bantuan Belajar</p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <SuggestionChip theme={agentTheme} label="Buat Latihan Soal" onClick={() => handleSend("Buatkan 5 soal pilihan ganda tentang Pemrograman Dasar")} />
+                      <SuggestionChip theme={agentTheme} label="Ringkas Materi" onClick={() => handleSend("Tolong ringkaskan konsep tentang: [Sebutkan konsep]")} />
+                      <SuggestionChip theme={agentTheme} label="Jelaskan Rumus" onClick={() => handleSend("Bantu jelaskan cara kerja rumus ini: [Tulis rumus]")} />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-center pt-2">
                     <Link href="/tools">
-                      <SuggestionChip label="Buka Tools" icon={<Plus size={12}/>} isLink={true} />
+                      <SuggestionChip theme={agentTheme} label="Jelajahi Semua Tools" icon={<Plus size={12}/>} isLink={true} />
                     </Link>
-                    <SuggestionChip label="Bimbingan Skripsi" onClick={() => handleSend("Saya butuh bantuan bimbingan skripsi, bisa mulai dari mana?")} />
-                  </>
-                )}
-                <SuggestionChip label="Buat Latihan Soal" onClick={() => handleSend("Buatkan 5 soal pilihan ganda tentang Pemrograman Dasar")} />
-              </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -282,8 +332,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
               {thoughtTraces.length > 0 && (
                 <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   {thoughtTraces.map((trace, idx) => (
-                    <div key={idx} className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-indigo-500/5 border border-slate-200 dark:border-indigo-500/20 rounded-lg w-fit">
-                       <span className="text-[11px] text-slate-600 dark:text-indigo-300 font-medium">{trace}</span>
+                    <div key={idx} className={`flex items-center gap-2 px-3 py-1.5 ${agentTheme.bg} border ${agentTheme.border} rounded-lg w-fit`}>
+                       <span className={`text-[11px] ${agentTheme.text} font-medium`}>{trace}</span>
                     </div>
                   ))}
                 </div>
@@ -314,6 +364,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             disabled={isPending}
             selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}
+            isNewChat={messages.length === 0}
           />
         </div>
       </div>
@@ -323,21 +374,35 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
 // --- KOMPONEN PENDUKUNG ---
 
-function SuggestionChip({ label, icon, onClick, isLink }) {
+function SuggestionChip({ label, icon, onClick, isLink, theme }) {
   const Component = isLink ? 'div' : 'button';
+  const hoverBorder = theme ? theme.border.replace('border-', 'hover:border-') : 'hover:border-indigo-500/50';
+  const hoverText = theme ? theme.text.replace('text-', 'hover:text-') : 'hover:text-indigo-500';
+
   return (
     <Component
       onClick={onClick} 
-      className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[11px] text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:border-indigo-500/50 transition-all cursor-pointer"
+      className={`flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[11px] text-slate-500 dark:text-gray-400 ${hoverText} ${hoverBorder} transition-all cursor-pointer`}
     >
       {icon} {label}
     </Component>
   );
 }
 
-function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile }) {
+function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile, isNewChat }) {
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
+  const [showNudge, setShowNudge] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Show nudge for new chats after a delay
+  useEffect(() => {
+    if (isNewChat) {
+      const timer = setTimeout(() => {
+        setShowNudge(true);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isNewChat]);
   const cameraInputRef = useRef(null);
   const galleryInputRef = useRef(null);
   const textareaRef = useRef(null);
@@ -452,16 +517,34 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
       </AnimatePresence>
 
       <div className="relative bg-slate-100 dark:bg-[#1E1E1E] rounded-2xl p-2 flex items-end gap-1 border border-slate-200 dark:border-[#2A2A2A] focus-within:border-indigo-500/50 transition-all shadow-2xl">
-        <button
-          onClick={() => setIsActionSheetOpen(!isActionSheetOpen)}
-          className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
-            isActionSheetOpen
-            ? 'bg-indigo-600 text-white rotate-45'
-            : 'text-slate-400 dark:text-gray-500 hover:text-indigo-400'
-          }`}
-        >
-          <Plus size={20} />
-        </button>
+        <div className="relative">
+          <AnimatePresence>
+            {showNudge && !isActionSheetOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.5, y: 10 }}
+                className="absolute bottom-full left-0 mb-4 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap shadow-xl"
+              >
+                Unggah File/Gambar di sini!
+                <div className="absolute top-full left-4 w-2 h-2 bg-indigo-600 rotate-45 -translate-y-1"></div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <button
+            onClick={() => {
+              setIsActionSheetOpen(!isActionSheetOpen);
+              setShowNudge(false);
+            }}
+            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
+              isActionSheetOpen
+              ? 'bg-indigo-600 text-white rotate-45'
+              : 'text-slate-400 dark:text-gray-500 hover:text-indigo-400'
+            } ${showNudge && !isActionSheetOpen ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-[#0F0F0F] animate-pulse' : ''}`}
+          >
+            <Plus size={20} />
+          </button>
+        </div>
 
         {/* Hidden Inputs */}
         <input
