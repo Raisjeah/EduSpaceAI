@@ -6,8 +6,8 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export async function deepSearchEngine(userQuery, history = [], fileParts = []) {
   try {
-    // Using gemini-1.5-flash for faster intermediate steps
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Using gemini-2.5-flash for faster intermediate steps
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     // Format history for context awareness
     const historyContext = history.length > 0
