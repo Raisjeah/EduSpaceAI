@@ -7,6 +7,8 @@ import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { OAuth2Client } from 'google-auth-library';
 import crypto from 'crypto';
+import { Resend } from 'resend';
+import { otpEmailTemplate } from '@/lib/emailTemplates';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -40,14 +42,38 @@ export async function register(formData) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Generate 6-digit OTP using cryptographically secure random numbers
+    const otpCode = crypto.randomInt(100000, 999999).toString();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
     const user = new User({
       name,
       email,
       password: hashedPassword,
+      otpCode,
+      otpExpires,
+      isVerified: false
     });
 
     await user.save();
 
+    // Send OTP email via Resend
+    try {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      await resend.emails.send({
+        from: 'Eduspace AI <noreply@eduspace.ai>',
+        to: [email],
+        subject: 'Verifikasi Akun Eduspace AI',
+        html: otpEmailTemplate(otpCode),
+      });
+    } catch (emailError) {
+      console.error('Failed to send initial OTP:', emailError);
+      // We still continue as user can resend OTP later
+    }
+
+    // Set session cookie even if not verified yet,
+    // UI will handle redirection based on isVerified status
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
     const cookieStore = await cookies();
@@ -58,7 +84,7 @@ export async function register(formData) {
       path: '/',
     });
 
-    return { success: true };
+    return { success: true, requiresVerification: true };
   } catch (error) {
     console.error('Registration error:', error);
     return { success: false, error: 'Gagal melakukan registrasi' };
@@ -181,6 +207,7 @@ export async function getUser() {
       email: user.email,
       image: user.image,
       current_plan: user.current_plan,
+      isVerified: user.isVerified,
     };
   } catch (error) {
     return null;

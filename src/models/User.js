@@ -8,6 +8,9 @@ const UserSchema = new mongoose.Schema({
   current_plan: { type: String, default: 'FREE' },
   plan_expired_at: { type: Date },
   is_active: { type: Boolean, default: true },
+  isVerified: { type: Boolean, default: false },
+  otpCode: { type: String },
+  otpExpires: { type: Date },
   createdAt: { type: Date, default: Date.now },
 });
 
