@@ -6,11 +6,17 @@ export async function fetchPageContent(url) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
+    const headers = {
+      "Accept": "text/event-stream",
+    };
+
+    if (process.env.JINA_API_KEY) {
+      headers["Authorization"] = `Bearer ${process.env.JINA_API_KEY}`;
+    }
+
     const response = await fetch(jinaUrl, {
       signal: controller.signal,
-      headers: {
-        "Accept": "text/event-stream", // Jina prefers this or markdown
-      }
+      headers: headers
     });
 
     clearTimeout(timeoutId);
