@@ -118,6 +118,21 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
     const result = await chat.sendMessage([prompt, ...fileParts]);
     const response = await result.response;
 
+    // Handle Image Generation Model Output
+    if (actualModel === 'gemini-3-pro-image-preview') {
+      const candidates = response.candidates;
+      if (candidates && candidates[0].content.parts) {
+        const imagePart = candidates[0].content.parts.find(p => p.inlineData);
+        if (imagePart) {
+          return JSON.stringify({
+            type: "image",
+            mimeType: imagePart.inlineData.mimeType,
+            base64Data: imagePart.inlineData.data
+          });
+        }
+      }
+    }
+
     return response.text();
 
   } catch (error) {
