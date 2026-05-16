@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import useAuth from '@/hooks/useAuth';
 import { createTransaction } from '@/app/actions/subscriptionActions';
-import { Check, Sparkles, Zap, Crown, ShieldCheck } from 'lucide-react';
+import { Check, Sparkles, Zap, Crown, ShieldCheck, PartyPopper } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const plans = [
   {
@@ -68,8 +70,21 @@ const plans = [
 ];
 
 export default function PricingPage() {
+  const router = useRouter();
   const { userId, user, showNotification, fetchUser } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [purchasedPlan, setPurchasedPlan] = useState(null);
+  const [countdown, setCountdown] = useState(5);
+
+  useEffect(() => {
+    if (showSuccessModal && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (showSuccessModal && countdown === 0) {
+      router.push('/');
+    }
+  }, [showSuccessModal, countdown, router]);
 
   useEffect(() => {
     // Load Midtrans Snap script
@@ -100,7 +115,8 @@ export default function PricingPage() {
       if (result.success) {
         window.snap.pay(result.snapToken, {
           onSuccess: function(result) {
-            showNotification('Pembayaran Berhasil!');
+            setPurchasedPlan(planName);
+            setShowSuccessModal(true);
             fetchUser(); // Update user state without reload
           },
           onPending: function(result) {
@@ -125,6 +141,42 @@ export default function PricingPage() {
 
   return (
     <div className="flex-1 overflow-y-auto bg-white dark:bg-[#0F0F0F] py-12 px-6 transition-colors">
+      <AnimatePresence>
+        {showSuccessModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white dark:bg-[#1A1A1A] rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border border-slate-200 dark:border-white/10"
+            >
+              <div className="w-20 h-20 bg-green-100 dark:bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <PartyPopper size={40} className="text-green-600 dark:text-green-500" />
+              </div>
+
+              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-2">
+                Selamat!
+              </h2>
+              <p className="text-slate-600 dark:text-gray-400 mb-8">
+                Pembayaran berhasil. Paket <span className="font-bold text-indigo-600 dark:text-indigo-400">{purchasedPlan}</span> Anda kini telah aktif. Selamat menikmati fitur premium EduSpaceAI!
+              </p>
+
+              <div className="mb-6 text-xs text-slate-400 dark:text-gray-500">
+                Mengalihkan ke dashboard dalam {countdown} detik...
+              </div>
+
+              <button
+                onClick={() => router.push('/')}
+                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
+              >
+                Mulai Chat Sekarang
+                <Check size={20} />
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <div className="max-w-7xl mx-auto text-center mb-16">
         <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-4">
           Pilih Paket Belajar Pintarmu
