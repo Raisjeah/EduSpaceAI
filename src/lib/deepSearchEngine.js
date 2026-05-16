@@ -4,16 +4,24 @@ import { fetchPageContent } from "./jina";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-export async function deepSearchEngine(userQuery) {
+export async function deepSearchEngine(userQuery, history = [], fileParts = []) {
   try {
     // Using gemini-1.5-flash for faster intermediate steps
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    // Format history for context awareness
+    const historyContext = history.length > 0
+      ? history.map(h => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.parts[0].text}`).join('\n')
+      : "No previous history.";
 
     // STEP 1: QUERY ANALYZER
     const analyzerPrompt = `
       Sebagai Query Analyzer, tugasmu adalah membedah pertanyaan pengguna dan menghasilkan 3-5 query pencarian yang dioptimalkan untuk mencari informasi terbaru di web.
 
-      Pertanyaan Pengguna: "${userQuery}"
+      KONTEKS PERCAKAPAN:
+      ${historyContext}
+
+      PERTANYAAN TERBARU PENGGUNA: "${userQuery}"
 
       Format output WAJIB JSON array of strings saja.
       Contoh: ["query 1", "query 2", "query 3"]
@@ -22,11 +30,22 @@ export async function deepSearchEngine(userQuery) {
     const analyzerResult = await model.generateContent(analyzerPrompt);
     const analyzerText = analyzerResult.response.text();
     let subQueries = [];
+
     try {
       const cleanedJson = analyzerText.replace(/```json|```/gi, '').trim();
-      subQueries = JSON.parse(cleanedJson);
+      const parsed = JSON.parse(cleanedJson);
+
+      if (Array.isArray(parsed)) {
+        subQueries = parsed;
+      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.queries)) {
+        subQueries = parsed.queries;
+      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.subQueries)) {
+        subQueries = parsed.subQueries;
+      } else {
+        throw new Error("Parsed JSON is not an array or expected object");
+      }
     } catch (e) {
-      console.error("Failed to parse sub-queries, falling back to original query");
+      console.error("Failed to parse sub-queries, falling back to original query:", e.message);
       subQueries = [userQuery];
     }
 
@@ -67,7 +86,10 @@ ${ctx.extractedContent}
 
     // STEP 4: ANALYST AGENT
     const analystPrompt = `
-      Tugasmu adalah menganalisis kumpulan konten web berikut untuk menjawab pertanyaan pengguna.
+      Tugasmu adalah menganalisis kumpulan konten web berikut untuk menjawab pertanyaan pengguna dengan mempertimbangkan konteks percakapan sebelumnya.
+
+      KONTEKS PERCAKAPAN:
+      ${historyContext}
 
       ATURAN KETAT:
       1. HANYA gunakan informasi dari konteks yang disediakan.
@@ -76,7 +98,7 @@ ${ctx.extractedContent}
       4. Bandingkan sumber jika ada informasi yang bertentangan.
       5. Deteksi konflik antar sumber jika ada.
 
-      KONTEKS:
+      KONTEKS WEB:
       ${structuredContext}
 
       PERTANYAAN PENGGUNA:
@@ -91,7 +113,7 @@ ${ctx.extractedContent}
     // STEP 5: WRITER AGENT
     const writerPrompt = `
       Kamu adalah EduSpaceAI, seorang dosen muda yang cerdas, edukatif, dan ramah.
-      Tugasmu adalah menulis jawaban final berdasarkan analisis data yang diberikan.
+      Tugasmu adalah menulis jawaban final berdasarkan analisis data yang diberikan dan konteks percakapan.
 
       GAYA BAHASA:
       - Seperti dosen muda yang pintar (smart young lecturer).
@@ -114,7 +136,10 @@ ${ctx.extractedContent}
       ## Sumber
       (Daftar URL yang digunakan)
 
-      ANALISIS DATA:
+      KONTEKS PERCAKAPAN:
+      ${historyContext}
+
+      ANALISIS DATA WEB:
       ${factualContext}
 
       PERTANYAAN PENGGUNA:
