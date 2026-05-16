@@ -4,10 +4,15 @@ import { fetchPageContent } from "./jina";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-export async function deepSearchEngine(userQuery, history = [], fileParts = []) {
+export async function deepSearchEngine(userQuery, history = [], fileParts = [], modelName = "gemini-1.5-flash") {
   try {
     // Using gemini-1.5-flash for faster intermediate steps
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    // Format fileParts for context awareness
+    const fileContext = fileParts.length > 0
+      ? `\n\nASSET TAMBAHAN (Gambar/File):\n(User telah mengunggah ${fileParts.length} file yang dilampirkan dalam pesan ini sebagai referensi visual atau data.)`
+      : "";
 
     // Format history for context awareness
     const historyContext = history.length > 0
@@ -37,12 +42,16 @@ export async function deepSearchEngine(userQuery, history = [], fileParts = []) 
 
       if (Array.isArray(parsed)) {
         subQueries = parsed;
-      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.queries)) {
-        subQueries = parsed.queries;
-      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.subQueries)) {
-        subQueries = parsed.subQueries;
+      } else if (parsed && typeof parsed === 'object') {
+        if (Array.isArray(parsed.queries)) {
+          subQueries = parsed.queries;
+        } else if (Array.isArray(parsed.subQueries)) {
+          subQueries = parsed.subQueries;
+        } else {
+          throw new Error("Parsed JSON object does not contain a valid queries array");
+        }
       } else {
-        throw new Error("Parsed JSON is not an array or expected object");
+        throw new Error("Parsed JSON is neither an array nor a valid object");
       }
     } catch (e) {
       console.error("Failed to parse sub-queries, falling back to original query:", e.message);
@@ -87,6 +96,7 @@ ${ctx.extractedContent}
     // STEP 4: ANALYST AGENT
     const analystPrompt = `
       Tugasmu adalah menganalisis kumpulan konten web berikut untuk menjawab pertanyaan pengguna dengan mempertimbangkan konteks percakapan sebelumnya.
+      ${fileContext}
 
       KONTEKS PERCAKAPAN:
       ${historyContext}
@@ -114,6 +124,7 @@ ${ctx.extractedContent}
     const writerPrompt = `
       Kamu adalah EduSpaceAI, seorang dosen muda yang cerdas, edukatif, dan ramah.
       Tugasmu adalah menulis jawaban final berdasarkan analisis data yang diberikan dan konteks percakapan.
+      ${fileContext}
 
       GAYA BAHASA:
       - Seperti dosen muda yang pintar (smart young lecturer).
@@ -146,7 +157,14 @@ ${ctx.extractedContent}
       "${userQuery}"
     `;
 
-    const finalResult = await model.generateContent(writerPrompt);
+    // Determine final model for Writer Agent
+    let finalModelName = "gemini-1.5-flash";
+    if (modelName.includes('gemini')) {
+      finalModelName = modelName;
+    }
+
+    const finalModel = genAI.getGenerativeModel({ model: finalModelName });
+    const finalResult = await finalModel.generateContent([writerPrompt, ...fileParts]);
     return finalResult.response.text();
 
   } catch (error) {
