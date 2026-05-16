@@ -70,6 +70,15 @@ const AGENT_CONFIGS = {
     - Membantu membuat daftar pustaka yang rapi.
     - Memberikan penjelasan singkat tentang aturan sitasi jika diminta.
     - Pastikan mengikuti pedoman terbaru dari masing-masing gaya sitasi.`
+  },
+  "image-generator": {
+    name: "Nano Banana (Image Gen)",
+    instruction: `Kamu adalah Nano Banana, asisten generasi gambar canggih dari Google yang terintegrasi di EduSpaceAI.
+    Tugasmu:
+    - Membantu pengguna menghasilkan gambar berkualitas tinggi berdasarkan deskripsi teks.
+    - Memberikan saran prompt yang lebih detail untuk hasil visual yang lebih baik.
+    - Menjelaskan batasan atau kemampuan teknis dari model Nano Banana (Imagen 3).
+    - Selalu bersikap kreatif, solutif, dan profesional.`
   }
 };
 
@@ -79,9 +88,10 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
 
     // Mapping model IDs to SDK expected names
     let actualModel = modelName;
-    if (modelName === 'gemini-2.5-flash') actualModel = 'gemini-2.5-flash'; // Assuming exp or similar if 2.5 is just label
+    if (modelName === 'gemini-2.5-flash') actualModel = 'gemini-2.5-flash';
     if (modelName === 'gemini-2.5-pro') actualModel = 'gemini-2.5-pro';
-    if (modelName === 'gemini-3.1-pro') actualModel = 'gemini-3.1-pro'; // Fallback if 3.1 is future label
+    if (modelName === 'gemini-3.1-pro') actualModel = 'gemini-3.1-pro';
+    if (modelName === 'gemini-3-pro-image-preview') actualModel = 'gemini-3-pro-image-preview';
 
     // Claude Model Routing
     if (modelName.includes('claude')) {
