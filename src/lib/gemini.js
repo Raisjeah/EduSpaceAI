@@ -78,7 +78,7 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
   try {
     // 1. Deep Search Special Handling
     if (agentId === 'deep-search') {
-      return await deepSearchEngine(prompt, history, fileParts);
+      return await deepSearchEngine(prompt, history, fileParts, modelName);
     }
 
     const config = AGENT_CONFIGS[agentId] || AGENT_CONFIGS.default;
