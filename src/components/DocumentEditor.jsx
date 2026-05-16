@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect, useTransition } from 'react';
-import { motion } from 'framer-motion';
-import { X, FolderOpen, BrainCircuit, Send, MessageSquare, Sparkles, ChevronRight, FileText, Eraser } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, FolderOpen, BrainCircuit, Send, MessageSquare, Sparkles, ChevronRight, FileText, Eraser, Square } from 'lucide-react';
 import { saveDocument } from '@/app/actions/documentActions';
 import { saveChat, sendMessage } from '@/app/actions/chatActions';
 import { extractFileContent } from '@/app/actions/fileActions'; // server action
@@ -10,8 +10,18 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AiMessage from './AiMessage';
 import ThinkingIndicator from './ThinkingIndicator';
+import { useChat } from '@/context/ChatContext';
+import TextareaAutosize from 'react-textarea-autosize';
 
 export default function DocumentEditor({ type, userId }) {
+  const {
+    chatData,
+    setChatMessages,
+    setChatStatus,
+    runTypewriter,
+    stopTypewriter
+  } = useChat();
+
   const [content, setContent] = useState('');
   const [fileName, setFileName] = useState('Belum ada file diunggah');
   const [fileType, setFileType] = useState('text/plain');
@@ -19,11 +29,15 @@ export default function DocumentEditor({ type, userId }) {
 
   // Chat Integration State
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [isPending, startTransition] = useTransition();
-  const [isThinking, setIsThinking] = useState(false);
   const [activeChatId, setActiveChatId] = useState(null);
+
+  const currentId = activeChatId || 'editor_chat';
+  const currentChat = chatData[currentId] || { messages: [], isThinking: false, isTyping: false };
+  const messages = currentChat.messages;
+  const isThinking = currentChat.isThinking;
+  const isTyping = currentChat.isTyping;
 
   // Selection state
   const [selection, setSelection] = useState({ text: '', show: false });
@@ -34,7 +48,7 @@ export default function DocumentEditor({ type, userId }) {
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages, isPending]);
+  }, [messages, isPending]);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -70,8 +84,8 @@ export default function DocumentEditor({ type, userId }) {
       text: "Tolong analisis dokumen ini.",
       _id: Date.now().toString()
     };
-    setChatMessages(prev => [...prev, userMessage]);
-    setIsThinking(true);
+    setChatMessages(chatId, prev => [...prev, userMessage]);
+    setChatStatus(chatId, { isThinking: true });
 
     startTransition(async () => {
       const formData = new FormData();
@@ -81,12 +95,9 @@ export default function DocumentEditor({ type, userId }) {
 
       const result = await sendMessage(formData);
       if (result.success) {
-        setIsThinking(false);
-        setChatMessages(prev => [...prev, {
-          role: 'model',
-          text: result.aiResponse,
-          _id: (Date.now() + 1).toString()
-        }]);
+        runTypewriter(chatId, result.aiResponse);
+      } else {
+        setChatStatus(chatId, { isThinking: false });
       }
     });
   };
@@ -131,8 +142,8 @@ export default function DocumentEditor({ type, userId }) {
       text: textToSend,
       _id: Date.now().toString()
     };
-    setChatMessages(prev => [...prev, userMessage]);
-    setIsThinking(true);
+    setChatMessages(chatId, prev => [...prev, userMessage]);
+    setChatStatus(chatId, { isThinking: true });
 
     startTransition(async () => {
       const formData = new FormData();
@@ -143,12 +154,9 @@ export default function DocumentEditor({ type, userId }) {
 
       const result = await sendMessage(formData);
       if (result.success) {
-        setIsThinking(false);
-        setChatMessages(prev => [...prev, {
-          role: 'model',
-          text: result.aiResponse,
-          _id: (Date.now() + 1).toString()
-        }]);
+        runTypewriter(chatId, result.aiResponse);
+      } else {
+        setChatStatus(chatId, { isThinking: false });
       }
     });
   };
@@ -272,7 +280,7 @@ export default function DocumentEditor({ type, userId }) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar min-h-0">
-          {chatMessages.length === 0 ? (
+          {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center px-6">
               <div className="w-12 h-12 bg-slate-100 dark:bg-[#1A1A1A] rounded-2xl flex items-center justify-center mb-4 border border-slate-200 dark:border-[#222]">
                 <FileText size={20} className="text-slate-400 dark:text-gray-600" />
@@ -281,12 +289,13 @@ export default function DocumentEditor({ type, userId }) {
               <p className="text-[11px] text-slate-500 dark:text-gray-500">Klik "Analisis dengan AI" atau mulai chat untuk mendapatkan saran akademik.</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {chatMessages.map((msg, idx) => (
+            <div className="space-y-6">
+              {messages.map((msg, idx) => (
                 <AiMessage
                   key={msg._id || idx}
                   content={msg.text}
                   isUser={msg.role === 'user'}
+                  isTyping={msg.role === 'model' && idx === messages.length - 1 && isTyping}
                   onApply={msg.role === 'model' ? (text) => setContent(text) : null}
                 />
               ))}
@@ -299,22 +308,45 @@ export default function DocumentEditor({ type, userId }) {
         </div>
 
         <div className="p-4 bg-white dark:bg-[#1A1A1A] border-t border-slate-200 dark:border-[#222]">
-          <div className="relative">
-            <input
-              type="text"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
-              placeholder="Tanya perbaikan dokumen..."
-              className="w-full bg-slate-50 dark:bg-[#0F0F0F] border border-slate-200 dark:border-[#333] rounded-xl py-3 pl-4 pr-12 text-base text-slate-900 dark:text-gray-200 outline-none focus:border-indigo-500/50 transition-colors"
-            />
-            <button
-              onClick={handleSendChat}
-              disabled={!chatInput.trim() || isPending}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-indigo-600 rounded-lg text-white disabled:opacity-50"
-            >
-              <Send size={14} />
-            </button>
+          <div className="flex flex-col gap-2">
+            <AnimatePresence>
+              {isTyping && (
+                <div className="flex justify-center mb-1">
+                   <motion.button
+                     initial={{ opacity: 0, y: 5 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     exit={{ opacity: 0, y: 5 }}
+                     onClick={() => stopTypewriter(currentId)}
+                     className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[10px] font-bold text-slate-600 dark:text-gray-300 hover:text-red-600 transition-all shadow-sm"
+                   >
+                     <Square size={10} fill="currentColor" /> Berhenti
+                   </motion.button>
+                </div>
+              )}
+            </AnimatePresence>
+            <div className="relative">
+              <TextareaAutosize
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendChat();
+                  }
+                }}
+                minRows={1}
+                maxRows={4}
+                placeholder="Tanya perbaikan..."
+                className="w-full bg-slate-50 dark:bg-[#0F0F0F] border border-slate-200 dark:border-[#333] rounded-xl py-3 pl-4 pr-12 text-sm text-slate-900 dark:text-gray-200 outline-none focus:border-indigo-500/50 transition-colors resize-none overflow-y-auto custom-scrollbar"
+              />
+              <button
+                onClick={handleSendChat}
+                disabled={!chatInput.trim() || isPending}
+                className="absolute right-2 bottom-2 w-8 h-8 flex items-center justify-center bg-indigo-600 rounded-lg text-white disabled:opacity-50 shadow-lg shadow-indigo-900/20"
+              >
+                <Send size={14} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
