@@ -4,7 +4,7 @@ import { fetchPageContent } from "./jina";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-export async function deepSearchEngine(userQuery, history = [], fileParts = [], modelName = "gemini-1.5-flash") {
+export async function deepSearchEngine(userQuery, history = [], fileParts = [], modelName = "gemini-2.5-flash") {
   try {
     // Using gemini-2.5-flash for faster intermediate steps
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -158,7 +158,7 @@ ${ctx.extractedContent}
     `;
 
     // Determine final model for Writer Agent
-    let finalModelName = "gemini-1.5-flash";
+    let finalModelName = "gemini-2.5-flash";
     if (modelName.includes('gemini')) {
       finalModelName = modelName;
     }
