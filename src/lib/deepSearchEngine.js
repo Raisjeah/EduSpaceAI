@@ -20,8 +20,8 @@ function getValidModelName(modelName) {
     return "gemini-2.5-flash";
   }
 
-  if (modelName === 'gemini-3.1-pro') return 'gemini-3.1-pro-preview';
-  if (modelName === 'gemini-3-pro-image-preview') return 'gemini-3.1-flash-image-preview';
+  if (modelName === 'gemini-3.1-pro') return 'gemini-2.5-flash';
+  if (modelName === 'gemini-3-pro-image-preview') return 'gemini-2.5-flash';
 
   return modelName;
 }
