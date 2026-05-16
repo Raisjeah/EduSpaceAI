@@ -78,9 +78,12 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   useEffect(() => {
     if (isPending && project?.agentId === 'deep-search') {
       const traces = [
-        '🔍 Mencari referensi jurnal...',
-        '📄 Menganalisis 5 sumber berita...',
-        '✍️ Menyusun rangkuman...'
+        '🔍 Menganalisis pertanyaan...',
+        '📋 Membuat rencana riset...',
+        '🌐 Mencari informasi di web...',
+        '📄 Membaca konten website...',
+        '🧠 Menganalisis sumber data...',
+        '✍️ Menyusun jawaban final...'
       ];
       let i = 0;
       setThoughtTraces([traces[0]]);
@@ -91,7 +94,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         } else {
           clearInterval(interval);
         }
-      }, 2000);
+      }, 3000);
       return () => clearInterval(interval);
     } else {
       setThoughtTraces([]);
