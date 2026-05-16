@@ -96,12 +96,12 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
     let actualModel = modelName;
     if (modelName === 'gemini-2.5-flash') actualModel = 'gemini-2.5-flash';
     if (modelName === 'gemini-2.5-pro') actualModel = 'gemini-2.5-pro';
-    if (modelName === 'gemini-3.1-pro') actualModel = 'gemini-3.1-pro-preview';
+    if (modelName === 'gemini-3-pro-preview') actualModel = 'gemini-3-pro-preview';
     if (modelName === 'gemini-3-pro-image-preview') actualModel = 'gemini-3.1-flash-image-preview';
 
     // Claude Model Routing
     if (modelName.includes('claude')) {
-      const claudeModel = modelName === 'claude-4-6-sonnet' ? "claude-3-5-sonnet-20241022" : modelName;
+      const claudeModel = modelName === 'claude-4-6-sonnet' ? "claude-4-6-sonnet" : modelName;
       return getClaudeResponse(prompt, history, fileParts, config.instruction, claudeModel);
     }
 
