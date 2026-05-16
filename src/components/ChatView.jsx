@@ -72,8 +72,12 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   }, []);
 
   const handleModelChange = (modelId) => {
-    setSelectedModel(modelId);
-    localStorage.setItem('eduspace_preferred_model', modelId);
+    try {
+      setSelectedModel(modelId);
+      localStorage.setItem('eduspace_preferred_model', modelId);
+    } catch (err) {
+      console.error("Failed to change model:", err);
+    }
   };
 
   // Simulated Thought Traces Effect
@@ -109,9 +113,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       // Clear internal bridge once we are on the real route
       setInternalId(null);
 
-      // Hanya tampilkan loading jika messages memang kosong
-      // (Bisa jadi sudah ada pesan optimis, jadi jangan flash loading)
-      if (messages.length === 0) {
+      // Hanya tampilkan loading jika messages memang kosong DAN tidak dalam proses migrasi
+      if (messages.length === 0 && internalId !== activeChatId) {
         setIsLoadingChat(true);
       }
 
@@ -137,7 +140,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         }
       });
     } else if (!activeChatId) {
-      // Jika di halaman home (/), pastikan state 'new' bersih HANYA jika tidak sedang pending
+      // Jika di halaman home (/), pastikan state 'new' bersih HANYA jika tidak sedang pending/migrasi
       if (!isPending && !internalId) {
         clearChat('new');
       }

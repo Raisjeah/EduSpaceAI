@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3 } from 'lucide-react';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { getChatHistory } from '@/app/actions/chatActions';
 import { logout } from '@/app/actions/authActions';
 import { getProjects } from '@/app/actions/projectActions';
@@ -22,17 +22,28 @@ export default function Sidebar({
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, searchQuery, fetchUser, showNotification } = useAuth();
+  const lastFetchRef = useRef({ userId: null, projectId: null, pathname: null });
 
   // Optimistic History Update: Refetch history when route changes
   useEffect(() => {
     const fetchData = async () => {
       if (!userId) return;
 
-      // Jalankan fetch secara paralel untuk performa lebih cepat
       const isProjectRoute = pathname.startsWith('/project/');
       const projectIdFromPath = isProjectRoute ? pathname.split('/')[2] : null;
       const projectIdFromQuery = searchParams.get('projectId');
       const projectId = projectIdFromPath || projectIdFromQuery;
+
+      // Skip fetch if userId and projectId are the same as last fetch
+      // Unless we just navigated to a new chat which might need a history refresh
+      const isChatNavigation = pathname.startsWith('/chat/');
+      if (
+        lastFetchRef.current.userId === userId &&
+        lastFetchRef.current.projectId === projectId &&
+        !isChatNavigation
+      ) {
+        return;
+      }
 
       try {
         const [history, userProjects] = await Promise.all([
@@ -42,6 +53,8 @@ export default function Sidebar({
 
         setChatGroups(history);
         setProjects(userProjects);
+
+        lastFetchRef.current = { userId, projectId, pathname };
       } catch (error) {
         console.error("Gagal memuat data sidebar:", error);
       }
