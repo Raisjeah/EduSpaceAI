@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import Anthropic from "@anthropic-ai/sdk";
+import { deepSearchEngine } from "./deepSearchEngine";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const anthropic = new Anthropic({
@@ -75,6 +76,11 @@ const AGENT_CONFIGS = {
 
 export async function getGeminiResponse(prompt, history = [], fileParts = [], agentId = 'default', modelName = "gemini-2.5-flash") {
   try {
+    // 1. Deep Search Special Handling
+    if (agentId === 'deep-search') {
+      return await deepSearchEngine(prompt, history, fileParts);
+    }
+
     const config = AGENT_CONFIGS[agentId] || AGENT_CONFIGS.default;
 
     // Mapping model IDs to SDK expected names
