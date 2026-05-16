@@ -7,7 +7,7 @@ import Subscription from '@/models/Subscription';
 import { getSessionUser } from '@/lib/session';
 
 const snap = new midtransClient.Snap({
-  isProduction: process.env.NODE_ENV === 'production',
+  isProduction: process.env.MIDTRANS_IS_PRODUCTION === 'true',
   serverKey: process.env.MIDTRANS_SERVER_KEY,
   clientKey: process.env.MIDTRANS_CLIENT_KEY,
 });
