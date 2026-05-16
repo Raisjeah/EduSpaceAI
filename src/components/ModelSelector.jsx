@@ -38,6 +38,14 @@ const MODELS_DATA = [
     icon: <PenTool size={14} className="text-orange-400" />,
     provider: 'Anthropic'
   },
+  {
+    id: 'gemini-3-pro-image-preview',
+    name: 'Nano Banana (Image)',
+    description: 'Generasi gambar canggih dengan Imagen 3',
+    tier: 'ULTRA',
+    icon: <Sparkles size={14} className="text-amber-500" />,
+    provider: 'Google'
+  },
 ];
 
 const TIER_RANK = {

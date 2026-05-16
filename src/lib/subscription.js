@@ -21,6 +21,7 @@ export const MODEL_PERMISSIONS = {
   'gemini-2.5-pro': TIERS.CLASSIC,
   'gemini-3.1-pro': TIERS.PRO,
   'claude-4-6-sonnet': TIERS.ULTRA,
+  'gemini-3-pro-image-preview': TIERS.ULTRA,
 };
 
 export function getModelByPlan(userPlan) {

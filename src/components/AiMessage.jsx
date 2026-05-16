@@ -14,6 +14,7 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
   const [disliked, setDisliked] = useState(false);
 
   const handleCopy = async () => {
+    if (imageData) return; // Can't copy image as text
     try {
       await navigator.clipboard.writeText(content);
       setCopied(true);
@@ -22,6 +23,16 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
       console.error('Gagal menyalin teks: ', err);
     }
   };
+
+  // Detect Image Payload
+  let imageData = null;
+  if (content.startsWith('{"type":"image"')) {
+    try {
+      imageData = JSON.parse(content);
+    } catch (e) {
+      console.error("Failed to parse image payload", e);
+    }
+  }
 
   if (isUser) {
     return (
@@ -57,27 +68,50 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
   return (
     <div className="w-full flex justify-start">
       <div className="w-full max-w-none flex flex-col">
-        <div className="py-4 md:py-6 w-full leading-relaxed transition-all">
-          <div className="markdown-content prose dark:prose-invert prose-base text-slate-800 dark:text-gray-200 max-w-none leading-relaxed prose-headings:text-slate-900 dark:prose-headings:text-white prose-a:text-indigo-600 dark:prose-a:text-indigo-400 prose-strong:text-slate-900 dark:prose-strong:text-white prose-code:text-indigo-600 dark:prose-code:text-indigo-400 prose-pre:bg-slate-50 dark:prose-pre:bg-[#1A1A1A] prose-pre:border prose-pre:border-slate-200 dark:prose-pre:border-[#2A2A2A]">
-            <ReactMarkdown
-              remarkPlugins={[remarkMath]}
-              rehypePlugins={[rehypeKatex]}
-              components={{
-                code({ node, inline, className, children, ...props }) {
-                  const match = /language-(\w+)/.exec(className || '');
-                  return !inline && match && match[1] === 'mermaid' ? (
-                    <Mermaid chart={String(children).replace(/\n$/, '')} />
-                  ) : (
-                    <code className={className} {...props}>
-                      {children}
-                    </code>
-                  );
-                }
-              }}
-            >
-              {content}
-            </ReactMarkdown>
-          </div>
+        <div className="py-6 w-full leading-relaxed transition-all">
+          {imageData ? (
+            <div className="relative group rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-lg max-w-2xl">
+              <img
+                src={`data:${imageData.mimeType};base64,${imageData.base64Data}`}
+                alt="AI Generated"
+                className="w-full h-auto object-contain animate-in fade-in zoom-in duration-500"
+              />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <button
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = `data:${imageData.mimeType};base64,${imageData.base64Data}`;
+                    link.download = `ai-generated-${Date.now()}.jpg`;
+                    link.click();
+                  }}
+                  className="px-4 py-2 bg-white text-black text-xs font-bold rounded-full hover:scale-105 transition-transform"
+                >
+                  Unduh Gambar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="markdown-content prose dark:prose-invert prose-base text-base max-w-none leading-relaxed">
+              <ReactMarkdown
+                remarkPlugins={[remarkMath]}
+                rehypePlugins={[rehypeKatex]}
+                components={{
+                  code({ node, inline, className, children, ...props }) {
+                    const match = /language-(\w+)/.exec(className || '');
+                    return !inline && match && match[1] === 'mermaid' ? (
+                      <Mermaid chart={String(children).replace(/\n$/, '')} />
+                    ) : (
+                      <code className={className} {...props}>
+                        {children}
+                      </code>
+                    );
+                  }
+                }}
+              >
+                {content}
+              </ReactMarkdown>
+            </div>
+          )}
         </div>
 
         {/* Action Bar - Only show when not typing */}
@@ -97,27 +131,20 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
           >
             <ThumbsDown size={16} />
           </button>
-          <button
-            onClick={handleCopy}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-[#1E1E1E] transition-colors flex items-center gap-1.5"
-            title="Salin Pesan"
-          >
-            {copied ? (
-              <>
-                <Check size={16} className="text-green-500" />
-                <span className="text-[10px] font-medium text-green-500">Tersalin!</span>
-              </>
-            ) : (
-              <Copy size={16} />
-            )}
-          </button>
-
-          {onApply && (
+          {!imageData && (
             <button
-              onClick={() => onApply(content)}
-              className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all text-[10px] font-bold shadow-lg shadow-indigo-900/20"
+              onClick={handleCopy}
+              className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-[#1E1E1E] transition-colors flex items-center gap-1.5"
+              title="Salin Pesan"
             >
-              <Check size={14} /> Terapkan ke Editor
+              {copied ? (
+                <>
+                  <Check size={16} className="text-green-500" />
+                  <span className="text-[10px] font-medium text-green-500">Tersalin!</span>
+                </>
+              ) : (
+                <Copy size={16} />
+              )}
             </button>
           )}
         </div>
