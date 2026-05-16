@@ -50,11 +50,41 @@ export default function Sidebar({
     fetchData();
   }, [userId, pathname, searchParams]);
 
-  const filteredChatGroups = useMemo(() => {
-    if (!searchQuery.trim()) return chatGroups;
-    return chatGroups.filter(group =>
-      group.text.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  const groupedChatHistory = useMemo(() => {
+    const filtered = !searchQuery.trim()
+      ? chatGroups
+      : chatGroups.filter(group => group.text.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const groups = {
+      today: { label: 'Hari Ini', items: [] },
+      yesterday: { label: 'Kemarin', items: [] },
+      last7Days: { label: '7 Hari Terakhir', items: [] },
+      older: { label: 'Sebelumnya', items: [] }
+    };
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const last7Days = new Date(today);
+    last7Days.setDate(last7Days.getDate() - 7);
+
+    filtered.forEach(chat => {
+      const chatDate = new Date(chat.createdAt || Date.now());
+      const chatDay = new Date(chatDate.getFullYear(), chatDate.getMonth(), chatDate.getDate());
+
+      if (chatDay.getTime() === today.getTime()) {
+        groups.today.items.push(chat);
+      } else if (chatDay.getTime() === yesterday.getTime()) {
+        groups.yesterday.items.push(chat);
+      } else if (chatDay.getTime() >= last7Days.getTime()) {
+        groups.last7Days.items.push(chat);
+      } else {
+        groups.older.items.push(chat);
+      }
+    });
+
+    return Object.values(groups).filter(g => g.items.length > 0);
   }, [chatGroups, searchQuery]);
 
   const closeSidebar = () => {
@@ -74,6 +104,27 @@ export default function Sidebar({
       case 'researcher': return <BookOpen size={14} className="text-green-400" />;
       case 'editor': return <Edit3 size={14} className="text-amber-400" />;
       default: return <Rocket size={14} className="text-indigo-400" />;
+    }
+  };
+
+  const getAgentTheme = (agentId) => {
+    switch (agentId) {
+      case 'deep-search': return {
+        active: 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500',
+        hover: 'hover:bg-blue-50 dark:hover:bg-blue-900/10'
+      };
+      case 'researcher': return {
+        active: 'bg-green-600/10 text-green-600 dark:text-green-400 border-green-500',
+        hover: 'hover:bg-green-50 dark:hover:bg-green-900/10'
+      };
+      case 'editor': return {
+        active: 'bg-amber-600/10 text-amber-600 dark:text-amber-400 border-amber-500',
+        hover: 'hover:bg-amber-50 dark:hover:bg-amber-900/10'
+      };
+      default: return {
+        active: 'bg-indigo-600/10 text-indigo-600 dark:text-white border-indigo-500',
+        hover: 'hover:bg-indigo-50 dark:hover:bg-indigo-900/10'
+      };
     }
   };
 
@@ -120,6 +171,18 @@ export default function Sidebar({
             >
               <Briefcase size={14} /> <span className="text-[11px] font-semibold">Agent Baru</span>
             </button>
+
+            {/* Search Input In Sidebar */}
+            <div className="relative mt-2">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari history..."
+                className="w-full bg-slate-100 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-xl py-2 pl-9 pr-4 text-[12px] text-slate-900 dark:text-white outline-none focus:border-indigo-500/50 transition-colors"
+              />
+            </div>
           </div>
 
           {/* Navigation */}
@@ -145,13 +208,16 @@ export default function Sidebar({
                     const isPathActive = pathname === `/project/${project._id}`;
                     const isQueryActive = searchParams.get('projectId') === project._id;
                     const isActive = isPathActive || isQueryActive;
+                    const theme = getAgentTheme(project.agentId);
                     return (
                       <Link
                         key={project._id}
                         href={`/project/${project._id}`}
                         onClick={closeSidebar}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[11px] transition-all ${
-                          isActive ? 'bg-indigo-600/10 text-indigo-600 dark:text-white border-l-2 border-indigo-500' : 'text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-[#151515] hover:text-slate-900 dark:hover:text-gray-200'
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[11px] transition-all border-l-2 ${
+                          isActive
+                          ? theme.active
+                          : `text-slate-500 dark:text-gray-400 ${theme.hover} hover:text-slate-900 dark:hover:text-gray-200 border-transparent`
                         }`}
                       >
                         {getAgentIcon(project.agentId)}
@@ -167,34 +233,38 @@ export default function Sidebar({
               {isProjectContext ? 'Riwayat Agent' : 'Riwayat Belajar'}
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1 pr-2">
-              {filteredChatGroups.length === 0 ? (
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2">
+              {groupedChatHistory.length === 0 ? (
                 <div className="px-3 py-4 text-[11px] text-slate-500 dark:text-gray-600 italic text-center bg-slate-50 dark:bg-[#151515] rounded-xl border border-dashed border-slate-200 dark:border-[#222]">
                   {searchQuery ? 'Tidak ada hasil pencarian' : 'Belum ada percakapan'}
                 </div>
               ) : (
-                filteredChatGroups.map((group) => {
-                  const isActive = pathname.includes(`/chat/${group._id}`);
-                  // Pertahankan context project saat klik history
-                  const currentProjectId = (pathname.startsWith('/project/') ? pathname.split('/')[2] : null) || searchParams.get('projectId');
-                  const href = `/chat/${group._id}${currentProjectId ? `?projectId=${currentProjectId}` : ''}`;
+                groupedChatHistory.map((group) => (
+                  <div key={group.label} className="space-y-1">
+                    <div className="px-3 py-1 text-[9px] font-bold text-slate-400 dark:text-gray-600 uppercase tracking-wider">{group.label}</div>
+                    {group.items.map((chat) => {
+                      const isActive = pathname.includes(`/chat/${chat._id}`);
+                      const currentProjectId = (pathname.startsWith('/project/') ? pathname.split('/')[2] : null) || searchParams.get('projectId');
+                      const href = `/chat/${chat._id}${currentProjectId ? `?projectId=${currentProjectId}` : ''}`;
 
-                  return (
-                    <Link
-                      key={group._id}
-                      href={href}
-                      onClick={closeSidebar}
-                      className={`group flex items-center gap-3 px-3 py-3 text-[12px] rounded-xl cursor-pointer transition-all border-l-4 ${
-                        isActive
-                        ? 'bg-slate-100 dark:bg-[#1A1A1A] text-slate-900 dark:text-white border-indigo-500'
-                        : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200 hover:bg-slate-50 dark:hover:bg-[#151515] border-transparent'
-                      }`}
-                    >
-                      <MessageSquare size={14} className={isActive ? 'text-indigo-400' : 'text-gray-600'} />
-                      <span className="truncate flex-1">{group.text}</span>
-                    </Link>
-                  );
-                })
+                      return (
+                        <Link
+                          key={chat._id}
+                          href={href}
+                          onClick={closeSidebar}
+                          className={`group flex items-center gap-3 px-3 py-2.5 text-[12px] rounded-xl cursor-pointer transition-all border-l-4 ${
+                            isActive
+                            ? 'bg-slate-100 dark:bg-[#1A1A1A] text-slate-900 dark:text-white border-indigo-500'
+                            : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200 hover:bg-slate-50 dark:hover:bg-[#151515] border-transparent'
+                          }`}
+                        >
+                          <MessageSquare size={14} className={isActive ? 'text-indigo-400' : 'text-gray-600 group-hover:text-indigo-400/50'} />
+                          <span className="truncate flex-1">{chat.text}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ))
               )}
             </div>
           </nav>

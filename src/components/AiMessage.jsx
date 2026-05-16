@@ -8,7 +8,7 @@ import { ThumbsUp, ThumbsDown, Copy, Check } from 'lucide-react';
 import Mermaid from './Mermaid';
 import 'katex/dist/katex.min.css';
 
-export default function AiMessage({ content, isUser = false, isTyping = false }) {
+export default function AiMessage({ content, isUser = false, isTyping = false, onApply }) {
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
@@ -38,8 +38,8 @@ export default function AiMessage({ content, isUser = false, isTyping = false })
     return (
       <div className="w-full flex justify-end">
         <div className="w-fit max-w-[85%] flex flex-row-reverse gap-4">
-          <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 backdrop-blur-md text-white rounded-tr-none leading-relaxed transition-all">
-            <div className="markdown-content prose prose-invert prose-sm max-w-none leading-relaxed">
+          <div className="p-4 rounded-2xl bg-indigo-600/10 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 backdrop-blur-md text-slate-800 dark:text-white rounded-tr-none leading-relaxed transition-all">
+            <div className="markdown-content prose dark:prose-invert prose-sm max-w-none leading-relaxed prose-p:my-1 prose-headings:mb-2 prose-headings:mt-4">
               <ReactMarkdown
                 remarkPlugins={[remarkMath]}
                 rehypePlugins={[rehypeKatex]}

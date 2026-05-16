@@ -7,6 +7,7 @@ const ChatContext = createContext();
 export function ChatProvider({ children }) {
   // Store messages and status keyed by chatId (use 'new' for blank chats)
   const [chatData, setChatData] = useState({});
+  const [activeChatTitle, setActiveChatTitle] = useState('EduSpaceAI');
   const typewriterIntervals = useRef({});
 
   const setChatMessages = useCallback((chatId, messagesOrFn) => {
@@ -98,6 +99,15 @@ export function ChatProvider({ children }) {
     }
   }, []);
 
+  const stopTypewriter = useCallback((chatId) => {
+    const id = chatId || 'new';
+    if (typewriterIntervals.current[id]) {
+      clearInterval(typewriterIntervals.current[id]);
+      delete typewriterIntervals.current[id];
+      setChatStatus(id, { isTyping: false });
+    }
+  }, [setChatStatus]);
+
   const clearChat = useCallback((chatId) => {
     const id = chatId || 'new';
     if (typewriterIntervals.current[id]) {
@@ -117,8 +127,11 @@ export function ChatProvider({ children }) {
       setChatMessages,
       setChatStatus,
       runTypewriter,
+      stopTypewriter,
       migrateNewChatToId,
-      clearChat
+      clearChat,
+      activeChatTitle,
+      setActiveChatTitle
     }}>
       {children}
     </ChatContext.Provider>

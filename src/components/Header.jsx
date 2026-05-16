@@ -1,17 +1,17 @@
 'use client';
 
-import { Menu, Search, User, X, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { Menu, User, Sparkles } from 'lucide-react';
 import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';
+import { useChat } from '@/context/ChatContext';
 
 export default function Header({ setIsSidebarOpen }) {
-  const { searchQuery, setSearchQuery, userId, user } = useAuth();
-  const [isSearchActive, setIsSearchActive] = useState(false);
+  const { userId, user } = useAuth();
+  const { activeChatTitle } = useChat();
 
   return (
     <header className="flex justify-between items-center p-4 sticky top-0 z-20 bg-white dark:bg-[#0F0F0F] border-b border-slate-200 dark:border-[#1E1E1E] flex-none transition-colors duration-200">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 min-w-0">
         {!userId ? (
           <Link href="/" className="flex items-center gap-2">
              <div className="w-10 h-10 flex items-center justify-center">
@@ -24,26 +24,20 @@ export default function Header({ setIsSidebarOpen }) {
               <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white hidden sm:block">EduSpaceAI</span>
           </Link>
         ) : (
-          <button onClick={() => setIsSidebarOpen(true)} className="text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors">
-            <Menu size={20} />
-          </button>
+          <>
+            <button onClick={() => setIsSidebarOpen(true)} className="text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors shrink-0">
+              <Menu size={20} />
+            </button>
+            <div className="flex flex-col min-w-0">
+               <h1 className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[150px] sm:max-w-[300px]">
+                 {activeChatTitle}
+               </h1>
+            </div>
+          </>
         )}
       </div>
 
-      <div className="flex items-center gap-3 flex-1 justify-end">
-        {userId && (
-          <div className={`flex items-center transition-all duration-300 overflow-hidden ${isSearchActive ? 'flex-1 max-w-md' : 'w-0'}`}>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari riwayat..."
-              className="w-full bg-slate-100 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-full py-1.5 px-4 text-base text-slate-900 dark:text-white outline-none focus:border-indigo-500/50 transition-colors"
-              autoFocus={isSearchActive}
-            />
-          </div>
-        )}
-
+      <div className="flex items-center gap-3 flex-none justify-end">
         <div className="flex items-center gap-4 text-gray-400">
           {!userId && (
             <Link
@@ -62,18 +56,6 @@ export default function Header({ setIsSidebarOpen }) {
               <Sparkles size={14} />
               {user?.current_plan === 'FREE' ? 'Upgrade Pro' : user?.current_plan}
             </Link>
-          )}
-
-          {userId && (
-            <button
-              onClick={() => {
-                setIsSearchActive(!isSearchActive);
-                if (isSearchActive) setSearchQuery('');
-              }}
-              className="hover:text-slate-900 dark:hover:text-white transition-colors"
-            >
-              {isSearchActive ? <X size={18} /> : <Search size={18} />}
-            </button>
           )}
 
           {userId && (
