@@ -94,9 +94,9 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
 
     // Mapping model IDs to SDK expected names
     let actualModel = modelName;
-    if (modelName === 'gemini-2.5-flash') actualModel = 'gemini-1.5-flash';
-    if (modelName === 'gemini-2.5-pro') actualModel = 'gemini-1.5-pro';
-    if (modelName === 'gemini-3.1-pro') actualModel = 'gemini-1.5-pro';
+    if (modelName === 'gemini-2.5-flash') actualModel = 'gemini-2.5-flash';
+    if (modelName === 'gemini-2.5-pro') actualModel = 'gemini-2.5-pro';
+    if (modelName === 'gemini-3.1-pro') actualModel = 'gemini-3.1-pro-preview';
     if (modelName === 'gemini-3-pro-image-preview') actualModel = 'gemini-3.1-flash-image-preview';
 
     // Claude Model Routing
