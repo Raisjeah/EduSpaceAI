@@ -4,10 +4,10 @@ import { fetchPageContent } from "./jina";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-export async function deepSearchEngine(userQuery, history = [], fileParts = [], modelName = "gemini-1.5-flash") {
+export async function deepSearchEngine(userQuery, history = [], fileParts = [], modelName = "gemini-2.5-flash") {
   try {
     // Using gemini-1.5-flash for faster intermediate steps
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     // Format fileParts for context awareness
     const fileContext = fileParts.length > 0
@@ -158,13 +158,13 @@ ${ctx.extractedContent}
     `;
 
     // Determine final model for Writer Agent
-    let finalModelName = "gemini-1.5-flash";
+    let finalModelName = "gemini-2.5-flash";
     if (modelName.includes('gemini')) {
       finalModelName = modelName;
-      if (modelName === 'gemini-2.5-flash') finalModelName = 'gemini-1.5-flash';
-      if (modelName === 'gemini-2.5-pro') finalModelName = 'gemini-1.5-pro';
-      if (modelName === 'gemini-3.1-pro') finalModelName = 'gemini-1.5-pro';
-      if (modelName === 'gemini-3-pro-image-preview') finalModelName = 'gemini-1.5-flash'; // Image gen model shouldn't be used for writing
+      if (modelName === 'gemini-2.5-flash') finalModelName = 'gemini-2.5-flash';
+      if (modelName === 'gemini-2.5-pro') finalModelName = 'gemini-2.5-pro';
+      if (modelName === 'gemini-3.1-pro') finalModelName = 'gemini-3.1-pro-preview';
+      if (modelName === 'gemini-3-pro-image-preview') finalModelName = 'gemini-3-pro-image-preview'; // Image gen model shouldn't be used for writing
     }
 
     const finalModel = genAI.getGenerativeModel({ model: finalModelName });
