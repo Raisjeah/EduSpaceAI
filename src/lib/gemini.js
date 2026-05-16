@@ -94,10 +94,10 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
 
     // Mapping model IDs to SDK expected names
     let actualModel = modelName;
-    if (modelName === 'gemini-2.5-flash') actualModel = 'gemini-2.5-flash';
-    if (modelName === 'gemini-2.5-pro') actualModel = 'gemini-2.5-pro';
-    if (modelName === 'gemini-3-flash-preview') actualModel = 'gemini-3-flash-preview';
-    if (modelName === 'gemini-3.1-flash-image-preview') actualModel = 'gemini-3.1-flash-image-preview';
+    if (modelName === 'gemini-2.5-flash') actualModel = 'gemini-1.5-flash';
+    if (modelName === 'gemini-2.5-pro') actualModel = 'gemini-1.5-pro';
+    if (modelName === 'gemini-3.1-pro') actualModel = 'gemini-1.5-pro';
+    if (modelName === 'gemini-3-pro-image-preview') actualModel = 'gemini-3.1-flash-image-preview';
 
     // Claude Model Routing
     if (modelName.includes('claude')) {
@@ -125,7 +125,7 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
     const response = await result.response;
 
     // Handle Image Generation Model Output
-    if (actualModel === 'gemini-3.1-flash-image-preview') {
+    if (actualModel === 'gemini-3.1-flash-image-preview' || modelName === 'gemini-3-pro-image-preview') {
       const candidates = response.candidates;
       if (candidates && candidates[0].content.parts) {
         const imagePart = candidates[0].content.parts.find(p => p.inlineData);

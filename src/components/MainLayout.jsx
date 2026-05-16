@@ -49,11 +49,12 @@ export default function MainLayout({ children }) {
 
   const isHomePage = pathname === '/';
   const isChatPage = pathname.startsWith('/chat');
+  const isProjectPage = pathname.startsWith('/project');
   const isPricingPage = pathname === '/pricing';
   const isLegalPage = pathname === '/terms' || pathname === '/privacy';
 
-  // Key untuk AnimatePresence agar transisi dari "/" ke "/chat/:id" tidak re-render layout
-  const layoutKey = (isHomePage || isChatPage) ? 'chat-view' : pathname;
+  // Key untuk AnimatePresence agar transisi dari "/", "/chat/:id", atau "/project/:id" tidak re-render layout
+  const layoutKey = (isHomePage || isChatPage || isProjectPage) ? 'chat-view' : pathname;
 
   // Loading state - harus menutupi SEMUA hal tanpa terkecuali jika isLoading true
   if (isLoading) {
