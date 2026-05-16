@@ -50,11 +50,41 @@ export default function Sidebar({
     fetchData();
   }, [userId, pathname, searchParams]);
 
-  const filteredChatGroups = useMemo(() => {
-    if (!searchQuery.trim()) return chatGroups;
-    return chatGroups.filter(group =>
-      group.text.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  const groupedChatHistory = useMemo(() => {
+    const filtered = !searchQuery.trim()
+      ? chatGroups
+      : chatGroups.filter(group => group.text.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const groups = {
+      today: { label: 'Hari Ini', items: [] },
+      yesterday: { label: 'Kemarin', items: [] },
+      last7Days: { label: '7 Hari Terakhir', items: [] },
+      older: { label: 'Sebelumnya', items: [] }
+    };
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const last7Days = new Date(today);
+    last7Days.setDate(last7Days.getDate() - 7);
+
+    filtered.forEach(chat => {
+      const chatDate = new Date(chat.createdAt || Date.now());
+      const chatDay = new Date(chatDate.getFullYear(), chatDate.getMonth(), chatDate.getDate());
+
+      if (chatDay.getTime() === today.getTime()) {
+        groups.today.items.push(chat);
+      } else if (chatDay.getTime() === yesterday.getTime()) {
+        groups.yesterday.items.push(chat);
+      } else if (chatDay.getTime() >= last7Days.getTime()) {
+        groups.last7Days.items.push(chat);
+      } else {
+        groups.older.items.push(chat);
+      }
+    });
+
+    return Object.values(groups).filter(g => g.items.length > 0);
   }, [chatGroups, searchQuery]);
 
   const closeSidebar = () => {
@@ -203,34 +233,38 @@ export default function Sidebar({
               {isProjectContext ? 'Riwayat Agent' : 'Riwayat Belajar'}
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1 pr-2">
-              {filteredChatGroups.length === 0 ? (
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2">
+              {groupedChatHistory.length === 0 ? (
                 <div className="px-3 py-4 text-[11px] text-slate-500 dark:text-gray-600 italic text-center bg-slate-50 dark:bg-[#151515] rounded-xl border border-dashed border-slate-200 dark:border-[#222]">
                   {searchQuery ? 'Tidak ada hasil pencarian' : 'Belum ada percakapan'}
                 </div>
               ) : (
-                filteredChatGroups.map((group) => {
-                  const isActive = pathname.includes(`/chat/${group._id}`);
-                  // Pertahankan context project saat klik history
-                  const currentProjectId = (pathname.startsWith('/project/') ? pathname.split('/')[2] : null) || searchParams.get('projectId');
-                  const href = `/chat/${group._id}${currentProjectId ? `?projectId=${currentProjectId}` : ''}`;
+                groupedChatHistory.map((group) => (
+                  <div key={group.label} className="space-y-1">
+                    <div className="px-3 py-1 text-[9px] font-bold text-slate-400 dark:text-gray-600 uppercase tracking-wider">{group.label}</div>
+                    {group.items.map((chat) => {
+                      const isActive = pathname.includes(`/chat/${chat._id}`);
+                      const currentProjectId = (pathname.startsWith('/project/') ? pathname.split('/')[2] : null) || searchParams.get('projectId');
+                      const href = `/chat/${chat._id}${currentProjectId ? `?projectId=${currentProjectId}` : ''}`;
 
-                  return (
-                    <Link
-                      key={group._id}
-                      href={href}
-                      onClick={closeSidebar}
-                      className={`group flex items-center gap-3 px-3 py-3 text-[12px] rounded-xl cursor-pointer transition-all border-l-4 ${
-                        isActive
-                        ? 'bg-slate-100 dark:bg-[#1A1A1A] text-slate-900 dark:text-white border-indigo-500'
-                        : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200 hover:bg-slate-50 dark:hover:bg-[#151515] border-transparent'
-                      }`}
-                    >
-                      <MessageSquare size={14} className={isActive ? 'text-indigo-400' : 'text-gray-600'} />
-                      <span className="truncate flex-1">{group.text}</span>
-                    </Link>
-                  );
-                })
+                      return (
+                        <Link
+                          key={chat._id}
+                          href={href}
+                          onClick={closeSidebar}
+                          className={`group flex items-center gap-3 px-3 py-2.5 text-[12px] rounded-xl cursor-pointer transition-all border-l-4 ${
+                            isActive
+                            ? 'bg-slate-100 dark:bg-[#1A1A1A] text-slate-900 dark:text-white border-indigo-500'
+                            : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200 hover:bg-slate-50 dark:hover:bg-[#151515] border-transparent'
+                          }`}
+                        >
+                          <MessageSquare size={14} className={isActive ? 'text-indigo-400' : 'text-gray-600 group-hover:text-indigo-400/50'} />
+                          <span className="truncate flex-1">{chat.text}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ))
               )}
             </div>
           </nav>

@@ -27,8 +27,8 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
     return (
       <div className="w-full flex justify-end">
         <div className="w-fit max-w-[85%] flex flex-row-reverse gap-4">
-          <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 backdrop-blur-md text-white rounded-tr-none leading-relaxed transition-all">
-            <div className="markdown-content prose prose-invert prose-sm max-w-none leading-relaxed">
+          <div className="p-4 rounded-2xl bg-indigo-600/10 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 backdrop-blur-md text-slate-800 dark:text-white rounded-tr-none leading-relaxed transition-all">
+            <div className="markdown-content prose dark:prose-invert prose-sm max-w-none leading-relaxed prose-p:my-1 prose-headings:mb-2 prose-headings:mt-4">
               <ReactMarkdown
                 remarkPlugins={[remarkMath]}
                 rehypePlugins={[rehypeKatex]}
@@ -58,7 +58,7 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
     <div className="w-full flex justify-start">
       <div className="w-full max-w-none flex flex-col">
         <div className="py-4 md:py-6 w-full leading-relaxed transition-all">
-          <div className="markdown-content prose dark:prose-invert prose-base text-base max-w-none leading-relaxed">
+          <div className="markdown-content prose dark:prose-invert prose-base text-slate-800 dark:text-gray-200 max-w-none leading-relaxed prose-headings:text-slate-900 dark:prose-headings:text-white prose-a:text-indigo-600 dark:prose-a:text-indigo-400 prose-strong:text-slate-900 dark:prose-strong:text-white prose-code:text-indigo-600 dark:prose-code:text-indigo-400 prose-pre:bg-slate-50 dark:prose-pre:bg-[#1A1A1A] prose-pre:border prose-pre:border-slate-200 dark:prose-pre:border-[#2A2A2A]">
             <ReactMarkdown
               remarkPlugins={[remarkMath]}
               rehypePlugins={[rehypeKatex]}

@@ -99,6 +99,15 @@ export function ChatProvider({ children }) {
     }
   }, []);
 
+  const stopTypewriter = useCallback((chatId) => {
+    const id = chatId || 'new';
+    if (typewriterIntervals.current[id]) {
+      clearInterval(typewriterIntervals.current[id]);
+      delete typewriterIntervals.current[id];
+      setChatStatus(id, { isTyping: false });
+    }
+  }, [setChatStatus]);
+
   const clearChat = useCallback((chatId) => {
     const id = chatId || 'new';
     if (typewriterIntervals.current[id]) {
@@ -118,6 +127,7 @@ export function ChatProvider({ children }) {
       setChatMessages,
       setChatStatus,
       runTypewriter,
+      stopTypewriter,
       migrateNewChatToId,
       clearChat,
       activeChatTitle,

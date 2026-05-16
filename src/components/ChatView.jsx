@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, useTransition } from 'react';
 import { useChat } from '@/context/ChatContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Plus, Send, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File } from 'lucide-react';
+import TextareaAutosize from 'react-textarea-autosize';
+import { ChevronDown, Plus, Send, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File, Square, Code, GraduationCap, Microscope, ArrowLeft } from 'lucide-react';
 import { sendMessage, getChatDetails } from '@/app/actions/chatActions';
 import { getProjectDetails } from '@/app/actions/projectActions';
 import AiMessage from './AiMessage';
@@ -21,6 +22,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     setChatMessages,
     setChatStatus,
     runTypewriter,
+    stopTypewriter,
     migrateNewChatToId,
     clearChat,
     setActiveChatTitle
@@ -37,12 +39,12 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
   const setMessages = (msgs) => setChatMessages(currentId, msgs);
   const setIsThinking = (val) => setChatStatus(currentId, { isThinking: val });
-  const setIsTyping = (val) => setChatStatus(currentId, { isTyping: val });
 
   const [input, setInput] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [project, setProject] = useState(null);
   const [isPending, startTransition] = useTransition();
+  const [isUploading, setIsUploading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
   const [thoughtTraces, setThoughtTraces] = useState([]);
   const [upgradeModal, setUpgradeModal] = useState({ isOpen: false, feature: '' });
@@ -170,7 +172,12 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
     const fileToUpload = selectedFile;
     setSelectedFile(null);
-    setIsThinking(true);
+
+    if (fileToUpload) {
+      setIsUploading(true);
+    } else {
+      setIsThinking(true);
+    }
 
     startTransition(async () => {
       const formData = new FormData();
@@ -183,6 +190,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       if (fileToUpload) formData.append('file', fileToUpload);
 
       const result = await sendMessage(formData);
+      setIsUploading(false);
 
       if (result.success) {
         if (!activeChatId && currentId === 'new') {
@@ -267,24 +275,53 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       />
       {/* Project Header (If in project) */}
       {project && (
-        <div className={`px-6 py-3 border-b ${agentTheme.border} ${agentTheme.bg} flex items-center justify-between z-10 flex-none transition-colors duration-200`}>
-          <div className="flex items-center gap-3">
-            <div className={`w-8 h-8 rounded-lg ${agentTheme.bg} border ${agentTheme.border} flex items-center justify-center`}>
-              {getAgentIcon(project.agentId)}
-            </div>
-            <div>
-              <h2 className="text-[12px] font-bold text-slate-900 dark:text-white leading-tight">{project.name}</h2>
-              <p className={`text-[10px] ${agentTheme.text} uppercase tracking-widest font-semibold`}>{getAgentName(project.agentId)}</p>
+        <div className={`px-4 md:px-6 py-3 border-b ${agentTheme.border} ${agentTheme.bg} flex items-center justify-between z-10 flex-none transition-colors duration-200`}>
+          <div className="flex items-center gap-2 md:gap-4">
+            <Link
+              href="/"
+              className={`p-2 rounded-lg hover:bg-white/50 dark:hover:bg-black/20 ${agentTheme.text} transition-all`}
+              title="Keluar dari Workspace"
+            >
+              <ArrowLeft size={18} />
+            </Link>
+            <div className="flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-lg ${agentTheme.bg} border ${agentTheme.border} flex items-center justify-center`}>
+                {getAgentIcon(project.agentId)}
+              </div>
+              <div>
+                <h2 className="text-[12px] font-bold text-slate-900 dark:text-white leading-tight">{project.name}</h2>
+                <p className={`text-[10px] ${agentTheme.text} uppercase tracking-widest font-semibold`}>{getAgentName(project.agentId)}</p>
+              </div>
             </div>
           </div>
-          <div className={`text-[10px] ${agentTheme.text} ${agentTheme.bg} px-2 py-1 rounded border ${agentTheme.border} font-bold`}>Active Agent Workspace</div>
+          <div className={`hidden sm:block text-[10px] ${agentTheme.text} ${agentTheme.bg} px-2 py-1 rounded border ${agentTheme.border} font-bold uppercase tracking-wider`}>Workspace Agent</div>
         </div>
       )}
 
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
         {isLoadingChat ? (
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <p className="text-slate-500 dark:text-gray-500 text-sm animate-pulse">Memuat percakapan...</p>
+          <div className="flex-1 max-w-4xl mx-auto w-full pt-8 px-4 space-y-8 animate-pulse">
+            <div className="flex justify-start">
+              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-[#1E1E1E]" />
+              <div className="ml-4 space-y-2">
+                <div className="h-4 w-48 bg-slate-100 dark:bg-[#1E1E1E] rounded" />
+                <div className="h-4 w-64 bg-slate-100 dark:bg-[#1E1E1E] rounded" />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <div className="mr-4 space-y-2">
+                <div className="h-4 w-32 bg-indigo-50 dark:bg-indigo-900/10 rounded ml-auto" />
+                <div className="h-10 w-64 bg-indigo-50 dark:bg-indigo-900/10 rounded" />
+              </div>
+              <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-900/10" />
+            </div>
+            <div className="flex justify-start pt-4">
+              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-[#1E1E1E]" />
+              <div className="ml-4 space-y-2">
+                <div className="h-4 w-56 bg-slate-100 dark:bg-[#1E1E1E] rounded" />
+                <div className="h-20 w-80 bg-slate-100 dark:bg-[#1E1E1E] rounded" />
+              </div>
+            </div>
           </div>
         ) : messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center px-4">
@@ -304,14 +341,17 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             <div className="w-full max-w-2xl text-center">
               {project?.agentId === 'deep-search' ? (
                 <div className="flex flex-wrap justify-center gap-3">
-                   <SuggestionChip theme={agentTheme} label="Cari berita terbaru AI" onClick={() => handleSend("Apa berita terbaru tentang perkembangan AI minggu ini?")} />
-                   <SuggestionChip theme={agentTheme} label="Tren Teknologi 2025" onClick={() => handleSend("Apa tren teknologi utama yang diprediksi untuk tahun 2025?")} />
+                   <SuggestionChip theme={agentTheme} icon={<Search size={12}/>} label="Cari berita terbaru AI" onClick={() => handleSend("Apa berita terbaru tentang perkembangan AI minggu ini?")} />
+                   <SuggestionChip theme={agentTheme} icon={<Rocket size={12}/>} label="Tren Teknologi 2025" onClick={() => handleSend("Apa tren teknologi utama yang diprediksi untuk tahun 2025?")} />
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
                   <div className="space-y-3">
-                    <p className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest">Akademik & Skripsi</p>
-                    <div className="flex flex-wrap justify-center gap-2">
+                    <div className="flex items-center gap-2 px-1">
+                      <GraduationCap size={14} className="text-indigo-500" />
+                      <p className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest">Skripsi & Riset</p>
+                    </div>
+                    <div className="flex flex-col gap-2">
                       <SuggestionChip theme={agentTheme} label="Bimbingan Skripsi" onClick={() => handleSend("Saya butuh bantuan bimbingan skripsi, bisa mulai dari mana?")} />
                       <SuggestionChip theme={agentTheme} label="Cek Judul Skripsi" onClick={() => handleSend("Bantu saya review judul skripsi: [Sebutkan judulmu]")} />
                       <SuggestionChip theme={agentTheme} label="Cari Rumusan Masalah" onClick={() => handleSend("Bantu saya membuat rumusan masalah untuk topik: [Sebutkan topik]")} />
@@ -319,21 +359,36 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                   </div>
 
                   <div className="space-y-3">
-                    <p className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest">Bantuan Belajar</p>
-                    <div className="flex flex-wrap justify-center gap-2">
+                    <div className="flex items-center gap-2 px-1">
+                      <BookOpen size={14} className="text-green-500" />
+                      <p className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest">Bantuan Belajar</p>
+                    </div>
+                    <div className="flex flex-col gap-2">
                       <SuggestionChip theme={agentTheme} label="Buat Latihan Soal" onClick={() => handleSend("Buatkan 5 soal pilihan ganda tentang Pemrograman Dasar")} />
                       <SuggestionChip theme={agentTheme} label="Ringkas Materi" onClick={() => handleSend("Tolong ringkaskan konsep tentang: [Sebutkan konsep]")} />
                       <SuggestionChip theme={agentTheme} label="Jelaskan Rumus" onClick={() => handleSend("Bantu jelaskan cara kerja rumus ini: [Tulis rumus]")} />
                     </div>
                   </div>
 
-                  <div className="flex justify-center pt-2">
-                    <Link href="/tools">
-                      <SuggestionChip theme={agentTheme} label="Jelajahi Semua Tools" icon={<Plus size={12}/>} isLink={true} />
-                    </Link>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 px-1">
+                      <Code size={14} className="text-blue-500" />
+                      <p className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest">Coding & IT</p>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <SuggestionChip theme={agentTheme} label="Debug Kode" onClick={() => handleSend("Bantu saya mencari error di kode ini: [Paste kodemu]")} />
+                      <SuggestionChip theme={agentTheme} label="Jelaskan Algoritma" onClick={() => handleSend("Jelaskan cara kerja algoritma Dijkstra dengan bahasa sederhana")} />
+                      <SuggestionChip theme={agentTheme} label="Review Query SQL" onClick={() => handleSend("Bantu optimasi query SQL berikut: [Paste query]")} />
+                    </div>
                   </div>
                 </div>
               )}
+
+              <div className="flex justify-center pt-8">
+                <Link href="/tools">
+                  <SuggestionChip theme={agentTheme} label="Jelajahi Semua Tools" icon={<Plus size={12}/>} isLink={true} />
+                </Link>
+              </div>
             </div>
           </div>
         ) : (
@@ -356,9 +411,15 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                   ))}
                 </div>
               )}
-              {isThinking && (
-                <div className="px-1">
+              {(isThinking || isUploading) && (
+                <div className="px-1 flex flex-col gap-2">
                   <ThinkingIndicator />
+                  {isUploading && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800/30 rounded-lg w-fit animate-pulse">
+                      <FileText size={12} className="text-indigo-500" />
+                      <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">Mengunggah file...</span>
+                    </div>
+                  )}
                 </div>
               )}
               <div ref={chatEndRef} />
@@ -368,7 +429,22 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       </div>
       <div className="p-4 md:p-6 bg-gradient-to-t from-white dark:from-[#0F0F0F] via-white dark:via-[#0F0F0F] to-transparent flex-none">
         <div className="max-w-4xl mx-auto flex flex-col gap-3">
-          <div className="flex justify-end pr-2">
+          <div className="flex items-center justify-between px-2">
+             <div className="flex-1 flex justify-center">
+               <AnimatePresence>
+                 {isTyping && (
+                    <motion.button
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      onClick={() => stopTypewriter(currentId)}
+                      className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[11px] font-bold text-slate-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 hover:border-red-200 transition-all shadow-sm"
+                    >
+                      <Square size={12} fill="currentColor" /> Berhenti Menghasilkan
+                    </motion.button>
+                 )}
+               </AnimatePresence>
+             </div>
              <ModelSelector
                currentPlan={user?.current_plan || 'FREE'}
                selectedModel={selectedModel}
@@ -400,9 +476,9 @@ function SuggestionChip({ label, icon, onClick, isLink, theme }) {
   return (
     <Component
       onClick={onClick} 
-      className={`flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[11px] text-slate-500 dark:text-gray-400 ${hoverText} ${hoverBorder} transition-all cursor-pointer`}
+      className={`flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-xl text-[11px] text-slate-600 dark:text-gray-400 ${hoverText} ${hoverBorder} transition-all cursor-pointer w-full md:w-auto md:inline-flex`}
     >
-      {icon} {label}
+      {icon} <span className="truncate">{label}</span>
     </Component>
   );
 }
@@ -426,24 +502,6 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
   const textareaRef = useRef(null);
   const actionSheetRef = useRef(null);
 
-  // Close action sheet when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (actionSheetRef.current && !actionSheetRef.current.contains(event.target)) {
-        setIsActionSheetOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Auto-expand textarea
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 200) + 'px';
-    }
-  }, [input]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -461,6 +519,12 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
     <div className="flex flex-col w-full relative">
       <AnimatePresence>
         {isActionSheetOpen && (
+          <>
+          {/* Overlay to close action sheet */}
+          <div
+            className="fixed inset-0 z-40 cursor-default"
+            onClick={() => setIsActionSheetOpen(false)}
+          />
           <motion.div
             ref={actionSheetRef}
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -500,6 +564,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               </button>
             </div>
           </motion.div>
+          </>
         )}
       </AnimatePresence>
 
@@ -588,7 +653,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           accept=".pdf,.doc,.docx,.txt,.csv"
         />
 
-        <textarea
+        <TextareaAutosize
           ref={textareaRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -598,7 +663,8 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               handleSend();
             }
           }}
-          rows={1}
+          minRows={1}
+          maxRows={8}
           disabled={disabled}
           placeholder="Tanya apa saja ke Dosen AI-mu..."
           className="flex-1 bg-transparent border-none outline-none py-2.5 px-3 text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
