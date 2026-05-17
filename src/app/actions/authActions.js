@@ -181,6 +181,7 @@ export async function getUser() {
       email: user.email,
       image: user.image,
       current_plan: user.current_plan,
+      isVerified: user.isVerified,
     };
   } catch (error) {
     return null;
@@ -210,6 +211,7 @@ export async function updateProfile(formData) {
         name: user.name,
         email: user.email,
         image: user.image,
+        isVerified: user.isVerified,
       }
     };
   } catch (error) {

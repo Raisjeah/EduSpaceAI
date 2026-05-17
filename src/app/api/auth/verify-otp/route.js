@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
-import { Resend } from 'resend';
+import { getResend } from '@/lib/resend';
 import { getWelcomeTemplate } from '@/lib/emailTemplates';
 
 export async function POST(req) {
-  const resend = new Resend(process.env.RESEND_API_KEY);
+  const resend = getResend();
   try {
     const { email, otp } = await req.json();
 
