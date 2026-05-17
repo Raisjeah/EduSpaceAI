@@ -29,7 +29,7 @@ export default function Header({ setIsSidebarOpen }) {
               <Menu size={20} />
             </button>
             <div className="flex flex-col min-w-0">
-               <h1 className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[150px] sm:max-w-[300px]">
+               <h1 className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[120px] sm:max-w-[200px] md:max-w-[300px]">
                  {activeChatTitle}
                </h1>
             </div>

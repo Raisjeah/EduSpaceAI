@@ -86,7 +86,7 @@ export default function ModelSelector({ currentPlan, selectedModel, onSelect }) 
       </button>
 
       {isOpen && (
-        <div className="absolute bottom-full right-0 mb-2 w-72 bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="absolute bottom-full right-0 mb-2 w-64 sm:w-72 max-w-[90vw] bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
           <div className="p-2 space-y-1">
             {MODELS_DATA.map((model) => {
               const isLocked = TIER_RANK[model.tier] > userRank;

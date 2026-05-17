@@ -164,7 +164,7 @@ export default function Sidebar({
         fixed top-0 left-0 h-full z-50 bg-white dark:bg-[#0F0F0F] border-r border-slate-200 dark:border-[#1E1E1E]
         transform transition-transform duration-300 ease-in-out flex-shrink-0
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        w-[280px] transition-colors duration-200
+        w-[85vw] max-w-[280px] sm:w-[280px] transition-colors duration-200
       `}>
         <div className="flex flex-col h-full p-4">
           {/* Header / Brand */}
@@ -208,7 +208,7 @@ export default function Sidebar({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari history..."
-                className="w-full bg-slate-100 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-xl py-2 pl-9 pr-4 text-[12px] text-slate-900 dark:text-white outline-none focus:border-indigo-500/50 transition-colors"
+                className="w-full bg-slate-100 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-xl py-2 pl-8 pr-3 sm:pr-4 text-[11px] sm:text-[12px] text-slate-900 dark:text-white outline-none focus:border-indigo-500/50 transition-colors"
               />
             </div>
           </div>
