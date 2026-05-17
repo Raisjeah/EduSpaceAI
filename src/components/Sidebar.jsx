@@ -312,7 +312,9 @@ export default function Sidebar({
                     </div>
                     <div className="flex flex-col">
                         <span className="text-[12px] font-bold text-slate-800 dark:text-gray-200 truncate max-w-[120px]">{user?.name || 'Anon'}</span>
-                        <span className="text-[9px] text-slate-400 dark:text-gray-500">{user?.current_plan || 'FREE'} Account</span>
+                        <span className="text-[9px] text-slate-400 dark:text-gray-500">
+                          {((user?.current_plan || 'FREE').charAt(0) + (user?.current_plan || 'FREE').slice(1).toLowerCase())} Account
+                        </span>
                     </div>
                   </div>
                 </div>

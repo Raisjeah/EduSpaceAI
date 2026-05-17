@@ -27,6 +27,11 @@ export const MODEL_PERMISSIONS = {
   'gemini-3-pro-image-preview': TIERS.ULTRA,
   'claude-3-5-sonnet-20241022': TIERS.ULTRA,
   'gemini-2.5-flash-image-preview': TIERS.ULTRA,
+
+  // Functional SDK slugs for internal permission checks
+  'gemini-1.5-flash': TIERS.FREE,
+  'gemini-1.5-pro': TIERS.CLASSIC,
+  'gemini-3.1-flash-image-preview': TIERS.ULTRA,
 };
 
 export function getModelByPlan(userPlan) {

@@ -26,6 +26,7 @@ const MODEL_MAPPING = {
   'gemini-2.5-pro': 'gemini-1.5-pro',
   'gemini-3.1-pro': 'gemini-1.5-pro',
   'gemini-3-pro-image-preview': 'gemini-3.1-flash-image-preview',
+  'gemini-2.5-flash-image-preview': 'gemini-1.5-flash', // Legacy mapping
   'claude-4-6-sonnet': 'claude-3-5-sonnet-20241022',
 };
 
@@ -38,15 +39,19 @@ function resolveModel(modelName) {
   if (typeof mappedModel !== 'string' || !mappedModel) {
     return { provider: 'gemini', sdkModel: DEFAULT_GEMINI_MODEL };
   }
+
   if (CLAUDE_MODELS.has(mappedModel)) {
     return { provider: 'claude', sdkModel: mappedModel };
   }
+
   if (mappedModel.startsWith('claude')) {
-    return { provider: 'claude', sdkModel: DEFAULT_CLAUDE_MODEL };
+    return { provider: 'claude', sdkModel: mappedModel };
   }
+
   if (GEMINI_MODELS.has(mappedModel)) {
     return { provider: 'gemini', sdkModel: mappedModel };
   }
+
   return { provider: 'gemini', sdkModel: DEFAULT_GEMINI_MODEL };
 }
 
@@ -187,7 +192,7 @@ async function getClaudeResponse(prompt, history, fileParts, systemInstruction, 
   try {
     const messages = history.map(msg => ({
       role: msg.role === 'user' ? 'user' : 'assistant',
-      content: msg.parts[0].text
+      content: msg.parts?.find(p => p.text)?.text || ""
     }));
 
     let content = [];
