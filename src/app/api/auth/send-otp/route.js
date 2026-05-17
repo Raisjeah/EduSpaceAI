@@ -21,7 +21,7 @@ export async function POST(req) {
     }
 
     // Generate 6-digit OTP using cryptographically secure random numbers
-    const otpCode = crypto.randomInt(100000, 999999).toString();
+    const otpCode = crypto.randomInt(100000, 1000000).toString();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     user.otpCode = otpCode;
@@ -29,7 +29,21 @@ export async function POST(req) {
     await user.save();
 
     // Initialize Resend inside the handler
-    const resend = new Resend(process.env.RESEND_API_KEY);
+    const resendApiKey = process.env.RESEND_API_KEY;
+
+    if (!resendApiKey && process.env.NODE_ENV !== 'production') {
+      return NextResponse.json({
+        success: true,
+        message: 'OTP generated (Email simulation in Dev - No API Key)',
+        otp: otpCode
+      });
+    }
+
+    if (!resendApiKey) {
+      return NextResponse.json({ error: 'Email service configuration missing' }, { status: 500 });
+    }
+
+    const resend = new Resend(resendApiKey);
 
     const { data, error } = await resend.emails.send({
       from: 'Eduspace AI <noreply@eduspace.ai>',

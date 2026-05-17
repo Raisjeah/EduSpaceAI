@@ -44,7 +44,7 @@ export async function register(formData) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Generate 6-digit OTP using cryptographically secure random numbers
-    const otpCode = crypto.randomInt(100000, 999999).toString();
+    const otpCode = crypto.randomInt(100000, 1000000).toString();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     const user = new User({
@@ -60,13 +60,18 @@ export async function register(formData) {
 
     // Send OTP email via Resend
     try {
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      await resend.emails.send({
-        from: 'Eduspace AI <noreply@eduspace.ai>',
-        to: [email],
-        subject: 'Verifikasi Akun Eduspace AI',
-        html: otpEmailTemplate(otpCode),
-      });
+      const resendApiKey = process.env.RESEND_API_KEY;
+      if (resendApiKey) {
+        const resend = new Resend(resendApiKey);
+        await resend.emails.send({
+          from: 'Eduspace AI <noreply@eduspace.ai>',
+          to: [email],
+          subject: 'Verifikasi Akun Eduspace AI',
+          html: otpEmailTemplate(otpCode),
+        });
+      } else if (process.env.NODE_ENV !== 'production') {
+        console.log('Dev Mode: OTP for', email, 'is', otpCode);
+      }
     } catch (emailError) {
       console.error('Failed to send initial OTP:', emailError);
       // We still continue as user can resend OTP later
@@ -122,7 +127,7 @@ export async function login(formData) {
       path: '/',
     });
 
-    return { success: true };
+    return { success: true, requiresVerification: !user.isVerified };
   } catch (error) {
     console.error('Login error:', error);
     return { success: false, error: 'Gagal melakukan login' };
@@ -161,6 +166,7 @@ export async function loginWithGoogle(idToken) {
         email,
         password: randomPassword,
         image: picture,
+        isVerified: true, // Google users are pre-verified
       });
       await user.save();
     } else {

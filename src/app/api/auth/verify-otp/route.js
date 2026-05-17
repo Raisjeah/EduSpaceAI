@@ -32,13 +32,16 @@ export async function POST(req) {
 
     // Send Welcome Email
     try {
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      await resend.emails.send({
-        from: 'Eduspace AI <noreply@eduspace.ai>',
-        to: [email],
-        subject: `Selamat Datang di Eduspace AI, ${user.name}!`,
-        html: welcomeEmailTemplate(user.name),
-      });
+      const resendApiKey = process.env.RESEND_API_KEY;
+      if (resendApiKey) {
+        const resend = new Resend(resendApiKey);
+        await resend.emails.send({
+          from: 'Eduspace AI <noreply@eduspace.ai>',
+          to: [email],
+          subject: `Selamat Datang di Eduspace AI, ${user.name}!`,
+          html: welcomeEmailTemplate(user.name),
+        });
+      }
     } catch (err) {
       console.error('Welcome email failed:', err);
     }
