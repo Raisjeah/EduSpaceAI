@@ -15,13 +15,16 @@ export const TIERS = {
 export const MODELS = {
   [TIERS.FREE]: 'gemini-2.5-flash',
   [TIERS.CLASSIC]: 'gemini-2.5-pro',
-  [TIERS.PRO]: 'gemini-2.5-pro',
-  [TIERS.ULTRA]: 'claude-3-5-sonnet-20241022',
+  [TIERS.PRO]: 'gemini-3.1-pro',
+  [TIERS.ULTRA]: 'claude-4-6-sonnet',
 };
 
 export const MODEL_PERMISSIONS = {
   'gemini-2.5-flash': TIERS.FREE,
   'gemini-2.5-pro': TIERS.CLASSIC,
+  'gemini-3.1-pro': TIERS.PRO,
+  'claude-4-6-sonnet': TIERS.ULTRA,
+  'gemini-3-pro-image-preview': TIERS.ULTRA,
   'claude-3-5-sonnet-20241022': TIERS.ULTRA,
   'gemini-2.5-flash-image-preview': TIERS.ULTRA,
 };

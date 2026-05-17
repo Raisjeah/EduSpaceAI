@@ -4,7 +4,7 @@ import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import { ThumbsUp, ThumbsDown, Copy, Check } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Copy, Check, FileText } from 'lucide-react';
 import Mermaid from './Mermaid';
 import 'katex/dist/katex.min.css';
 
@@ -132,20 +132,33 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
             <ThumbsDown size={16} />
           </button>
           {!imageData && (
-            <button
-              onClick={handleCopy}
-              className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-[#1E1E1E] transition-colors flex items-center gap-1.5"
-              title="Salin Pesan"
-            >
-              {copied ? (
-                <>
-                  <Check size={16} className="text-green-500" />
-                  <span className="text-[10px] font-medium text-green-500">Tersalin!</span>
-                </>
-              ) : (
-                <Copy size={16} />
+            <div className="flex items-center gap-1 sm:gap-2">
+              <button
+                onClick={handleCopy}
+                className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-[#1E1E1E] transition-colors flex items-center gap-1.5"
+                title="Salin Pesan"
+              >
+                {copied ? (
+                  <>
+                    <Check size={16} className="text-green-500" />
+                    <span className="text-[10px] font-medium text-green-500">Tersalin!</span>
+                  </>
+                ) : (
+                  <Copy size={16} />
+                )}
+              </button>
+
+              {onApply && (
+                <button
+                  onClick={() => onApply(content)}
+                  className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-[#1E1E1E] transition-colors flex items-center gap-1.5"
+                  title="Terapkan ke Editor"
+                >
+                  <FileText size={16} />
+                  <span className="text-[10px] font-medium hidden sm:inline">Apply to Editor</span>
+                </button>
               )}
-            </button>
+            </div>
           )}
         </div>
         )}

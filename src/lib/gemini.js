@@ -7,33 +7,45 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-// Whitelist of model IDs the app supports. Anything else is rejected at the
-// edge instead of being silently downgraded.
+// Whitelist of functional SDK model slugs supported by the application.
+// These are the actual model names recognized by the Gemini/Anthropic SDKs.
 const GEMINI_MODELS = new Set([
-  'gemini-2.5-flash',
-  'gemini-2.5-pro',
-  'gemini-2.5-flash-image-preview',
+  'gemini-1.5-flash',
+  'gemini-1.5-pro',
+  'gemini-1.5-flash-8b',
+  'gemini-3.1-flash-image-preview',
 ]);
 
 const CLAUDE_MODELS = new Set([
   'claude-3-5-sonnet-20241022',
 ]);
 
-const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
+// Translates UI model identifiers to functional SDK model slugs.
+const MODEL_MAPPING = {
+  'gemini-2.5-flash': 'gemini-1.5-flash',
+  'gemini-2.5-pro': 'gemini-1.5-pro',
+  'gemini-3.1-pro': 'gemini-1.5-pro',
+  'gemini-3-pro-image-preview': 'gemini-3.1-flash-image-preview',
+  'claude-4-6-sonnet': 'claude-3-5-sonnet-20241022',
+};
+
+const DEFAULT_GEMINI_MODEL = 'gemini-1.5-flash';
 const DEFAULT_CLAUDE_MODEL = 'claude-3-5-sonnet-20241022';
 
 function resolveModel(modelName) {
-  if (typeof modelName !== 'string' || !modelName) {
+  const mappedModel = MODEL_MAPPING[modelName] || modelName;
+
+  if (typeof mappedModel !== 'string' || !mappedModel) {
     return { provider: 'gemini', sdkModel: DEFAULT_GEMINI_MODEL };
   }
-  if (CLAUDE_MODELS.has(modelName)) {
-    return { provider: 'claude', sdkModel: modelName };
+  if (CLAUDE_MODELS.has(mappedModel)) {
+    return { provider: 'claude', sdkModel: mappedModel };
   }
-  if (modelName.startsWith('claude')) {
+  if (mappedModel.startsWith('claude')) {
     return { provider: 'claude', sdkModel: DEFAULT_CLAUDE_MODEL };
   }
-  if (GEMINI_MODELS.has(modelName)) {
-    return { provider: 'gemini', sdkModel: modelName };
+  if (GEMINI_MODELS.has(mappedModel)) {
+    return { provider: 'gemini', sdkModel: mappedModel };
   }
   return { provider: 'gemini', sdkModel: DEFAULT_GEMINI_MODEL };
 }

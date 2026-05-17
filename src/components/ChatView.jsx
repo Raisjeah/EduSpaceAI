@@ -204,7 +204,10 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             ? `/chat/${result.chatId}?projectId=${projectId}`
             : `/chat/${result.chatId}`;
 
-          router.replace(targetUrl, { scroll: false });
+          // Using window.history.replaceState instead of router.replace() to prevent
+          // visual flickering and unnecessary component remounting during the
+          // transition from a 'new' chat to a specific chatId.
+          window.history.replaceState(null, '', targetUrl);
         }
 
         // --- TYPEWRITER EFFECT ---
