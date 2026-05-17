@@ -47,7 +47,7 @@ export async function register(formData) {
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
     const cookieStore = await cookies();
-    cookieStore.set('eduspace_session', token, {
+    cookieStore.set('pentestai_session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 7, // 1 week
@@ -85,7 +85,7 @@ export async function login(formData) {
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
     const cookieStore = await cookies();
-    cookieStore.set('eduspace_session', token, {
+    cookieStore.set('pentestai_session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 7, // 1 week
@@ -101,7 +101,7 @@ export async function login(formData) {
 
 export async function logout() {
   const cookieStore = await cookies();
-  cookieStore.delete('eduspace_session');
+  cookieStore.delete('pentestai_session');
   return { success: true };
 }
 
@@ -144,7 +144,7 @@ export async function loginWithGoogle(idToken) {
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
     const cookieStore = await cookies();
-    cookieStore.set('eduspace_session', token, {
+    cookieStore.set('pentestai_session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 7, // 1 week
@@ -161,7 +161,7 @@ export async function loginWithGoogle(idToken) {
 export async function getUser() {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get('eduspace_session')?.value;
+    const token = cookieStore.get('pentestai_session')?.value;
 
     if (!token) return null;
 

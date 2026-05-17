@@ -63,7 +63,7 @@ export default function LoginPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6 transition-colors duration-200">
       <div className="w-full max-w-md bg-white dark:bg-[#1A1A1A] p-8 rounded-2xl border border-slate-200 dark:border-gray-800 shadow-xl transition-colors">
-        <h1 className="text-2xl font-bold mb-6 text-slate-900 dark:text-white text-center">Masuk ke EduSpace</h1>
+        <h1 className="text-2xl font-bold mb-6 text-slate-900 dark:text-white text-center">Masuk ke PentestAI</h1>
 
         {error && (
           <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500 text-red-600 dark:text-red-500 p-3 rounded-lg mb-4 text-sm text-center">

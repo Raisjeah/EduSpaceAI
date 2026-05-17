@@ -245,7 +245,7 @@ export default function DocumentEditor({ type, userId }) {
               <Sparkles size={16} className="text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
-              <h3 className="text-[13px] font-bold text-slate-900 dark:text-white">Dosen Pembimbing AI</h3>
+              <h3 className="text-[13px] font-bold text-slate-900 dark:text-white">Lead Pentester AI</h3>
               <p className="text-[10px] text-slate-500 dark:text-gray-500 uppercase tracking-widest">Workspace Assistant</p>
             </div>
           </div>
@@ -261,7 +261,7 @@ export default function DocumentEditor({ type, userId }) {
                 <FileText size={20} className="text-slate-400 dark:text-gray-600" />
               </div>
               <h4 className="text-sm font-bold text-slate-700 dark:text-gray-300 mb-1">Belum Ada Analisis</h4>
-              <p className="text-[11px] text-slate-500 dark:text-gray-500">Klik "Analisis dengan AI" atau mulai chat untuk mendapatkan saran akademik.</p>
+              <p className="text-[11px] text-slate-500 dark:text-gray-500">Klik "Analisis dengan AI" atau mulai chat untuk mendapatkan saran keamanan.</p>
             </div>
           ) : (
             <div className="space-y-4">
