@@ -21,47 +21,54 @@ export default function Sidebar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, searchQuery, fetchUser, showNotification } = useAuth();
+  const { user, searchQuery, setSearchQuery, fetchUser, showNotification } = useAuth();
   const lastFetchRef = useRef({ userId: null, projectId: null, pathname: null });
 
-  // Optimistic History Update: Refetch history when route changes
+  const isProjectRoute = pathname.startsWith('/project/');
+  const projectIdFromPath = isProjectRoute ? pathname.split('/')[2] : null;
+  const projectIdFromQuery = searchParams.get('projectId');
+  const activeProjectId = projectIdFromPath || projectIdFromQuery;
+
+  // Projects jarang berubah, jadi cukup fetch saat user berubah
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProjects = async () => {
+      if (!userId) return;
+      try {
+        const userProjects = await getProjects(userId);
+        setProjects(userProjects);
+      } catch (error) {
+        console.error("Gagal memuat project:", error);
+      }
+    };
+
+    fetchProjects();
+  }, [userId]);
+
+  // History chat di-refresh berdasarkan konteks project aktif
+  useEffect(() => {
+    const fetchHistory = async () => {
       if (!userId) return;
 
-      const isProjectRoute = pathname.startsWith('/project/');
-      const projectIdFromPath = isProjectRoute ? pathname.split('/')[2] : null;
-      const projectIdFromQuery = searchParams.get('projectId');
-      const projectId = projectIdFromPath || projectIdFromQuery;
-
-      // Skip fetch if userId and projectId are the same as last fetch
-      // Unless we just navigated to a new chat which might need a history refresh
-      const isChatNavigation = pathname.startsWith('/chat/');
       if (
         lastFetchRef.current.userId === userId &&
-        lastFetchRef.current.projectId === projectId &&
-        !isChatNavigation
+        lastFetchRef.current.projectId === activeProjectId &&
+        lastFetchRef.current.pathname === pathname
       ) {
         return;
       }
 
       try {
-        const [history, userProjects] = await Promise.all([
-          getChatHistory(userId, projectId),
-          getProjects(userId)
-        ]);
-
+        const history = await getChatHistory(userId, activeProjectId);
         setChatGroups(history);
-        setProjects(userProjects);
 
-        lastFetchRef.current = { userId, projectId, pathname };
+        lastFetchRef.current = { userId, projectId: activeProjectId, pathname };
       } catch (error) {
-        console.error("Gagal memuat data sidebar:", error);
+        console.error("Gagal memuat history chat:", error);
       }
     };
 
-    fetchData();
-  }, [userId, pathname, searchParams]);
+    fetchHistory();
+  }, [userId, activeProjectId, pathname]);
 
   const groupedChatHistory = useMemo(() => {
     const filtered = !searchQuery.trim()

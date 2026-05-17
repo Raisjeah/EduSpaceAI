@@ -204,7 +204,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             ? `/chat/${result.chatId}?projectId=${projectId}`
             : `/chat/${result.chatId}`;
 
-          window.history.replaceState(null, '', targetUrl);
+          router.replace(targetUrl, { scroll: false });
         }
 
         // --- TYPEWRITER EFFECT ---
