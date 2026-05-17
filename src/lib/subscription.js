@@ -143,7 +143,6 @@ export async function checkUsageLimit(user) {
         current,
       };
     }
-    }
     throw err;
   }
 
