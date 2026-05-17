@@ -6,10 +6,13 @@ import { getSessionUser } from '@/lib/session';
 
 export async function seedPlans() {
   const adminUser = await getSessionUser();
-  // Basic security: only authenticated users can seed.
-  // In a real app, you'd check for an 'admin' role.
+  // Only authenticated admin users can seed plans (otherwise an attacker
+  // could overwrite pricing/features and bypass payment).
   if (!adminUser) {
     throw new Error('Unauthorized');
+  }
+  if (adminUser.role !== 'admin') {
+    throw new Error('Forbidden: hanya admin yang dapat melakukan seeding paket.');
   }
 
   const plans = [

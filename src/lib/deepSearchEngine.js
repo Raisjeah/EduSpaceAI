@@ -4,26 +4,22 @@ import { fetchPageContent } from "./jina";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Whitelist model valid
-const VALID_MODELS = [
-  "gemini-2.5-flash",
-  "gemini-2.5-pro",
-  "gemini-3.1-pro",
-  "gemini-3-pro-image-preview"
-];
+// Whitelist of model IDs supported by deep-search reasoning loops.
+// Image-only models cannot be used here, so they are not listed.
+const VALID_MODELS = new Set([
+  'gemini-2.5-flash',
+  'gemini-2.5-pro',
+]);
 
 /**
- * Helper to ensure model name is valid and mapped correctly to SDK names
+ * Coerce the requested model to a valid Gemini text-generation slug.
+ * Unknown models fall back to gemini-2.5-flash without silently changing tiers.
  */
 function getValidModelName(modelName) {
-  if (!VALID_MODELS.includes(modelName)) {
-    return "gemini-2.5-flash";
+  if (typeof modelName === 'string' && VALID_MODELS.has(modelName)) {
+    return modelName;
   }
-
-  if (modelName === 'gemini-3.1-pro') return 'gemini-2.5-flash';
-  if (modelName === 'gemini-3-pro-image-preview') return 'gemini-2.5-flash';
-
-  return modelName;
+  return 'gemini-2.5-flash';
 }
 
 // ✅ NEW: Timeout wrapper for API calls

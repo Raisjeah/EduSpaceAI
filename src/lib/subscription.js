@@ -1,5 +1,6 @@
 import Plan from '@/models/Plan';
-import Chat from '@/models/Chat';
+import User from '@/models/User';
+import UsageCounter from '@/models/UsageCounter';
 import dbConnect from '@/lib/mongodb';
 
 export const TIERS = {
@@ -9,19 +10,20 @@ export const TIERS = {
   ULTRA: 'ULTRA',
 };
 
+// Map plan -> guaranteed-real SDK model slug. IDs are stable for DB / UI selectors
+// while the actual underlying model can be swapped without breaking the contract.
 export const MODELS = {
   [TIERS.FREE]: 'gemini-2.5-flash',
   [TIERS.CLASSIC]: 'gemini-2.5-pro',
-  [TIERS.PRO]: 'gemini-3.1-pro',
-  [TIERS.ULTRA]: 'claude-4-6-sonnet',
+  [TIERS.PRO]: 'gemini-2.5-pro',
+  [TIERS.ULTRA]: 'claude-3-5-sonnet-20241022',
 };
 
 export const MODEL_PERMISSIONS = {
   'gemini-2.5-flash': TIERS.FREE,
   'gemini-2.5-pro': TIERS.CLASSIC,
-  'gemini-3.1-pro': TIERS.PRO,
-  'claude-4-6-sonnet': TIERS.ULTRA,
-  'gemini-3-pro-image-preview': TIERS.ULTRA,
+  'claude-3-5-sonnet-20241022': TIERS.ULTRA,
+  'gemini-2.5-flash-image-preview': TIERS.ULTRA,
 };
 
 export function getModelByPlan(userPlan) {
@@ -42,9 +44,28 @@ export function isModelAllowed(userPlan, modelId) {
   return tierHierarchy[userPlan || TIERS.FREE] >= tierHierarchy[requiredTier];
 }
 
+// Auto-downgrade a user to FREE when their paid plan has expired.
+async function getEffectivePlan(user) {
+  if (!user) return 'FREE';
+  const expired = user.plan_expired_at && new Date(user.plan_expired_at) < new Date();
+  if (expired && user.current_plan !== 'FREE') {
+    try {
+      await User.findByIdAndUpdate(user._id, {
+        current_plan: 'FREE',
+        plan_expired_at: null,
+      });
+    } catch (e) {
+      console.error('Failed to auto-downgrade expired plan:', e);
+    }
+    return 'FREE';
+  }
+  return user.current_plan || 'FREE';
+}
+
 export async function checkFeatureAccess(user, feature) {
   await dbConnect();
-  const planDoc = await Plan.findOne({ name: user.current_plan || 'FREE' }).lean();
+  const planName = await getEffectivePlan(user);
+  const planDoc = await Plan.findOne({ name: planName }).lean();
 
   if (!planDoc) return false;
 
@@ -64,34 +85,58 @@ export async function checkFeatureAccess(user, feature) {
   }
 }
 
-export async function getDailyUsage(userId) {
-  await dbConnect();
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
-
-  const count = await Chat.countDocuments({
-    userId,
-    role: 'user',
-    createdAt: { $gte: startOfDay }
-  });
-
-  return count;
+function utcDayKey(date = new Date()) {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(date.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
+export async function getDailyUsage(userId) {
+  await dbConnect();
+  const day = utcDayKey();
+  const doc = await UsageCounter.findOne({ userId: String(userId), day }).lean();
+  return doc?.count || 0;
+}
+
+/**
+ * Atomically check-and-increment the daily usage counter for a user.
+ * Only increments when the user is under their plan's daily message_limit.
+ */
 export async function checkUsageLimit(user) {
   await dbConnect();
-  let planDoc = await Plan.findOne({ name: user.current_plan || 'FREE' }).lean();
-  const currentUsage = await getDailyUsage(user._id);
+  const planName = await getEffectivePlan(user);
+  let planDoc = await Plan.findOne({ name: planName }).lean();
+  if (!planDoc) planDoc = { name: 'FREE', message_limit: 20 };
 
-  // Fallback to FREE if plan not found in DB
-  if (!planDoc) {
-    planDoc = { name: 'FREE', message_limit: 20 };
+  const day = utcDayKey();
+  const userId = String(user._id);
+
+  let updated;
+  try {
+    updated = await UsageCounter.findOneAndUpdate(
+      { userId, day, count: { $lt: planDoc.message_limit } },
+      { $inc: { count: 1 }, $set: { updatedAt: new Date() } },
+      { new: true, upsert: true }
+    );
+  } catch (err) {
+    // Duplicate key on (userId, day) unique index means another request already
+    // upserted a doc that is at-or-over the limit — treat as not allowed.
+    if (err?.code === 11000) {
+      const current = await getDailyUsage(userId);
+      return {
+        allowed: false,
+        limit: planDoc.message_limit,
+        current,
+      };
+    }
+    throw err;
   }
 
   return {
-    allowed: currentUsage < planDoc.message_limit,
+    allowed: true,
     limit: planDoc.message_limit,
-    current: currentUsage
+    current: updated.count,
   };
 }
 

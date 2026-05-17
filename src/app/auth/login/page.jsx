@@ -1,19 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { login, loginWithGoogle } from '@/app/actions/authActions';
 import useAuth from '@/hooks/useAuth';
 
-export default function LoginPage() {
+// Open-redirect guard: only allow same-origin relative paths.
+function sanitizeCallbackUrl(raw) {
+  if (typeof raw !== 'string' || raw.length === 0) return '/';
+  // Must start with a single forward slash and not be protocol-relative (//evil.com).
+  if (!raw.startsWith('/') || raw.startsWith('//')) return '/';
+  // Disallow backslashes (some browsers normalize to /).
+  if (raw.includes('\\')) return '/';
+  return raw;
+}
+
+function LoginPageInner() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { fetchUser, showNotification } = useAuth();
 
-  const callbackUrl = searchParams.get('callbackUrl') || '/';
+  const callbackUrl = sanitizeCallbackUrl(searchParams.get('callbackUrl'));
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -117,5 +127,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageInner />
+    </Suspense>
   );
 }

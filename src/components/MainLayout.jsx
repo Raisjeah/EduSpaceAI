@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '@/components/Sidebar';
@@ -84,11 +84,13 @@ export default function MainLayout({ children }) {
         />
       )}
 
-      <Sidebar
-        isSidebarOpen={isSidebarOpen}
-        setIsSidebarOpen={setIsSidebarOpen}
-        userId={userId}
-      />
+      <Suspense fallback={null}>
+        <Sidebar
+          isSidebarOpen={isSidebarOpen}
+          setIsSidebarOpen={setIsSidebarOpen}
+          userId={userId}
+        />
+      </Suspense>
 
       <main className="flex-1 flex flex-col h-[100dvh] min-w-0 relative overflow-hidden">
         <Header setIsSidebarOpen={setIsSidebarOpen} />
