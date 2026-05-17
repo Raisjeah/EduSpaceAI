@@ -337,7 +337,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         ) : messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center px-4 relative overflow-hidden">
             {/* Animated gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-pink-500/5 animate-gradient-shift bg-[length:400%_400%]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-pink-500/5 animate-gradient-shift bg-[length:400%_400%] pointer-events-none" />
 
             {/* Floating particles */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -383,7 +383,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                   : getGreeting()}
               </p>
             </div>
-            <div className="w-full max-w-2xl text-center">
+            <div className="w-full max-w-2xl text-center relative z-10">
               {project?.agentId === 'deep-search' ? (
                 <div className="flex flex-wrap justify-center gap-3">
                    <SuggestionChip theme={agentTheme} icon={<Search size={12}/>} label="Cari berita terbaru AI" onClick={() => handleSend("Apa berita terbaru tentang perkembangan AI minggu ini?")} />
@@ -740,9 +740,9 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           />
         </div>
 
-        <div className="flex items-center gap-1.5 relative z-10 mb-0.5">
+        <div className="flex items-center gap-1.5 relative z-10 mb-1">
           {input.length > 0 && (
-            <span className="text-[10px] text-slate-400 font-medium mb-2 mr-1">
+            <span className="text-[10px] text-slate-400 font-medium mb-1 mr-1">
               {input.length}/2000
             </span>
           )}
