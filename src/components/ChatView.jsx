@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useTransition } from 'react';
 import { useChat } from '@/context/ChatContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import TextareaAutosize from 'react-textarea-autosize';
-import { ChevronDown, Plus, Send, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File, Square, Code, GraduationCap, Microscope, ArrowLeft } from 'lucide-react';
+import { ChevronDown, Plus, Send, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File, Square, Code, GraduationCap, Microscope, ArrowLeft, Mic, AtSign } from 'lucide-react';
 import { sendMessage, getChatDetails } from '@/app/actions/chatActions';
 import { getProjectDetails } from '@/app/actions/projectActions';
 import AiMessage from './AiMessage';
@@ -269,6 +269,14 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
   const agentTheme = project ? getAgentTheme(project.agentId) : getAgentTheme('default');
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 11) return 'Selamat pagi! Siap bantu skripsimu hari ini?';
+    if (hour < 15) return 'Selamat siang! Ada yang bisa saya bantu?';
+    if (hour < 19) return 'Selamat sore! Tetap semangat belajarnya ya.';
+    return 'Selamat malam! Masih ada yang bisa dibantu?';
+  };
+
   return (
     <div className="flex flex-col h-full bg-white dark:bg-[#0F0F0F] overflow-hidden transition-colors duration-200">
       <UpgradeModal
@@ -327,20 +335,54 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             </div>
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center px-4">
-            <div className="w-16 h-16 bg-indigo-600/20 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30">
-              <span className="text-2xl text-indigo-500">
-                {project ? '📂' : '🎓'}
-              </span>
+          <div className="flex-1 flex flex-col items-center justify-center px-4 relative overflow-hidden">
+            {/* Animated gradient background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-pink-500/5 animate-gradient-shift bg-[length:400%_400%]" />
+
+            {/* Floating particles */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              {[...Array(6)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-2 h-2 bg-indigo-500/20 rounded-full"
+                  animate={{
+                    y: [0, -40, 0],
+                    opacity: [0.3, 0.8, 0.3],
+                    scale: [1, 1.2, 1]
+                  }}
+                  transition={{
+                    duration: 4 + i,
+                    repeat: Infinity,
+                    delay: i * 0.7,
+                  }}
+                  style={{
+                    left: `${15 + i * 15}%`,
+                    top: `${25 + (i % 3) * 20}%`,
+                  }}
+                />
+              ))}
             </div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2 text-center">
-              {project ? project.name : 'EduSpaceAI'}
-            </h1>
-            <p className="text-slate-600 dark:text-gray-400 mb-6 text-center max-w-sm">
-              {project
-                ? `Sedang menggunakan agen ${getAgentName(project.agentId)} untuk membantumu di project ini.`
-                : 'Dosen pribadi bertenaga AI yang siap bantu skripsi, tugas, dan belajarmu.'}
-            </p>
+
+            <div className="relative z-10 flex flex-col items-center">
+              <motion.div
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-indigo-500/30 border border-white/20"
+              >
+                <span className="text-4xl">
+                  {project ? '📂' : '🎓'}
+                </span>
+              </motion.div>
+
+              <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-3 text-center">
+                {project ? project.name : 'EduSpaceAI'}
+              </h1>
+              <p className="text-slate-600 dark:text-gray-400 mb-8 text-center max-w-sm font-medium">
+                {project
+                  ? `Sedang menggunakan agen ${getAgentName(project.agentId)} untuk membantumu di project ini.`
+                  : getGreeting()}
+              </p>
+            </div>
             <div className="w-full max-w-2xl text-center">
               {project?.agentId === 'deep-search' ? (
                 <div className="flex flex-wrap justify-center gap-3">
@@ -403,6 +445,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                   content={msg.text}
                   isUser={msg.role === 'user'}
                   isTyping={msg.role === 'model' && idx === messages.length - 1 && isTyping}
+                  agentId={project?.agentId}
                 />
               ))}
               {thoughtTraces.length > 0 && (
@@ -472,16 +515,29 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 // --- KOMPONEN PENDUKUNG ---
 
 function SuggestionChip({ label, icon, onClick, isLink, theme }) {
-  const Component = isLink ? 'div' : 'button';
+  const Component = isLink ? motion.div : motion.button;
   const hoverBorder = theme ? theme.border.replace('border-', 'hover:border-') : 'hover:border-indigo-500/50';
-  const hoverText = theme ? theme.text.replace('text-', 'hover:text-') : 'hover:text-indigo-500';
+  const hoverText = theme ? theme.text.replace('text-', 'hover:text-') : 'hover:text-indigo-600';
 
   return (
     <Component
+      whileHover={{ scale: 1.02, y: -2 }}
+      whileTap={{ scale: 0.98 }}
       onClick={onClick} 
-      className={`flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-xl text-[11px] text-slate-600 dark:text-gray-400 ${hoverText} ${hoverBorder} transition-all cursor-pointer w-full md:w-auto md:inline-flex`}
+      className={`flex items-center gap-2 px-4 py-2.5
+        bg-gradient-to-r from-slate-50 to-slate-100
+        dark:from-[#1E1E1E] dark:to-[#252525]
+        border border-slate-200 dark:border-[#2A2A2A]
+        rounded-xl text-[11px] text-slate-600 dark:text-gray-400
+        ${hoverText} ${hoverBorder}
+        transition-all shadow-sm hover:shadow-md cursor-pointer w-full md:w-auto md:inline-flex group`}
     >
-      {icon} <span className="truncate">{label}</span>
+      {icon && (
+        <div className="p-1 rounded-lg bg-indigo-500/10 group-hover:bg-indigo-500/20 transition-colors">
+          {icon}
+        </div>
+      )}
+      <span className="truncate font-medium">{label}</span>
     </Component>
   );
 }
@@ -602,8 +658,17 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
         )}
       </AnimatePresence>
 
-      <div className="relative bg-slate-100 dark:bg-[#1E1E1E] rounded-2xl p-2 flex items-end gap-1 border border-slate-200 dark:border-[#2A2A2A] focus-within:border-indigo-500/50 transition-all shadow-2xl">
-        <div className="relative">
+      <div className="relative bg-white/80 dark:bg-[#1E1E1E]/80 backdrop-blur-xl rounded-2xl p-2 flex items-end gap-1 border border-slate-200 dark:border-[#2A2A2A] focus-within:border-indigo-500/50 focus-within:shadow-xl focus-within:shadow-indigo-500/10 transition-all duration-300 shadow-2xl">
+        {/* Glow effect saat focus */}
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 rounded-2xl opacity-0 focus-within:opacity-100 transition-opacity pointer-events-none" />
+
+        <div className="flex gap-0.5 relative z-10">
+          <button className="p-2 hover:bg-slate-100 dark:hover:bg-[#2A2A2A] rounded-xl transition-colors hidden md:flex items-center justify-center">
+            <Mic size={18} className="text-slate-400" />
+          </button>
+        </div>
+
+        <div className="relative z-10">
           <AnimatePresence>
             {showNudge && !isActionSheetOpen && (
               <motion.div
@@ -656,31 +721,41 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           accept=".pdf,.doc,.docx,.txt,.csv"
         />
 
-        <TextareaAutosize
-          ref={textareaRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSend();
-            }
-          }}
-          minRows={1}
-          maxRows={8}
-          disabled={disabled}
-          placeholder="Tanya apa saja ke Dosen AI-mu..."
-          className="flex-1 bg-transparent border-none outline-none py-2.5 px-3 text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
-        />
-        <button
-          onClick={(e) => { e.preventDefault(); handleSend(); }}
-          disabled={disabled || (!input.trim() && !selectedFile)}
-          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-            (input.trim() || selectedFile) && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40' : 'bg-slate-200 dark:bg-[#2A2A2A] text-slate-400 dark:text-gray-600'
-          }`}
-        >
-          <Send size={18} />
-        </button>
+        <div className="flex-1 flex flex-col relative z-10">
+          <TextareaAutosize
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            minRows={1}
+            maxRows={8}
+            disabled={disabled}
+            placeholder="Tanya apa saja ke Dosen AI-mu..."
+            className="w-full bg-transparent border-none outline-none py-2.5 px-3 text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
+          />
+        </div>
+
+        <div className="flex items-center gap-1.5 relative z-10 mb-0.5">
+          {input.length > 0 && (
+            <span className="text-[10px] text-slate-400 font-medium mb-2 mr-1">
+              {input.length}/2000
+            </span>
+          )}
+          <button
+            onClick={(e) => { e.preventDefault(); handleSend(); }}
+            disabled={disabled || (!input.trim() && !selectedFile)}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+              (input.trim() || selectedFile) && !disabled ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/40' : 'bg-slate-200 dark:bg-[#2A2A2A] text-slate-400 dark:text-gray-600'
+            }`}
+          >
+            <Send size={18} />
+          </button>
+        </div>
       </div>
     </div>
   );
