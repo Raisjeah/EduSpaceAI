@@ -1,11 +1,44 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { ArrowRight, GraduationCap, Layout, Shield, Sparkles, Briefcase, Plus, Search, Zap, CheckCircle, BookOpen, Edit3 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, GraduationCap, Layout, Shield, Sparkles, Briefcase, Plus, Search, Zap, CheckCircle, BookOpen, Edit3, Star, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import Footer from '@/components/Footer';
 
 export default function LandingPage() {
+  const [openFaq, setOpenFaq] = useState(null);
+  const [playgroundResponse, setPlaygroundResponse] = useState('');
+  const [displayedText, setDisplayedText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+
+  const sampleResponses = {
+    "Cara membuat batasan masalah?": "Untuk membuat batasan masalah yang baik, Anda harus: \n1. Fokus pada variabel utama penelitian.\n2. Tentukan lokasi atau ruang lingkup penelitian.\n3. Batasi periode waktu yang diteliti.\n4. Pilih populasi atau subjek yang spesifik. \n\nContoh: 'Penelitian ini dibatasi pada mahasiswa semester akhir di Universitas Indonesia tahun akademik 2023/2024'.",
+    "Tips mencari jurnal Scopus?": "Mencari jurnal Scopus bisa dilakukan dengan:\n1. Menggunakan database Scopus.com atau ScimagoJR.\n2. Mencari dengan kata kunci spesifik menggunakan operator Boolean (AND, OR).\n3. Memeriksa Quartile (Q1-Q4) jurnal tersebut.\n4. Memastikan jurnal tidak masuk dalam daftar predator (Beall's List).",
+    "Bagaimana cara parafrase PUEBI?": "Parafrase sesuai PUEBI dilakukan dengan:\n1. Mengganti sinonim kata tanpa mengubah makna.\n2. Mengubah struktur kalimat (aktif ke pasif atau sebaliknya).\n3. Memastikan tanda baca dan ejaan tetap mengikuti kaidah PUEBI terbaru.\n4. Selalu mencantumkan sumber asli untuk menghindari plagiarisme.",
+    "default": "Pertanyaan menarik! Sebagai Profesor AI, saya menyarankan Anda untuk merumuskan pertanyaan dengan lebih spesifik agar saya bisa memberikan jawaban yang lebih mendalam dan teknis sesuai kaidah akademik."
+  };
+
+  const handlePlaygroundSubmit = (query) => {
+    if (!query || isTyping) return;
+
+    const response = sampleResponses[query] || sampleResponses["default"];
+    setPlaygroundResponse(response);
+    setDisplayedText('');
+    setIsTyping(true);
+
+    let index = 0;
+    const interval = setInterval(() => {
+      if (index < response.length) {
+        setDisplayedText(prev => prev + response.charAt(index));
+        index++;
+      } else {
+        setIsTyping(false);
+        clearInterval(interval);
+      }
+    }, 20);
+  };
+
   const fadeInUp = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
@@ -55,7 +88,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-8 leading-[1.1] px-2"
+            className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-8 leading-[1.1] px-2"
           >
             Selesaikan Skripsi & Jurnal <br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 dark:from-indigo-400 dark:via-purple-400 dark:to-indigo-400">
@@ -67,7 +100,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-xl md:text-2xl text-slate-500 dark:text-gray-400 max-w-3xl mx-auto mb-12 leading-relaxed"
+            className="text-lg md:text-2xl text-slate-500 dark:text-gray-400 max-w-3xl mx-auto mb-8 leading-relaxed"
           >
             Dosen AI pribadi yang memahami konteks risetmu. Dari cari judul, olah data, hingga cek PUEBI — semua dalam satu workspace cerdas.
           </motion.p>
@@ -76,21 +109,74 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            className="flex flex-wrap justify-center gap-4 md:gap-8 mb-12 text-sm font-medium text-slate-600 dark:text-gray-400"
           >
-            <Link
-              href="/auth/login"
-              className="group flex items-center gap-2 px-10 py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-lg transition-all shadow-xl shadow-indigo-900/20 hover:scale-[1.02] active:scale-[0.98]"
-            >
-              Coba Sekarang
-              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link
-              href="#features"
-              className="px-10 py-5 bg-white dark:bg-[#1A1A1A] hover:bg-slate-50 dark:hover:bg-[#252525] text-slate-600 dark:text-gray-300 rounded-2xl font-bold text-lg transition-all border border-slate-200 dark:border-[#2A2A2A] hover:border-slate-300 dark:hover:border-[#3A3A3A]"
-            >
-              Pelajari Fitur
-            </Link>
+            <div className="flex items-center gap-2">
+              <CheckCircle size={18} className="text-indigo-500" />
+              <span>Bimbingan 24/7 dari Profesor AI</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle size={18} className="text-indigo-500" />
+              <span>Cek Plagiasi & PUEBI Otomatis</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle size={18} className="text-indigo-500" />
+              <span>Akses 500+ Jurnal Terpercaya</span>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="flex flex-col items-center gap-4"
+          >
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+              <Link
+                href="/auth/login"
+                className="group w-full sm:w-auto flex items-center justify-center gap-2 px-10 py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-lg transition-all shadow-xl shadow-indigo-900/20 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Coba Sekarang
+                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link
+                href="#features"
+                className="w-full sm:w-auto px-10 py-5 bg-white dark:bg-[#1A1A1A] hover:bg-slate-50 dark:hover:bg-[#252525] text-slate-600 dark:text-gray-300 rounded-2xl font-bold text-lg transition-all border border-slate-200 dark:border-[#2A2A2A] hover:border-slate-300 dark:hover:border-[#3A3A3A]"
+              >
+                Pelajari Fitur
+              </Link>
+            </div>
+            <p className="text-xs text-slate-400 dark:text-gray-500 font-medium">
+              Tidak perlu kartu kredit • Mulai gratis sekarang
+            </p>
+          </motion.div>
+
+          {/* Trust Badges */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, delay: 0.5 }}
+            className="mt-20 pt-10 border-t border-slate-100 dark:border-[#1E1E1E]"
+          >
+            <p className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-8">Membantu Mahasiswa Dari Berbagai Kampus Top</p>
+            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
+              <div className="flex items-center gap-2 font-bold text-xl text-slate-700 dark:text-gray-300">
+                <GraduationCap className="text-indigo-600" /> UI
+              </div>
+              <div className="flex items-center gap-2 font-bold text-xl text-slate-700 dark:text-gray-300">
+                <GraduationCap className="text-indigo-600" /> ITB
+              </div>
+              <div className="flex items-center gap-2 font-bold text-xl text-slate-700 dark:text-gray-300">
+                <GraduationCap className="text-indigo-600" /> UGM
+              </div>
+              <div className="flex items-center gap-2 font-bold text-xl text-slate-700 dark:text-gray-300">
+                <GraduationCap className="text-indigo-600" /> BINUS
+              </div>
+              <div className="flex items-center gap-2 font-bold text-xl text-slate-700 dark:text-gray-300">
+                <GraduationCap className="text-indigo-600" /> UNPAD
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -246,36 +332,145 @@ export default function LandingPage() {
       {/* Interactive Playground */}
       <section className="relative flex-none py-24 px-6 bg-white dark:bg-[#0F0F0F] transition-colors overflow-hidden">
         <div className="max-w-4xl mx-auto">
-           <div className="bg-indigo-600 rounded-[2.5rem] p-8 md:p-12 text-center relative overflow-hidden shadow-2xl shadow-indigo-900/40">
-              <div className="relative z-10">
-                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Coba Tanya Dosen AI</h2>
-                 <p className="text-indigo-100 mb-8 max-w-xl mx-auto">Tulis pertanyaan akademikmu dan lihat bagaimana AI kami merespons secara cerdas.</p>
+          <div className="bg-indigo-600 rounded-[2.5rem] p-8 md:p-12 text-center relative overflow-hidden shadow-2xl shadow-indigo-900/40">
+            <div className="relative z-10">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Coba Tanya Dosen AI</h2>
+              <p className="text-indigo-100 mb-8 max-w-xl mx-auto">Tulis pertanyaan akademikmu dan lihat bagaimana AI kami merespons secara cerdas.</p>
 
-                 <div className="max-w-2xl mx-auto relative group">
-                    <input
-                       type="text"
-                       placeholder="Contoh: Bagaimana cara membuat batasan masalah yang baik?"
-                       className="w-full bg-white/10 border border-white/20 rounded-2xl py-5 px-6 text-white placeholder-indigo-200 outline-none focus:bg-white/20 focus:border-white/40 transition-all shadow-inner"
-                    />
-                    <Link
-                      href="/auth/login"
-                      className="absolute right-2 top-2 bottom-2 bg-white text-indigo-600 px-6 rounded-xl font-bold flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg"
-                    >
-                       Tanya AI <ArrowRight size={18} />
-                    </Link>
-                 </div>
-                 <p className="mt-4 text-[10px] text-indigo-200 font-medium uppercase tracking-widest">Daftar gratis untuk mendapatkan jawaban lengkap</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
+                {[
+                  "Cara membuat batasan masalah?",
+                  "Tips mencari jurnal Scopus?",
+                  "Bagaimana cara parafrase PUEBI?"
+                ].map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => {
+                      const input = document.getElementById('playground-input');
+                      if (input) {
+                        input.value = q;
+                        handlePlaygroundSubmit(q);
+                      }
+                    }}
+                    className="text-xs font-semibold px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/10 transition-all backdrop-blur-sm"
+                  >
+                    {q}
+                  </button>
+                ))}
               </div>
 
-              {/* Decorative elements */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2"></div>
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-400/10 blur-3xl rounded-full translate-y-1/2 -translate-x-1/2"></div>
-           </div>
+              <div className="max-w-2xl mx-auto relative group mb-6">
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  handlePlaygroundSubmit(e.target.elements.query.value);
+                }}>
+                  <input
+                    id="playground-input"
+                    name="query"
+                    type="text"
+                    placeholder="Contoh: Bagaimana cara membuat batasan masalah yang baik?"
+                    className="w-full bg-white/10 border border-white/20 rounded-2xl py-5 px-6 text-white placeholder-indigo-200 outline-none focus:bg-white/20 focus:border-white/40 transition-all shadow-inner pr-36"
+                  />
+                  <button
+                    type="submit"
+                    className="absolute right-2 top-2 bottom-2 bg-white text-indigo-600 px-6 rounded-xl font-bold flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg"
+                  >
+                    Tanya AI <ArrowRight size={18} />
+                  </button>
+                </form>
+              </div>
+
+              <AnimatePresence mode="wait">
+                {playgroundResponse && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="max-w-2xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl p-6 text-left border border-white/10"
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center">
+                        <Sparkles size={12} className="text-indigo-600" />
+                      </div>
+                      <span className="text-xs font-bold text-indigo-100 uppercase tracking-wider">Respons Profesor AI</span>
+                    </div>
+                    <p className="text-indigo-50 text-sm leading-relaxed whitespace-pre-wrap">
+                      {displayedText}
+                    </p>
+                    <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
+                       <Link href="/auth/login" className="text-xs font-bold text-white underline underline-offset-4 flex items-center gap-1">
+                          Lanjutkan Diskusi Lengkap <ArrowRight size={12} />
+                       </Link>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <p className="mt-6 text-[10px] text-indigo-200 font-medium uppercase tracking-widest">Daftar gratis untuk mendapatkan akses ke ribuan referensi akademik</p>
+            </div>
+
+            {/* Decorative elements */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2"></div>
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-400/10 blur-3xl rounded-full translate-y-1/2 -translate-x-1/2"></div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="relative flex-none py-24 px-6 bg-slate-50/50 dark:bg-[#0A0A0A]/50 transition-colors">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold mb-6">Apa Kata Mereka?</h2>
+            <p className="text-slate-500 dark:text-gray-400 max-w-2xl mx-auto">Ribuan mahasiswa telah membuktikan kemudahan riset dengan EduSpaceAI.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                name: "Andini Putri",
+                major: "Sastra Indonesia, UI",
+                quote: "EduSpaceAI sangat membantu saya dalam merapikan sitasi dan memastikan PUEBI saya benar. Skripsi saya selesai jauh lebih cepat dari target!",
+                rating: 5
+              },
+              {
+                name: "Budi Santoso",
+                major: "Teknik Informatika, ITB",
+                quote: "Fitur Deep Search-nya luar biasa. Menemukan referensi jurnal internasional yang relevan jadi sangat mudah dan terarah.",
+                rating: 5
+              },
+              {
+                name: "Siti Aminah",
+                major: "Manajemen, UGM",
+                quote: "Dosen AI-nya beneran kayak konsultasi sama profesor sungguhan. Logika penelitian saya jadi lebih kuat setelah dibantu di sini.",
+                rating: 5
+              }
+            ].map((t, i) => (
+              <motion.div
+                key={i}
+                whileHover={{ y: -5 }}
+                className="bg-white dark:bg-[#151515] p-8 rounded-3xl border border-slate-200 dark:border-[#2A2A2A] shadow-sm"
+              >
+                <div className="flex gap-1 mb-4">
+                  {[...Array(t.rating)].map((_, i) => <Star key={i} size={16} className="fill-amber-400 text-amber-400" />)}
+                </div>
+                <p className="text-slate-600 dark:text-gray-300 italic mb-6 leading-relaxed">"{t.quote}"</p>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 font-bold">
+                    {t.name[0]}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 dark:text-white text-sm">{t.name}</h4>
+                    <p className="text-xs text-slate-500 dark:text-gray-500">{t.major}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Dashboard Preview Section */}
-      <section className="relative flex-none py-20 md:py-32 px-6 bg-slate-50 dark:bg-[#0A0A0A]/50 transition-colors">
+      <section className="relative flex-none py-20 md:py-32 px-6 bg-white dark:bg-[#0F0F0F] transition-colors border-t border-slate-100 dark:border-[#1E1E1E]">
         <div className="max-w-5xl mx-auto">
           <div className="relative rounded-3xl border border-slate-200 dark:border-[#2A2A2A] bg-white dark:bg-[#151515] p-4 shadow-2xl shadow-slate-200 dark:shadow-black/50 overflow-hidden group transition-all">
             {/* Window Controls */}
@@ -353,6 +548,106 @@ export default function LandingPage() {
         </div>
       </section>
 
+
+      {/* Comparison Table Section */}
+      <section className="relative flex-none py-24 px-6 bg-slate-50/50 dark:bg-[#0A0A0A]/50 transition-colors">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold mb-6">Kenapa EduSpaceAI?</h2>
+            <p className="text-slate-500 dark:text-gray-400">Perbandingan fitur akademik kami dengan alat AI generik.</p>
+          </div>
+
+          <div className="overflow-hidden rounded-3xl border border-slate-200 dark:border-[#2A2A2A] bg-white dark:bg-[#151515] shadow-xl">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-[#1E1E1E]">
+                  <th className="p-6 text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400">Fitur Utama</th>
+                  <th className="p-6 text-sm font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">EduSpaceAI</th>
+                  <th className="p-6 text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400">AI Generik</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-[#2A2A2A]">
+                {[
+                  { feature: "Bimbingan Metodologi", edu: true, other: false },
+                  { feature: "Pencarian Jurnal Valid", edu: true, other: "Terbatas" },
+                  { feature: "Cek PUEBI & Plagiasi", edu: true, other: false },
+                  { feature: "Visualisasi Diagram", edu: true, other: "Hanya Teks" },
+                  { feature: "Kerahasiaan Data Riset", edu: "Terjamin", other: "Risiko Tinggi" },
+                ].map((row, i) => (
+                  <tr key={i} className="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
+                    <td className="p-6 font-semibold text-slate-700 dark:text-gray-300">{row.feature}</td>
+                    <td className="p-6">
+                      {row.edu === true ? <div className="flex items-center gap-2 text-green-500 font-bold"><Check size={20} /> Ada</div> : <span className="font-bold text-indigo-500">{row.edu}</span>}
+                    </td>
+                    <td className="p-6 text-slate-400 dark:text-gray-500">
+                      {row.other === false ? "Tidak Ada" : row.other}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="relative flex-none py-24 px-6 bg-white dark:bg-[#0F0F0F] transition-colors">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold mb-6">Pertanyaan Umum</h2>
+            <p className="text-slate-500 dark:text-gray-400 italic">Segala hal yang perlu Anda ketahui tentang EduSpaceAI.</p>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                q: "Apakah EduSpaceAI gratis digunakan?",
+                a: "Ya! Kami menyediakan paket FREE yang sangat cukup untuk memulai riset. Anda juga bisa upgrade ke paket Premium untuk akses model AI yang lebih cerdas dan kuota harian yang lebih besar."
+              },
+              {
+                q: "Bagaimana dengan privasi data dokumen saya?",
+                a: "Kami menjamin kerahasiaan 100%. Dokumen yang Anda unggah hanya digunakan untuk analisis konteks obrolan Anda dan tidak akan dibagikan kepada pihak ketiga atau digunakan untuk melatih model AI publik."
+              },
+              {
+                q: "Apakah referensi jurnal yang diberikan valid?",
+                a: "Sangat valid. Agen Deep Search kami terintegrasi dengan database akademik terpercaya dan selalu memberikan link sumber jurnal asli sehingga Anda bisa memverifikasinya secara langsung."
+              },
+              {
+                q: "Bisakah digunakan untuk tugas selain skripsi?",
+                a: "Tentu bisa! EduSpaceAI dirancang untuk semua kebutuhan akademik, mulai dari tugas harian, makalah, esai, hingga penulisan jurnal internasional (Scopus)."
+              },
+              {
+                q: "Apakah bimbingan AI ini legal secara akademik?",
+                a: "EduSpaceAI adalah alat bantu (asisten), bukan pengganti proses berpikir. Gunakan AI sebagai teman brainstorming dan korektor tata bahasa untuk meningkatkan kualitas karya Anda sendiri."
+              }
+            ].map((faq, i) => (
+              <div key={i} className="border border-slate-100 dark:border-[#2A2A2A] rounded-2xl overflow-hidden">
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full p-6 text-left flex items-center justify-between bg-white dark:bg-[#151515] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                >
+                  <span className="font-bold text-slate-800 dark:text-white">{faq.q}</span>
+                  {openFaq === i ? <ChevronUp size={20} className="text-indigo-500" /> : <ChevronDown size={20} className="text-slate-400" />}
+                </button>
+                <AnimatePresence>
+                  {openFaq === i && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden bg-slate-50/50 dark:bg-white/5"
+                    >
+                      <div className="p-6 text-slate-600 dark:text-gray-400 text-sm leading-relaxed border-t border-slate-100 dark:border-[#2A2A2A]">
+                        {faq.a}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <Footer />
     </div>
