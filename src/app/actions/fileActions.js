@@ -10,6 +10,12 @@ import dbConnect from '@/lib/mongodb';
 import { getFileSizeLimit } from '@/lib/subscription';
 import { getSessionUser } from '@/lib/session';
 
+// ✅ Safe limits untuk file processing
+const MAX_CONTENT_LENGTH = 100000;           // 100k chars
+const MAX_PDF_PAGES = 50;                    // Max pages to extract
+const MAX_EXCEL_SHEETS = 5;                  // Max sheets
+const MAX_EXCEL_ROWS_PER_SHEET = 500;        // Max rows per sheet
+
 async function saveTempFile(file) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
@@ -41,7 +47,8 @@ export async function extractFileContent(formData) {
     // 1. PARSE PDF
     if (fileType === 'application/pdf') {
       const dataBuffer = await fs.promises.readFile(filePath);
-      const pdfData = await pdfParse(dataBuffer);
+      // ✅ Limit PDF pages to prevent memory explosion
+      const pdfData = await pdfParse(dataBuffer, { max: MAX_PDF_PAGES });
       text = pdfData.text;
     }
     // 2. PARSE WORD (DOCX)
@@ -67,9 +74,18 @@ export async function extractFileContent(formData) {
         await workbook.xlsx.readFile(filePath);
       }
 
+      // ✅ Limit sheets & rows to prevent lag
+      let sheetCount = 0;
       workbook.eachSheet((worksheet, sheetId) => {
+        if (sheetCount >= MAX_EXCEL_SHEETS) return;
+        sheetCount++;
+        
         text += `\n--- Sheet: ${worksheet.name} ---\n`;
+        let rowCount = 0;
         worksheet.eachRow((row, rowNumber) => {
+          if (rowCount >= MAX_EXCEL_ROWS_PER_SHEET) return;
+          rowCount++;
+          
           const rowValues = Array.isArray(row.values) ? row.values.slice(1) : [];
           text += rowValues.join('\t') + '\n';
         });
@@ -83,14 +99,21 @@ export async function extractFileContent(formData) {
       throw new Error('Tipe file tidak didukung. Gunakan PDF, Word, Excel, atau Teks.');
     }
 
-    const cleanedText = text.replace(/[^\S\r\n]+/g, ' ').trim();
+    // ✅ Truncate content if exceeds limit
+    let cleanedText = text.replace(/[^\S\r\n]+/g, ' ').trim();
+    let truncated = false;
+    if (cleanedText.length > MAX_CONTENT_LENGTH) {
+      cleanedText = cleanedText.substring(0, MAX_CONTENT_LENGTH) + '\n\n[⚠️ Konten terpotong karena melampaui batas 100,000 karakter]';
+      truncated = true;
+    }
 
     if (fs.existsSync(filePath)) await fs.promises.unlink(filePath);
 
     return { 
       success: true, 
       content: cleanedText, 
-      fileName: file.name 
+      fileName: file.name,
+      truncated: truncated ? '⚠️ Content was truncated' : undefined
     };
 
   } catch (error) {
