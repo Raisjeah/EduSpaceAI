@@ -41,8 +41,9 @@ export default function LandingPage() {
 
   const fadeInUp = {
     initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.5 }
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true },
+    transition: { duration: 0.2 }
   };
 
   const stagger = {
@@ -56,7 +57,7 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col h-full overflow-y-auto custom-scrollbar bg-white dark:bg-[#0F0F0F] text-slate-900 dark:text-gray-200 transition-colors duration-200">
       {/* Hero Section */}
-      <section className="relative flex-none pt-28 md:pt-40 pb-20 md:pb-32 overflow-hidden">
+      <section className="relative flex-none pt-28 md:pt-40 pb-20 md:pb-32 overflow-hidden bg-gradient-to-r from-indigo-500/5 via-purple-500/5 to-indigo-500/5 animate-liquid-flow bg-[length:200%_200%]">
         {/* Background Decorative Elements */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10">
           <motion.div
@@ -74,108 +75,69 @@ export default function LandingPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-sm font-semibold mb-8 transition-colors"
-          >
-            <Sparkles size={16} />
-            <span>EduSpaceAI v1.2 - Asisten Riset Akademik AI Terdepan</span>
-          </motion.div>
-
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-8 leading-[1.1] px-2"
+            transition={{ duration: 0.2, delay: 0.1 }}
+            className="text-4xl md:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-8 leading-[1.1] px-2 max-w-4xl mx-auto"
           >
             Selesaikan Skripsi & Jurnal <br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 dark:from-indigo-400 dark:via-purple-400 dark:to-indigo-400">
-              3x Lebih Cepat
+              Lebih Cepat dengan AI
             </span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-base sm:text-lg md:text-2xl text-slate-500 dark:text-gray-400 max-w-3xl mx-auto mb-8 leading-relaxed"
+            transition={{ duration: 0.2, delay: 0.2 }}
+            className="text-lg md:text-xl text-slate-500 dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed"
           >
-            Dosen AI pribadi yang memahami konteks risetmu. Dari cari judul, olah data, hingga cek PUEBI — semua dalam satu workspace cerdas.
+            Dosen AI pribadi yang membantu riset, olah data, dan sitasi secara otomatis. Satu workspace cerdas untuk seluruh perjalanan akademikmu.
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-wrap justify-center gap-4 md:gap-8 mb-12 text-sm font-medium text-slate-600 dark:text-gray-400"
+            transition={{ duration: 0.2, delay: 0.3 }}
+            className="flex flex-col items-center gap-6"
           >
-            <div className="flex items-center gap-2">
-              <CheckCircle size={18} className="text-indigo-500" />
-              <span>Bimbingan 24/7 dari Profesor AI</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle size={18} className="text-indigo-500" />
-              <span>Cek Plagiasi & PUEBI Otomatis</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle size={18} className="text-indigo-500" />
-              <span>Akses 500+ Jurnal Terpercaya</span>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="flex flex-col items-center gap-4"
-          >
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full">
               <Link
                 href="/auth/login"
                 className="group w-full sm:w-auto flex items-center justify-center gap-2 px-10 py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-lg transition-all shadow-xl shadow-indigo-900/20 hover:scale-[1.02] active:scale-[0.98]"
               >
-                Coba Sekarang
+                Mulai Gratis
                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
-                href="#features"
-                className="w-full sm:w-auto px-10 py-5 bg-white dark:bg-[#1A1A1A] hover:bg-slate-50 dark:hover:bg-[#252525] text-slate-600 dark:text-gray-300 rounded-2xl font-bold text-lg transition-all border border-slate-200 dark:border-[#2A2A2A] hover:border-slate-300 dark:hover:border-[#3A3A3A]"
+                href="#demo"
+                className="text-indigo-600 dark:text-indigo-400 font-bold text-lg flex items-center gap-2 hover:gap-3 transition-all"
               >
-                Pelajari Fitur
+                Lihat Demo
+                <ArrowRight size={20} />
               </Link>
             </div>
-            <p className="text-xs text-slate-400 dark:text-gray-500 font-medium">
+            <p className="text-xs text-slate-500 dark:text-gray-400 font-medium">
               Tidak perlu kartu kredit • Mulai gratis sekarang
             </p>
           </motion.div>
 
-          {/* Trust Badges */}
+          {/* Trust Bar */}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            transition={{ duration: 1, delay: 0.5 }}
-            className="mt-20 pt-10 border-t border-slate-100 dark:border-[#1E1E1E]"
+            transition={{ duration: 0.2, delay: 0.5 }}
+            className="mt-20 pt-10 border-t border-slate-100 dark:border-white/5"
           >
-            <p className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-8">Membantu Mahasiswa Dari Berbagai Kampus Top</p>
-            <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-8 md:gap-16 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
-              <div className="flex items-center gap-2 font-bold text-xl text-slate-700 dark:text-gray-300">
-                <GraduationCap className="text-indigo-600" /> UI
-              </div>
-              <div className="flex items-center gap-2 font-bold text-xl text-slate-700 dark:text-gray-300">
-                <GraduationCap className="text-indigo-600" /> ITB
-              </div>
-              <div className="flex items-center gap-2 font-bold text-xl text-slate-700 dark:text-gray-300">
-                <GraduationCap className="text-indigo-600" /> UGM
-              </div>
-              <div className="flex items-center gap-2 font-bold text-xl text-slate-700 dark:text-gray-300">
-                <GraduationCap className="text-indigo-600" /> BINUS
-              </div>
-              <div className="flex items-center gap-2 font-bold text-xl text-slate-700 dark:text-gray-300">
-                <GraduationCap className="text-indigo-600" /> UNPAD
-              </div>
+            <p className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-8">Trust by students from</p>
+            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-30 grayscale contrast-125">
+              {['UI', 'ITB', 'UGM', 'BINUS', 'UNPAD'].map(uni => (
+                <div key={uni} className="flex items-center gap-2 font-black text-xl text-slate-400 dark:text-gray-500">
+                   {uni}
+                </div>
+              ))}
             </div>
           </motion.div>
         </div>
@@ -209,122 +171,76 @@ export default function LandingPage() {
       <section className="relative flex-none py-24 px-6 bg-white dark:bg-[#0F0F0F] transition-colors">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-             <h2 className="text-3xl md:text-5xl font-bold mb-4">Cara Kerja EduSpaceAI</h2>
-             <p className="text-slate-500 dark:text-gray-400 font-medium uppercase tracking-widest text-xs">Alur riset yang lebih cerdas</p>
+             <h2 className="text-3xl md:text-5xl font-bold mb-4">Mulai Riset dalam 3 Langkah</h2>
+             <p className="text-slate-500 dark:text-gray-400 font-medium uppercase tracking-widest text-xs">Alur kerja akademik yang disederhanakan</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-             <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-full bg-indigo-600 text-white flex items-center justify-center text-2xl font-black mb-6 shadow-lg shadow-indigo-500/40">1</div>
-                <h3 className="text-xl font-bold mb-3">Upload Draf/Jurnal</h3>
-                <p className="text-slate-500 dark:text-gray-400 text-sm">Unggah file PDF, Word, atau Excel. AI akan langsung mengekstrak dan memahami konteks isinya.</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
+             <div className="flex flex-col items-center text-center relative z-10">
+                <div className="w-16 h-16 rounded-2xl bg-indigo-600/10 dark:bg-white/5 backdrop-blur-md border border-indigo-600/20 dark:border-white/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-2xl font-black mb-6 shadow-xl">1</div>
+                <h3 className="text-xl font-bold mb-3">Upload Dokumen</h3>
+                <p className="text-slate-500 dark:text-gray-400 text-sm max-w-[60ch]">Unggah PDF atau Word. AI akan mengekstrak data dan memahami konteks risetmu.</p>
              </div>
-             <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-full bg-purple-600 text-white flex items-center justify-center text-2xl font-black mb-6 shadow-lg shadow-purple-500/40">2</div>
-                <h3 className="text-xl font-bold mb-3">Analisis & Cari Referensi</h3>
-                <p className="text-slate-500 dark:text-gray-400 text-sm">Gunakan Agen Deep Search untuk mencari referensi jurnal pendukung yang valid dan terbaru.</p>
+             <div className="flex flex-col items-center text-center relative z-10">
+                <div className="w-16 h-16 rounded-2xl bg-indigo-600/10 dark:bg-white/5 backdrop-blur-md border border-indigo-600/20 dark:border-white/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-2xl font-black mb-6 shadow-xl">2</div>
+                <h3 className="text-xl font-bold mb-3">Deep Analysis</h3>
+                <p className="text-slate-500 dark:text-gray-400 text-sm max-w-[60ch]">Gunakan Deep Search untuk menemukan referensi jurnal yang valid dan relevan.</p>
              </div>
-             <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-full bg-amber-600 text-white flex items-center justify-center text-2xl font-black mb-6 shadow-lg shadow-amber-500/40">3</div>
-                <h3 className="text-xl font-bold mb-3">Edit & Sempurnakan</h3>
-                <p className="text-slate-500 dark:text-gray-400 text-sm">Sempurnakan draf di Editor cerdas dengan bimbingan langsung dari Profesor Riset AI.</p>
+             <div className="flex flex-col items-center text-center relative z-10">
+                <div className="w-16 h-16 rounded-2xl bg-indigo-600/10 dark:bg-white/5 backdrop-blur-md border border-indigo-600/20 dark:border-white/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-2xl font-black mb-6 shadow-xl">3</div>
+                <h3 className="text-xl font-bold mb-3">Sempurnakan Draf</h3>
+                <p className="text-slate-500 dark:text-gray-400 text-sm max-w-[60ch]">Edit tulisanmu dengan bimbingan langsung dari Profesor AI di workspace cerdas.</p>
              </div>
+             {/* Connection line for desktop */}
+             <div className="hidden md:block absolute top-8 left-1/4 right-1/4 h-[2px] bg-gradient-to-r from-transparent via-slate-100 dark:via-white/5 to-transparent -z-0" />
           </div>
         </div>
       </section>
 
-      {/* Bento Grid Features - Agent Profiles */}
-      <section id="features" className="relative flex-none py-24 md:py-32 px-6 overflow-hidden bg-slate-50/50 dark:bg-[#0A0A0A]/50">
+      {/* Value-Heavy Benefit Cards */}
+      <section id="features" className="relative flex-none py-24 md:py-32 px-6 overflow-hidden">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold mb-6">Pilih Agen Spesialis Anda</h2>
-            <p className="text-slate-500 dark:text-gray-400 max-w-2xl mx-auto">Bekerja sama dengan AI yang memiliki kepribadian dan keahlian spesifik.</p>
+            <h2 className="text-3xl md:text-5xl font-bold mb-6">Fokus pada Hasil, Bukan Sekadar Fitur</h2>
+            <p className="text-slate-500 dark:text-gray-400 max-w-2xl mx-auto">AI kami dirancang untuk membantu Anda mencapai target akademik dengan standar tinggi.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[350px]">
-            {/* Deep Search - Large Card */}
-            <motion.div
-              whileHover={{ y: -5 }}
-              className="md:col-span-2 md:row-span-1 relative overflow-hidden rounded-3xl border border-slate-200 dark:border-[#2A2A2A] bg-gradient-to-br from-white to-slate-50 dark:from-[#151515] dark:to-[#0A0A0A] p-8 group transition-all shadow-sm"
-            >
-              <div className="relative z-10 h-full flex flex-col md:flex-row gap-8">
-                <div className="flex-1">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 text-blue-500 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">Search & Discovery</div>
-                  <h3 className="text-2xl md:text-3xl font-bold mb-4">Deep Search Agent</h3>
-                  <p className="text-slate-500 dark:text-gray-400 text-base mb-6">
-                    Ahli dalam menelusuri internet dan database akademik untuk menemukan informasi terbaru, tren teknologi, dan referensi jurnal terpercaya.
-                  </p>
-                  <div className="flex items-center gap-3">
-                     <div className="flex -space-x-2">
-                        {[1,2,3].map(i => <div key={i} className="w-8 h-8 rounded-full bg-slate-200 dark:bg-gray-800 border-2 border-white dark:border-[#151515]" />)}
-                     </div>
-                     <span className="text-[11px] text-slate-400 font-medium">Digunakan oleh 5k+ peneliti</span>
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                title: "Efisiensi Riset",
+                description: "Selesaikan draf skripsi dan jurnal 3x lebih cepat dengan bimbingan terstruktur dari Profesor AI.",
+                icon: <Zap className="text-indigo-500" />
+              },
+              {
+                title: "Kualitas Akademik",
+                description: "Pastikan tulisan Anda memenuhi standar PUEBI dan sitasi yang akurat tanpa risiko plagiarisme.",
+                icon: <Shield className="text-purple-500" />
+              },
+              {
+                title: "Akses 24/7",
+                description: "Dapatkan bantuan konsultasi metodologi dan olah data kapan saja tanpa harus menunggu jam kerja.",
+                icon: <Sparkles className="text-amber-500" />
+              }
+            ].map((benefit, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.2, delay: i * 0.1 }}
+                whileHover={{ y: -5 }}
+                className="relative p-8 rounded-[24px] bg-slate-50 dark:bg-white/5 backdrop-blur-[16px] border border-slate-200 dark:border-white/10 transition-all group overflow-hidden"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-white dark:bg-white/5 flex items-center justify-center mb-6 shadow-sm border border-slate-100 dark:border-white/5">
+                  {benefit.icon}
                 </div>
-                <div className="hidden md:flex flex-col justify-center items-center w-48 bg-blue-600/5 rounded-2xl border border-blue-500/20 p-6 relative overflow-hidden">
-                   <Search size={64} className="text-blue-500 mb-4" />
-                   <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-tr from-transparent via-blue-500/5 to-transparent animate-shimmer" />
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Researcher Profile */}
-            <motion.div
-              whileHover={{ y: -5 }}
-              className="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-[#2A2A2A] bg-white dark:bg-[#151515] p-8 transition-all shadow-sm"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center mb-6 text-green-500">
-                <BookOpen size={24} />
-              </div>
-              <h3 className="text-xl font-bold mb-3 flex items-center gap-2">
-                Profesor Riset
-                <span className="px-2 py-0.5 text-[9px] bg-green-600 text-white rounded-full uppercase tracking-wider">Expert</span>
-              </h3>
-              <p className="text-slate-500 dark:text-gray-400 text-sm leading-relaxed">
-                Spesialis metodologi dan kerangka berpikir. Membimbingmu menyusun Bab 1-5 dengan logika penelitian yang kuat dan sistematis.
-              </p>
-            </motion.div>
-
-            {/* Editor Profile */}
-            <motion.div
-              whileHover={{ y: -5 }}
-              className="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-[#2A2A2A] bg-white dark:bg-[#151515] p-8 transition-all shadow-sm"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-6 text-amber-500">
-                <Edit3 size={24} />
-              </div>
-              <h3 className="text-xl font-bold mb-3">Editor Akademik</h3>
-              <p className="text-slate-500 dark:text-gray-400 text-sm leading-relaxed">
-                Ahli dalam PUEBI, tata bahasa, dan format sitasi (APA, MLA). Memastikan tulisanmu terdengar profesional dan bebas plagiasi.
-              </p>
-            </motion.div>
-
-             {/* Visualizer Profile */}
-             <motion.div
-              whileHover={{ y: -5 }}
-              className="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-[#2A2A2A] bg-white dark:bg-[#151515] p-8 transition-all shadow-sm"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-6 text-indigo-500">
-                <Sparkles size={24} />
-              </div>
-              <h3 className="text-xl font-bold mb-3">Visual Mapper</h3>
-              <p className="text-slate-500 dark:text-gray-400 text-sm leading-relaxed">
-                Mengubah teori yang rumit menjadi diagram visual (Mermaid) yang mudah dipahami untuk presentasi dan draf jurnalmu.
-              </p>
-            </motion.div>
-
-             {/* Multi-model Support */}
-             <motion.div
-              whileHover={{ y: -5 }}
-              className="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-[#2A2A2A] bg-white dark:bg-[#151515] p-8 transition-all shadow-sm"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center mb-6 text-purple-500">
-                <Zap size={24} />
-              </div>
-              <h3 className="text-xl font-bold mb-3">Multi-model Switching</h3>
-              <p className="text-slate-500 dark:text-gray-400 text-sm leading-relaxed">
-                Pindah antar model AI terbaik (Gemini & Claude) sesuai kebutuhan. Gunakan model tercepat atau yang paling cerdas dalam satu klik.
-              </p>
-            </motion.div>
+                <h3 className="text-xl font-bold mb-3">{benefit.title}</h3>
+                <p className="text-slate-500 dark:text-gray-400 text-sm leading-relaxed max-w-[65ch]">
+                  {benefit.description}
+                </p>
+                <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-indigo-500/5 blur-2xl rounded-full group-hover:bg-indigo-500/10 transition-colors" />
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -470,9 +386,9 @@ export default function LandingPage() {
       </section>
 
       {/* Dashboard Preview Section */}
-      <section className="relative flex-none py-20 md:py-32 px-6 bg-white dark:bg-[#0F0F0F] transition-colors border-t border-slate-100 dark:border-[#1E1E1E]">
+      <section id="demo" className="relative flex-none py-20 md:py-32 px-6 bg-white dark:bg-[#0F0F0F] transition-colors border-t border-slate-100 dark:border-white/5">
         <div className="max-w-5xl mx-auto">
-          <div className="relative rounded-3xl border border-slate-200 dark:border-[#2A2A2A] bg-white dark:bg-[#151515] p-4 shadow-2xl shadow-slate-200 dark:shadow-black/50 overflow-hidden group transition-all">
+          <div className="relative rounded-[24px] border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 backdrop-blur-[16px] p-4 shadow-2xl shadow-indigo-500/5 overflow-hidden group transition-all">
             {/* Window Controls */}
             <div className="flex gap-1.5 mb-4 px-2">
               <div className="w-3 h-3 rounded-full bg-red-500/20 group-hover:bg-red-500/50 transition-colors"></div>
@@ -550,23 +466,23 @@ export default function LandingPage() {
 
 
       {/* Comparison Table Section */}
-      <section className="relative flex-none py-24 px-6 bg-slate-50/50 dark:bg-[#0A0A0A]/50 transition-colors">
+      <section className="relative flex-none py-24 px-6 bg-white dark:bg-[#0F0F0F] transition-colors">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold mb-6">Kenapa EduSpaceAI?</h2>
-            <p className="text-slate-500 dark:text-gray-400">Perbandingan fitur akademik kami dengan alat AI generik.</p>
+            <p className="text-slate-500 dark:text-gray-400 max-w-[65ch] mx-auto">Perbandingan fitur akademik kami dengan alat AI generik untuk kebutuhan riset Anda.</p>
           </div>
 
-          <div className="overflow-hidden rounded-3xl border border-slate-200 dark:border-[#2A2A2A] bg-white dark:bg-[#151515] shadow-xl">
+          <div className="overflow-hidden rounded-[24px] border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 backdrop-blur-[16px] shadow-2xl shadow-indigo-500/5">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-[#1E1E1E]">
+                <tr className="bg-slate-50/50 dark:bg-white/5">
                   <th className="p-6 text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400">Fitur Utama</th>
                   <th className="p-6 text-sm font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">EduSpaceAI</th>
                   <th className="p-6 text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400">AI Generik</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-[#2A2A2A]">
+              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                 {[
                   { feature: "Bimbingan Metodologi", edu: true, other: false },
                   { feature: "Pencarian Jurnal Valid", edu: true, other: "Terbatas" },
@@ -586,6 +502,48 @@ export default function LandingPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      </section>
+
+      {/* Brief Pricing Section */}
+      <section className="relative flex-none py-24 px-6 bg-white dark:bg-[#0F0F0F] transition-colors border-t border-slate-100 dark:border-white/5">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold mb-6">Pilih Paket Belajar Kamu</h2>
+            <p className="text-slate-500 dark:text-gray-400 max-w-2xl mx-auto italic">Tingkatkan produktivitas riset dengan kekuatan AI tercanggih.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {[
+              { name: 'FREE', price: '0', features: ['Gemini 2.5 Flash', '20 pesan / hari', 'Konteks pendek'] },
+              { name: 'PRO', price: '100.000', recommended: true, features: ['Gemini 3.1 Pro', '500 pesan / hari', 'Advanced AI Agent', 'Pencarian Internet'] },
+              { name: 'ULTRA', price: '200.000', features: ['Claude 4.6 Sonnet', 'Unlimited Fair Usage', 'Respon Prioritas'] }
+            ].map((plan, i) => (
+              <motion.div
+                key={i}
+                whileHover={{ y: -5 }}
+                className={`relative p-8 rounded-[24px] border ${plan.recommended ? 'border-indigo-600 bg-indigo-50/30 dark:bg-indigo-600/5 shadow-2xl' : 'border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 backdrop-blur-[16px]'} transition-all`}
+              >
+                {plan.recommended && <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase">Paling Populer</div>}
+                <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+                <div className="mb-6">
+                  <span className="text-sm font-bold mr-1">Rp</span>
+                  <span className="text-3xl font-black">{plan.price}</span>
+                  <span className="text-xs text-slate-500">/bulan</span>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((f, idx) => (
+                    <li key={idx} className="flex items-center gap-2 text-sm text-slate-600 dark:text-gray-400">
+                      <Check size={14} className="text-green-500" /> {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/pricing" className={`block w-full py-3 rounded-xl font-bold text-center transition-all ${plan.recommended ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-900 dark:bg-white text-white dark:text-black hover:opacity-90'}`}>
+                   Lihat Detail
+                </Link>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -621,10 +579,10 @@ export default function LandingPage() {
                 a: "EduSpaceAI adalah alat bantu (asisten), bukan pengganti proses berpikir. Gunakan AI sebagai teman brainstorming dan korektor tata bahasa untuk meningkatkan kualitas karya Anda sendiri."
               }
             ].map((faq, i) => (
-              <div key={i} className="border border-slate-100 dark:border-[#2A2A2A] rounded-2xl overflow-hidden">
+              <div key={i} className="border border-slate-200 dark:border-white/10 rounded-[24px] overflow-hidden bg-white dark:bg-black/20 backdrop-blur-[16px]">
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full p-6 text-left flex items-center justify-between bg-white dark:bg-[#151515] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                  className="w-full p-6 text-left flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                 >
                   <span className="font-bold text-slate-800 dark:text-white">{faq.q}</span>
                   {openFaq === i ? <ChevronUp size={20} className="text-indigo-500" /> : <ChevronDown size={20} className="text-slate-400" />}
@@ -635,9 +593,9 @@ export default function LandingPage() {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden bg-slate-50/50 dark:bg-white/5"
+                      className="overflow-hidden"
                     >
-                      <div className="p-6 text-slate-600 dark:text-gray-400 text-sm leading-relaxed border-t border-slate-100 dark:border-[#2A2A2A]">
+                      <div className="p-6 text-slate-600 dark:text-gray-400 text-sm leading-relaxed border-t border-slate-100 dark:border-white/5">
                         {faq.a}
                       </div>
                     </motion.div>
@@ -646,6 +604,47 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Final CTA Section */}
+      <section className="relative flex-none py-24 px-6 bg-white dark:bg-[#0F0F0F] transition-colors overflow-hidden">
+        <div className="max-w-4xl mx-auto">
+           <motion.div
+             initial={{ opacity: 0, scale: 0.95 }}
+             whileInView={{ opacity: 1, scale: 1 }}
+             viewport={{ once: true }}
+             transition={{ duration: 0.2 }}
+             className="relative rounded-[32px] bg-indigo-600 p-12 md:p-20 text-center overflow-hidden shadow-2xl shadow-indigo-500/20"
+           >
+              <div className="relative z-10">
+                <h2 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight">
+                  Siap Menyelesaikan <br className="hidden md:block" /> Riset Kamu Sekarang?
+                </h2>
+                <p className="text-indigo-100 mb-10 max-w-xl mx-auto text-lg">
+                  Bergabunglah dengan ribuan mahasiswa lainnya dan rasakan kemudahan riset dengan bimbingan Profesor AI.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                  <Link
+                    href="/auth/login"
+                    className="w-full sm:w-auto px-10 py-5 bg-white text-indigo-600 rounded-2xl font-bold text-lg hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl"
+                  >
+                    Mulai Sekarang
+                  </Link>
+                  <Link
+                    href="#demo"
+                    className="text-white font-bold text-lg flex items-center gap-2 hover:gap-3 transition-all"
+                  >
+                    Lihat Hasil Contoh <ArrowRight size={20} />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Decorative Background Elements */}
+              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-500 via-transparent to-purple-500 opacity-50" />
+              <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 blur-3xl rounded-full" />
+              <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-indigo-400/20 blur-3xl rounded-full" />
+           </motion.div>
         </div>
       </section>
 

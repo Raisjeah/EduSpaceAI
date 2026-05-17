@@ -13,11 +13,16 @@ module.exports = {
       },
       animation: {
         'shimmer': 'shimmer 2s linear infinite',
+        'liquid-flow': 'liquid-flow 12s ease-in-out infinite',
       },
       keyframes: {
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
+        },
+        'liquid-flow': {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
         },
       },
     },
