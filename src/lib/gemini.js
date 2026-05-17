@@ -7,6 +7,37 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+// Whitelist of model IDs the app supports. Anything else is rejected at the
+// edge instead of being silently downgraded.
+const GEMINI_MODELS = new Set([
+  'gemini-2.5-flash',
+  'gemini-2.5-pro',
+  'gemini-2.5-flash-image-preview',
+]);
+
+const CLAUDE_MODELS = new Set([
+  'claude-3-5-sonnet-20241022',
+]);
+
+const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
+const DEFAULT_CLAUDE_MODEL = 'claude-3-5-sonnet-20241022';
+
+function resolveModel(modelName) {
+  if (typeof modelName !== 'string' || !modelName) {
+    return { provider: 'gemini', sdkModel: DEFAULT_GEMINI_MODEL };
+  }
+  if (CLAUDE_MODELS.has(modelName)) {
+    return { provider: 'claude', sdkModel: modelName };
+  }
+  if (modelName.startsWith('claude')) {
+    return { provider: 'claude', sdkModel: DEFAULT_CLAUDE_MODEL };
+  }
+  if (GEMINI_MODELS.has(modelName)) {
+    return { provider: 'gemini', sdkModel: modelName };
+  }
+  return { provider: 'gemini', sdkModel: DEFAULT_GEMINI_MODEL };
+}
+
 const AGENT_CONFIGS = {
   default: {
     name: "EduSpaceAI",
@@ -83,36 +114,27 @@ const AGENT_CONFIGS = {
   }
 };
 
-export async function getGeminiResponse(prompt, history = [], fileParts = [], agentId = 'default', modelName = "gemini-2.5-flash") {
+export async function getGeminiResponse(prompt, history = [], fileParts = [], agentId = 'default', modelName = DEFAULT_GEMINI_MODEL) {
+  const config = AGENT_CONFIGS[agentId] || AGENT_CONFIGS.default;
+  const { provider, sdkModel } = resolveModel(modelName);
+
   try {
     // 1. Deep Search Special Handling
     if (agentId === 'deep-search') {
-      return await deepSearchEngine(prompt, history, fileParts, modelName);
+      return await deepSearchEngine(prompt, history, fileParts, sdkModel);
     }
 
-    const config = AGENT_CONFIGS[agentId] || AGENT_CONFIGS.default;
-
-    // Mapping model IDs to SDK expected names
-    let actualModel = modelName;
-    if (modelName === 'gemini-2.5-flash') actualModel = 'gemini-2.5-flash';
-    if (modelName === 'gemini-2.5-pro') actualModel = 'gemini-2.5-pro';
-    if (modelName === 'gemini-3-pro-preview') actualModel = 'gemini-3-pro-preview';
-    if (modelName === 'gemini-3-pro-image-preview') actualModel = 'gemini-3.1-flash-image-preview';
-
-    // Claude Model Routing
-    if (modelName.includes('claude')) {
-      const claudeModel = modelName === 'claude-4-6-sonnet' ? "claude-4-6-sonnet" : modelName;
-      return getClaudeResponse(prompt, history, fileParts, config.instruction, claudeModel);
+    if (provider === 'claude') {
+      return getClaudeResponse(prompt, history, fileParts, config.instruction, sdkModel);
     }
 
     // Gemini Models
-    const model = genAI.getGenerativeModel({ 
-      model: actualModel,
+    const model = genAI.getGenerativeModel({
+      model: sdkModel,
       systemInstruction: config.instruction,
       tools: config.tools || [],
     });
 
-    // Mulai chat session
     const chat = model.startChat({
       history: history,
       generationConfig: {
@@ -124,33 +146,32 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
     const result = await chat.sendMessage([prompt, ...fileParts]);
     const response = await result.response;
 
-    // Handle Image Generation Model Output
-    if (actualModel === 'gemini-3.1-flash-image-preview' || modelName === 'gemini-3-pro-image-preview') {
+    // Image-generation model output (base64 inline data).
+    if (sdkModel.endsWith('image-preview')) {
       const candidates = response.candidates;
-      if (candidates && candidates[0].content.parts) {
-        const imagePart = candidates[0].content.parts.find(p => p.inlineData);
+      if (candidates && candidates[0]?.content?.parts) {
+        const imagePart = candidates[0].content.parts.find((p) => p.inlineData);
         if (imagePart) {
           return JSON.stringify({
             type: "image",
             mimeType: imagePart.inlineData.mimeType,
-            base64Data: imagePart.inlineData.data
+            base64Data: imagePart.inlineData.data,
           });
         }
       }
     }
 
     return response.text();
-
   } catch (error) {
     console.error("AI SDK Error:", error);
-    if (error.message.includes("quota")) {
+    if (typeof error?.message === 'string' && error.message.toLowerCase().includes('quota')) {
       return "⚠️ Kuota API habis. Coba lagi nanti atau ganti API Key.";
     }
     return "⚠️ Terjadi kesalahan pada koneksi Dosen AI. Silakan coba lagi.";
   }
 }
 
-async function getClaudeResponse(prompt, history, fileParts, systemInstruction, modelName = "claude-3-5-sonnet-20241022") {
+async function getClaudeResponse(prompt, history, fileParts, systemInstruction, modelName = DEFAULT_CLAUDE_MODEL) {
   try {
     const messages = history.map(msg => ({
       role: msg.role === 'user' ? 'user' : 'assistant',

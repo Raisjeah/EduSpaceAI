@@ -5,8 +5,25 @@ import Subscription from '@/models/Subscription';
 import User from '@/models/User';
 import Plan from '@/models/Plan';
 
+function safeEqual(a, b) {
+  try {
+    const bufA = Buffer.from(String(a || ''), 'utf8');
+    const bufB = Buffer.from(String(b || ''), 'utf8');
+    if (bufA.length !== bufB.length) return false;
+    return crypto.timingSafeEqual(bufA, bufB);
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(req) {
   try {
+    const serverKey = process.env.MIDTRANS_SERVER_KEY;
+    if (!serverKey) {
+      console.error('[Midtrans Webhook] MIDTRANS_SERVER_KEY not configured');
+      return NextResponse.json({ message: 'Server misconfigured' }, { status: 500 });
+    }
+
     const body = await req.json();
     const {
       order_id,
@@ -17,14 +34,18 @@ export async function POST(req) {
       status_code,
     } = body;
 
-    // Verify Signature
-    const serverKey = process.env.MIDTRANS_SERVER_KEY;
+    if (!order_id || !transaction_status || !signature_key || !gross_amount || !status_code) {
+      return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Verify signature using a constant-time compare.
     const hash = crypto
       .createHash('sha512')
       .update(order_id + status_code + gross_amount + serverKey)
       .digest('hex');
 
-    if (hash !== signature_key) {
+    if (!safeEqual(hash, signature_key)) {
+      console.warn(`[Midtrans Webhook] Invalid signature for order ${order_id}`);
       return NextResponse.json({ message: 'Invalid Signature' }, { status: 400 });
     }
 
@@ -36,10 +57,25 @@ export async function POST(req) {
       return NextResponse.json({ message: 'Subscription not found' }, { status: 404 });
     }
 
+    // Validate gross_amount against the server-recorded amount.
+    // Midtrans sends values like "200000.00" — compare as numbers, not strings.
+    const expectedAmount = Number(subscription.amount);
+    const receivedAmount = Number(gross_amount);
+    if (!Number.isFinite(receivedAmount) || Math.abs(receivedAmount - expectedAmount) > 0.5) {
+      console.warn(
+        `[Midtrans Webhook] gross_amount mismatch for order ${order_id}: expected ${expectedAmount}, got ${receivedAmount}`
+      );
+      return NextResponse.json({ message: 'Amount mismatch' }, { status: 400 });
+    }
+
+    // Idempotency: already finalized as a successful payment.
+    if (subscription.payment_status === 'settlement' || subscription.payment_status === 'capture') {
+      console.log(`[Midtrans Webhook] Skipping duplicate webhook for ${order_id}`);
+      return NextResponse.json({ message: 'Already processed' });
+    }
+
     console.log(`[Midtrans Webhook] Processing ${transaction_status} for order: ${order_id}`);
 
-    // Update Subscription Status
-    subscription.payment_status = transaction_status;
     subscription.transaction_id = body.transaction_id;
 
     if (transaction_status === 'settlement' || transaction_status === 'capture') {
@@ -48,10 +84,9 @@ export async function POST(req) {
       } else {
         subscription.payment_status = 'settlement';
 
-        // Activate Subscription for User
         const plan = await Plan.findById(subscription.plan_id);
         if (!plan) {
-           throw new Error(`Plan not found for ID: ${subscription.plan_id}`);
+          throw new Error(`Plan not found for ID: ${subscription.plan_id}`);
         }
 
         const expiredAt = new Date();
@@ -66,20 +101,18 @@ export async function POST(req) {
           is_active: true,
         });
 
-        console.log(`[Midtrans Webhook] User ${subscription.user_id} upgraded to ${plan.name} until ${expiredAt}`);
+        console.log(
+          `[Midtrans Webhook] User ${subscription.user_id} upgraded to ${plan.name} until ${expiredAt.toISOString()}`
+        );
       }
-    } else if (
-      transaction_status === 'cancel' ||
-      transaction_status === 'deny' ||
-      transaction_status === 'expire'
-    ) {
+    } else {
+      // pending / cancel / deny / expire (or anything else): just record the status.
       subscription.payment_status = transaction_status;
     }
 
     await subscription.save();
 
     return NextResponse.json({ message: 'OK' });
-
   } catch (error) {
     console.error('Midtrans Webhook Error:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });

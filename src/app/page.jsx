@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import ChatView from '@/components/ChatView';
 import LandingPage from '@/components/LandingPage';
 import useAuth from '@/hooks/useAuth';
@@ -16,5 +17,11 @@ export default function Home() {
     );
   }
 
-  return userId ? <ChatView userId={userId} /> : <LandingPage />;
+  return userId ? (
+    <Suspense fallback={null}>
+      <ChatView userId={userId} />
+    </Suspense>
+  ) : (
+    <LandingPage />
+  );
 }

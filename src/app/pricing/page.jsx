@@ -87,9 +87,15 @@ export default function PricingPage() {
   }, [showSuccessModal, countdown, router]);
 
   useEffect(() => {
-    // Load Midtrans Snap script
+    // Load Midtrans Snap script. Use production endpoint when the env flag is set,
+    // otherwise default to sandbox so local development keeps working.
+    const isProd = process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === 'true';
+    const snapUrl = isProd
+      ? 'https://app.midtrans.com/snap/snap.js'
+      : 'https://app.sandbox.midtrans.com/snap/snap.js';
+
     const script = document.createElement('script');
-    script.src = "https://app.sandbox.midtrans.com/snap/snap.js";
+    script.src = snapUrl;
     script.setAttribute('data-client-key', process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY);
     document.body.appendChild(script);
 
