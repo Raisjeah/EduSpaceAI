@@ -8,6 +8,9 @@ module.exports = {
   darkMode: "class",
   theme: {
     extend: {
+      screens: {
+        'xs': '375px',
+      },
       animation: {
         'shimmer': 'shimmer 2s linear infinite',
       },

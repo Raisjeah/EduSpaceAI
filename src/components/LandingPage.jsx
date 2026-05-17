@@ -88,7 +88,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-8 leading-[1.1] px-2"
+            className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-8 leading-[1.1] px-2"
           >
             Selesaikan Skripsi & Jurnal <br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 dark:from-indigo-400 dark:via-purple-400 dark:to-indigo-400">
@@ -100,7 +100,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg md:text-2xl text-slate-500 dark:text-gray-400 max-w-3xl mx-auto mb-8 leading-relaxed"
+            className="text-base sm:text-lg md:text-2xl text-slate-500 dark:text-gray-400 max-w-3xl mx-auto mb-8 leading-relaxed"
           >
             Dosen AI pribadi yang memahami konteks risetmu. Dari cari judul, olah data, hingga cek PUEBI — semua dalam satu workspace cerdas.
           </motion.p>
@@ -160,7 +160,7 @@ export default function LandingPage() {
             className="mt-20 pt-10 border-t border-slate-100 dark:border-[#1E1E1E]"
           >
             <p className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-8">Membantu Mahasiswa Dari Berbagai Kampus Top</p>
-            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
+            <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-8 md:gap-16 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
               <div className="flex items-center gap-2 font-bold text-xl text-slate-700 dark:text-gray-300">
                 <GraduationCap className="text-indigo-600" /> UI
               </div>

@@ -327,7 +327,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             </div>
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center px-4">
+          <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6">
             <div className="w-16 h-16 bg-indigo-600/20 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30">
               <span className="text-2xl text-indigo-500">
                 {project ? '📂' : '🎓'}
@@ -348,7 +348,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                    <SuggestionChip theme={agentTheme} icon={<Rocket size={12}/>} label="Tren Teknologi 2025" onClick={() => handleSend("Apa tren teknologi utama yang diprediksi untuk tahun 2025?")} />
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 text-left">
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 px-1">
                       <GraduationCap size={14} className="text-indigo-500" />
@@ -396,7 +396,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <div className="max-w-4xl mx-auto w-full pt-4 md:pt-8 pb-[100px] md:pb-[120px] px-4 space-y-8 flex-1">
+            <div className="max-w-4xl mx-auto w-full pt-4 md:pt-8 pb-[120px] md:pb-[140px] px-4 sm:px-6 space-y-8 flex-1 pb-[env(safe-area-inset-bottom)]">
               {messages.map((msg, idx) => (
                 <AiMessage
                   key={msg._id || idx}
@@ -533,7 +533,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute bottom-full left-0 mb-4 w-56 bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2A2A2A] rounded-2xl shadow-2xl p-2 z-50 backdrop-blur-xl bg-white/90 dark:bg-[#1A1A1A]/90"
+            className="absolute bottom-full left-0 mb-4 w-52 sm:w-56 max-w-[85vw] bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2A2A2A] rounded-2xl shadow-2xl p-2 z-50 backdrop-blur-xl bg-white/90 dark:bg-[#1A1A1A]/90"
           >
             <div className="flex flex-col gap-1">
               <button
@@ -589,7 +589,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               </div>
             )}
             <div className="flex flex-col min-w-0 pr-2">
-              <span className="text-[11px] font-semibold text-slate-700 dark:text-gray-200 truncate max-w-[150px]">{selectedFile.name}</span>
+              <span className="text-[11px] font-semibold text-slate-700 dark:text-gray-200 truncate max-w-[100px] sm:max-w-[150px]">{selectedFile.name}</span>
               <span className="text-[9px] text-slate-400 dark:text-gray-500 uppercase">{(selectedFile.size / 1024).toFixed(0)} KB • {selectedFile.type.split('/')[1] || 'FILE'}</span>
             </div>
             <button
