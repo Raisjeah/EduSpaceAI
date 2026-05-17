@@ -4,24 +4,22 @@ import { fetchPageContent } from "./jina";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Whitelist of model IDs supported by deep-search reasoning loops.
-// Image-only models cannot be used here, so they are not listed.
+// Whitelist of functional SDK model IDs supported by deep-search reasoning loops.
 const VALID_MODELS = new Set([
-  'gemini-2.5-flash',
-  'gemini-2.5-pro',
+  'gemini-1.5-flash',
   'gemini-1.5-pro',
-  'gemini-3.1-pro',
+  'gemini-1.5-flash-8b',
 ]);
 
 /**
  * Coerce the requested model to a valid Gemini text-generation slug.
- * Unknown models fall back to gemini-2.5-flash without silently changing tiers.
+ * Unknown models fall back to gemini-1.5-flash without silently changing tiers.
  */
 function getValidModelName(modelName) {
   if (typeof modelName === 'string' && VALID_MODELS.has(modelName)) {
     return modelName;
   }
-  return 'gemini-2.5-flash';
+  return 'gemini-1.5-flash';
 }
 
 // ✅ NEW: Timeout wrapper for API calls
@@ -38,9 +36,9 @@ export async function deepSearchEngine(userQuery, history = [], fileParts = [], 
   try {
     const selectedModelName = getValidModelName(modelName);
 
-    // Using gemini-2.5-flash for faster intermediate steps
+    // Using gemini-1.5-flash for faster intermediate steps
     const analyzerModel = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash",
       generationConfig: { responseMimeType: "application/json" }
     });
 
