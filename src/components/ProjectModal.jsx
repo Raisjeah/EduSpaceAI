@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { X, Rocket, Search, BookOpen, Edit3 } from 'lucide-react';
 import { createProject } from '@/app/actions/projectActions';
 import { useRouter } from 'next/navigation';
@@ -9,6 +9,7 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
   const [name, setName] = useState('');
   const [agentId, setAgentId] = useState('default');
   const [isLoading, setIsLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   const agents = [
@@ -24,14 +25,17 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
 
     setIsLoading(true);
     const result = await createProject(name, userId, agentId);
-    setIsLoading(false);
 
     if (result.success) {
-      onClose();
-      setName('');
-      setAgentId('default');
-      router.push(`/project/${result.project._id}`);
+      startTransition(() => {
+        onClose();
+        setName('');
+        setAgentId('default');
+        setIsLoading(false);
+        router.push(`/project/${result.project._id}`);
+      });
     } else {
+      setIsLoading(false);
       alert(result.error);
     }
   };

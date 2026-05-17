@@ -28,18 +28,19 @@ export default function MainLayout({ children }) {
     if (!hasMounted || isLoading) return;
 
     const isAuthPage = pathname.startsWith('/auth');
-      const isHomePage = pathname === '/';
-      const isPricingPage = pathname === '/pricing';
-      const isLegalPage = pathname === '/terms' || pathname === '/privacy';
+    const isHomePage = pathname === '/';
+    const isPricingPage = pathname === '/pricing';
+    const isLegalPage = pathname === '/terms' || pathname === '/privacy';
+    const isInternalPage = !isAuthPage && !isHomePage && !isPricingPage && !isLegalPage;
 
-      // Redirect ke login jika mencoba akses halaman internal (bukan home/auth/pricing/legal) tanpa login
-      if (!userId && !isAuthPage && !isHomePage && !isPricingPage && !isLegalPage) {
-        router.push(`/auth/login?callbackUrl=${encodeURIComponent(pathname)}`);
-      }
-      // Redirect ke home jika sudah login tapi mencoba akses halaman auth
-      else if (userId && isAuthPage) {
-        router.push('/');
-      }
+    // Redirect ke login hanya jika benar-benar tidak ada userId (bukan transisi loading)
+    if (!userId && isInternalPage) {
+      router.replace(`/auth/login?callbackUrl=${encodeURIComponent(pathname)}`);
+    }
+    // Redirect ke home jika sudah login tapi mencoba akses halaman auth
+    else if (userId && isAuthPage) {
+      router.replace('/');
+    }
   }, [userId, isLoading, pathname, router, hasMounted]);
 
   // Mencegah Hydration Error
@@ -50,14 +51,13 @@ export default function MainLayout({ children }) {
   const isHomePage = pathname === '/';
   const isChatPage = pathname.startsWith('/chat');
   const isProjectPage = pathname.startsWith('/project');
-  const isPricingPage = pathname === '/pricing';
-  const isLegalPage = pathname === '/terms' || pathname === '/privacy';
 
   // Key untuk AnimatePresence agar transisi dari "/", "/chat/:id", atau "/project/:id" tidak re-render layout
   const layoutKey = (isHomePage || isChatPage || isProjectPage) ? 'chat-view' : pathname;
 
-  // Loading state - harus menutupi SEMUA hal tanpa terkecuali jika isLoading true
-  if (isLoading) {
+  // Loading state - Hanya tampilkan loading screen jika belum ada userId dan sedang loading (initial auth check)
+  // Jika sudah ada userId, biarkan layout tetap render agar tidak ada "flicker" saat re-fetching user data
+  if (isLoading && !userId) {
     return <LoadingScreen />;
   }
 

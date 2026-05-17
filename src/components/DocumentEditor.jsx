@@ -50,23 +50,49 @@ export default function DocumentEditor({ type, userId }) {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isPending]);
 
+  const [extractProgress, setExtractProgress] = useState(0);
+
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setFileName(file.name);
     setFileType(file.type || 'text/plain');
     setIsLoading(true);
+    setExtractProgress(10);
 
     const formData = new FormData();
     formData.append('file', file);
-    const result = await extractFileContent(formData);
 
-    if (result.success) {
-      setContent(result.content);
-    } else {
-      setContent(`Gagal ekstrak file: ${result.error}`);
+    // Simulate progress for better UX feedback
+    const progressInterval = setInterval(() => {
+      setExtractProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90;
+        }
+        return prev + 10;
+      });
+    }, 500);
+
+    try {
+      const result = await extractFileContent(formData);
+      clearInterval(progressInterval);
+      setExtractProgress(100);
+
+      if (result.success) {
+        setContent(result.content);
+      } else {
+        setContent(`Gagal ekstrak file: ${result.error}`);
+      }
+    } catch (err) {
+      clearInterval(progressInterval);
+      setContent(`Terjadi kesalahan saat mengunggah file.`);
+    } finally {
+      setTimeout(() => {
+        setIsLoading(false);
+        setExtractProgress(0);
+      }, 500);
     }
-    setIsLoading(false);
   };
 
   const handleAnalyze = async () => {
@@ -204,17 +230,20 @@ export default function DocumentEditor({ type, userId }) {
         <div className="flex-1 relative flex flex-col min-h-0">
           {isLoading && (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 dark:bg-[#0F0F0F]/80 backdrop-blur-sm rounded-[1.5rem] border border-indigo-500/20">
-              <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-2xl shadow-xl border border-slate-200 dark:border-[#333] flex flex-col items-center">
+              <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-2xl shadow-xl border border-slate-200 dark:border-[#333] flex flex-col items-center w-[280px]">
                 <ThinkingIndicator />
-                <p className="text-xs font-bold text-slate-600 dark:text-gray-300 mt-2">Mengekstrak & Menganalisis File...</p>
-                <div className="w-48 h-1 bg-slate-100 dark:bg-[#222] rounded-full mt-4 overflow-hidden">
+                <p className="text-xs font-bold text-slate-600 dark:text-gray-300 mt-2">
+                  {extractProgress < 100 ? 'Mengekstrak Konten File...' : 'Berhasil Diekstrak!'}
+                </p>
+                <div className="w-full h-1.5 bg-slate-100 dark:bg-[#222] rounded-full mt-4 overflow-hidden relative">
                   <motion.div
-                    initial={{ x: '-100%' }}
-                    animate={{ x: '100%' }}
-                    transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-                    className="w-full h-full bg-indigo-600"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${extractProgress}%` }}
+                    transition={{ duration: 0.3 }}
+                    className="h-full bg-indigo-600"
                   />
                 </div>
+                <p className="text-[10px] text-slate-400 mt-2 font-mono">{extractProgress}% Selesai</p>
               </div>
             </div>
           )}

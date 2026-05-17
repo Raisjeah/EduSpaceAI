@@ -31,24 +31,30 @@ export default function Sidebar({
 
   // Projects jarang berubah, jadi cukup fetch saat user berubah
   useEffect(() => {
+    let isMounted = true;
     const fetchProjects = async () => {
       if (!userId) return;
       try {
         const userProjects = await getProjects(userId);
-        setProjects(userProjects);
+        if (isMounted) {
+          setProjects(userProjects);
+        }
       } catch (error) {
         console.error("Gagal memuat project:", error);
       }
     };
 
     fetchProjects();
+    return () => { isMounted = false; };
   }, [userId]);
 
   // History chat di-refresh berdasarkan konteks project aktif
   useEffect(() => {
+    let isMounted = true;
     const fetchHistory = async () => {
       if (!userId) return;
 
+      // Cek apakah data sudah pernah di-fetch untuk konteks yang sama
       if (
         lastFetchRef.current.userId === userId &&
         lastFetchRef.current.projectId === activeProjectId &&
@@ -59,15 +65,17 @@ export default function Sidebar({
 
       try {
         const history = await getChatHistory(userId, activeProjectId);
-        setChatGroups(history);
-
-        lastFetchRef.current = { userId, projectId: activeProjectId, pathname };
+        if (isMounted) {
+          setChatGroups(history);
+          lastFetchRef.current = { userId, projectId: activeProjectId, pathname };
+        }
       } catch (error) {
         console.error("Gagal memuat history chat:", error);
       }
     };
 
     fetchHistory();
+    return () => { isMounted = false; };
   }, [userId, activeProjectId, pathname]);
 
   const groupedChatHistory = useMemo(() => {
