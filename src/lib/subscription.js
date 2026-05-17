@@ -123,12 +123,26 @@ export async function checkUsageLimit(user) {
     // Duplicate key on (userId, day) unique index means another request already
     // upserted a doc that is at-or-over the limit — treat as not allowed.
     if (err?.code === 11000) {
+      // Race: another request upserted concurrently. Retry without upsert.
+      const retried = await UsageCounter.findOneAndUpdate(
+        { userId, day, count: { $lt: planDoc.message_limit } },
+        { $inc: { count: 1 }, $set: { updatedAt: new Date() } },
+        { new: true }
+      );
+      if (retried) {
+        return {
+          allowed: true,
+          limit: planDoc.message_limit,
+          current: retried.count,
+        };
+      }
       const current = await getDailyUsage(userId);
       return {
         allowed: false,
         limit: planDoc.message_limit,
         current,
       };
+    }
     }
     throw err;
   }
