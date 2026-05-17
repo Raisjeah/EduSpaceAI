@@ -26,6 +26,16 @@ function getValidModelName(modelName) {
   return modelName;
 }
 
+// ✅ NEW: Timeout wrapper for API calls
+function withTimeout(promise, timeoutMs, label = 'Operation') {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timeout after ${timeoutMs}ms`)), timeoutMs)
+    )
+  ]);
+}
+
 export async function deepSearchEngine(userQuery, history = [], fileParts = [], modelName = "gemini-2.5-flash") {
   try {
     const selectedModelName = getValidModelName(modelName);
@@ -64,7 +74,11 @@ export async function deepSearchEngine(userQuery, history = [], fileParts = [], 
       Contoh: ["query 1", "query 2", "query 3"]
     `;
 
-    const analyzerResult = await analyzerModel.generateContent(analyzerPrompt);
+    const analyzerResult = await withTimeout(
+      analyzerModel.generateContent(analyzerPrompt),
+      10000,
+      'Query Analyzer'
+    );
     const analyzerText = analyzerResult.response.text();
     let subQueries = [];
 
@@ -87,8 +101,10 @@ export async function deepSearchEngine(userQuery, history = [], fileParts = [], 
       subQueries = [userQuery];
     }
 
-    // STEP 2: PARALLEL TAVILY SEARCH
-    const searchResultsSettled = await Promise.allSettled(subQueries.map(q => search(q)));
+    // ✅ STEP 2: PARALLEL TAVILY SEARCH (already optimized with Promise.allSettled)
+    const searchResultsSettled = await Promise.allSettled(
+      subQueries.map(q => withTimeout(search(q), 8000, `Search: ${q}`))
+    );
     const searchResultsArrays = searchResultsSettled
       .filter(r => r.status === 'fulfilled')
       .map(r => r.value);
@@ -127,8 +143,10 @@ export async function deepSearchEngine(userQuery, history = [], fileParts = [], 
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
 
-    // STEP 3: JINA CONTENT EXTRACTION
-    const extractionResultsSettled = await Promise.allSettled(rerankedResults.map(res => fetchPageContent(res.url)));
+    // ✅ STEP 3: PARALLEL JINA CONTENT EXTRACTION (already optimized)
+    const extractionResultsSettled = await Promise.allSettled(
+      rerankedResults.map(res => withTimeout(fetchPageContent(res.url), 7000, `Fetch: ${res.url}`))
+    );
     const extractedContexts = extractionResultsSettled
       .map((res, idx) => {
         if (res.status === 'fulfilled') return res.value;
@@ -185,7 +203,11 @@ ${sanitizeContent(ctx.extractedContent)}
       Berikan analisis yang bersih, faktual, dan mendalam dalam Bahasa Indonesia.
     `;
 
-    const analystResult = await analystModel.generateContent([analystPrompt, ...fileParts]);
+    const analystResult = await withTimeout(
+      analystModel.generateContent([analystPrompt, ...fileParts]),
+      15000,
+      'Analyst Agent'
+    );
     const factualContext = analystResult.response.text();
 
     // Verified Source List for Citation Consistency
@@ -235,7 +257,11 @@ ${sanitizeContent(ctx.extractedContent)}
     `;
 
     const writerModel = genAI.getGenerativeModel({ model: selectedModelName });
-    const finalResult = await writerModel.generateContent([writerPrompt, ...fileParts]);
+    const finalResult = await withTimeout(
+      writerModel.generateContent([writerPrompt, ...fileParts]),
+      15000,
+      'Writer Agent'
+    );
     return finalResult.response.text();
 
   } catch (error) {
