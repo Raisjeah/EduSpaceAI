@@ -4,14 +4,26 @@ import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import { ThumbsUp, ThumbsDown, Copy, Check } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Copy, Check, Volume2, Pause, Loader2 } from 'lucide-react';
 import Mermaid from './Mermaid';
+import { useTTS } from './chat/AudioPlayer';
+import Toast from './Toast';
 import 'katex/dist/katex.min.css';
 
 export default function AiMessage({ content, isUser = false, isTyping = false, onApply }) {
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
+  const [showErrorToast, setShowErrorToast] = useState(false);
+  const { isPlaying, isLoading, togglePlay, error } = useTTS(content);
+
+  const handleTTS = async () => {
+    try {
+      await togglePlay();
+    } catch (err) {
+      setShowErrorToast(true);
+    }
+  };
 
   const handleCopy = async () => {
     if (imageData) return; // Can't copy image as text
@@ -132,24 +144,52 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
             <ThumbsDown size={16} />
           </button>
           {!imageData && (
-            <button
-              onClick={handleCopy}
-              className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-[#1E1E1E] transition-colors flex items-center gap-1.5"
-              title="Salin Pesan"
-            >
-              {copied ? (
-                <>
-                  <Check size={16} className="text-green-500" />
-                  <span className="text-[10px] font-medium text-green-500">Tersalin!</span>
-                </>
-              ) : (
-                <Copy size={16} />
-              )}
-            </button>
+            <>
+              <button
+                onClick={handleCopy}
+                className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-[#1E1E1E] transition-colors flex items-center gap-1.5"
+                title="Salin Pesan"
+              >
+                {copied ? (
+                  <>
+                    <Check size={16} className="text-green-500" />
+                    <span className="text-[10px] font-medium text-green-500">Tersalin!</span>
+                  </>
+                ) : (
+                  <Copy size={16} />
+                )}
+              </button>
+
+              <button
+                onClick={handleTTS}
+                disabled={isLoading}
+                className={`p-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
+                  isPlaying
+                    ? 'text-indigo-500 bg-indigo-500/10'
+                    : 'text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-[#1E1E1E]'
+                } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                title={isPlaying ? "Jeda Suara" : "Dengarkan Pesan"}
+              >
+                {isLoading ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : isPlaying ? (
+                  <Pause size={16} />
+                ) : (
+                  <Volume2 size={16} />
+                )}
+              </button>
+            </>
           )}
         </div>
         )}
       </div>
+      {showErrorToast && (
+        <Toast
+          message="Gagal menghasilkan suara"
+          type="error"
+          onClose={() => setShowErrorToast(false)}
+        />
+      )}
     </div>
   );
 }

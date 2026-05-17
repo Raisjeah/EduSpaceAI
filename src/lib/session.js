@@ -7,7 +7,7 @@ import { cookies } from 'next/headers';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+if (!JWT_SECRET && process.env.NODE_ENV === 'production' && !process.env.NEXT_PHASE) {
   throw new Error('JWT_SECRET environment variable is missing');
 }
 
