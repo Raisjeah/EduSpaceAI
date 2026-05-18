@@ -28,7 +28,7 @@ export async function POST(req) {
 
     // Gunakan model gemini-2.5-flash-tts sesuai permintaan
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-tts",
+      model: "gemini-2.5-flash-preview",
       contents: [{ role: "user", parts: [{ text }] }],
       config: {
         responseModalities: ["AUDIO"],
