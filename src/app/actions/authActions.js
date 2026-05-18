@@ -8,6 +8,7 @@ import { cookies } from 'next/headers';
 import { OAuth2Client } from 'google-auth-library';
 import crypto from 'crypto';
 import { getSessionUser } from '@/lib/session';
+import LoginAttempt from '@/models/LoginAttempt';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -45,31 +46,53 @@ function validatePassword(password) {
   return null;
 }
 
-// Simple in-memory login rate limit (per-process).
-const LOGIN_ATTEMPTS = new Map();
+// Database-backed login rate limit.
 const LOGIN_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 const LOGIN_MAX_ATTEMPTS = 5;
 
-function checkLoginRateLimit(email) {
+async function checkLoginRateLimit(email) {
   const key = email.toLowerCase();
-  const now = Date.now();
-  const entry = LOGIN_ATTEMPTS.get(key);
-  if (!entry || now - entry.firstAttempt > LOGIN_WINDOW_MS) {
-    LOGIN_ATTEMPTS.set(key, { count: 1, firstAttempt: now });
+  const now = new Date();
+
+  await dbConnect();
+
+  let attempt = await LoginAttempt.findOne({ email: key });
+
+  if (!attempt || (now.getTime() - attempt.firstAttempt.getTime() > LOGIN_WINDOW_MS)) {
+    // Reset window
+    if (attempt) {
+      attempt.count = 1;
+      attempt.firstAttempt = now;
+      attempt.lastAttempt = now;
+      await attempt.save();
+    } else {
+      await LoginAttempt.create({
+        email: key,
+        count: 1,
+        firstAttempt: now,
+        lastAttempt: now
+      });
+    }
     return { allowed: true };
   }
-  entry.count += 1;
-  if (entry.count > LOGIN_MAX_ATTEMPTS) {
+
+  attempt.count += 1;
+  attempt.lastAttempt = now;
+  await attempt.save();
+
+  if (attempt.count > LOGIN_MAX_ATTEMPTS) {
     return {
       allowed: false,
-      retryAfterMs: LOGIN_WINDOW_MS - (now - entry.firstAttempt),
+      retryAfterMs: LOGIN_WINDOW_MS - (now.getTime() - attempt.firstAttempt.getTime()),
     };
   }
+
   return { allowed: true };
 }
 
-function clearLoginRateLimit(email) {
-  LOGIN_ATTEMPTS.delete(email.toLowerCase());
+async function clearLoginRateLimit(email) {
+  await dbConnect();
+  await LoginAttempt.deleteOne({ email: email.toLowerCase() });
 }
 
 export async function register(formData) {
@@ -107,7 +130,11 @@ export async function register(formData) {
 
     await user.save();
 
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
+      expiresIn: '7d',
+      issuer: 'eduspace-ai',
+      audience: 'eduspace-app'
+    });
 
     const cookieStore = await cookies();
     cookieStore.set('eduspace_session', token, COOKIE_OPTIONS);
@@ -130,7 +157,7 @@ export async function login(formData) {
     return { success: false, error: 'Email dan password harus diisi' };
   }
 
-  const rate = checkLoginRateLimit(email);
+  const rate = await checkLoginRateLimit(email);
   if (!rate.allowed) {
     const minutes = Math.ceil((rate.retryAfterMs || LOGIN_WINDOW_MS) / 60000);
     return {
@@ -152,9 +179,13 @@ export async function login(formData) {
       return { success: false, error: 'Email atau password salah' };
     }
 
-    clearLoginRateLimit(email);
+    await clearLoginRateLimit(email);
 
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
+      expiresIn: '7d',
+      issuer: 'eduspace-ai',
+      audience: 'eduspace-app'
+    });
 
     const cookieStore = await cookies();
     cookieStore.set('eduspace_session', token, COOKIE_OPTIONS);
@@ -213,7 +244,11 @@ export async function loginWithGoogle(idToken) {
       await user.save();
     }
 
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
+      expiresIn: '7d',
+      issuer: 'eduspace-ai',
+      audience: 'eduspace-app'
+    });
 
     const cookieStore = await cookies();
     cookieStore.set('eduspace_session', token, COOKIE_OPTIONS);
@@ -232,7 +267,10 @@ export async function getUser() {
 
     if (!token) return null;
 
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET, {
+      issuer: 'eduspace-ai',
+      audience: 'eduspace-app'
+    });
     await dbConnect();
     const user = await User.findById(decoded.userId).select('-password');
 

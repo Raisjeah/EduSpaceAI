@@ -156,8 +156,9 @@ export async function deepSearchEngine(userQuery, history = [], fileParts = [], 
     const sanitizeContent = (text) => {
       if (!text) return "";
       return text
-        .replace(/(ignore|disregard|skip)\b.*?\binstructions\b/gi, "[INSTRUCTION_FILTERED]")
-        .replace(/\b(system prompt|assistant:|developer:|user:|act as|you are a)\b/gi, "[KEYWORD_FILTERED]")
+        .replace(/(?:ignore|disregard|skip|forget|delete|reset)\b.*?\b(?:instructions|prompt|rules|context|previous)/gi, "[INSTRUCTION_FILTERED]")
+        .replace(/\b(system prompt|assistant:|developer:|user:|act as|you are a|instruction:|output:|input:|respond as)\b/gi, "[KEYWORD_FILTERED]")
+        .replace(/[^\x20-\x7E\s\r\n]/g, "") // Remove non-printable/hidden characters often used in jailbreaks
         .replace(/https?:\/\/[^\s]+/g, "[URL]") // Optional: normalize internal URLs
         .substring(0, 10000); // Intelligent truncation per source
     };

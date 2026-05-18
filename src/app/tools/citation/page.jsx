@@ -20,7 +20,6 @@ export default function CitationPage() {
 
     startTransition(async () => {
       const formData = new FormData();
-      formData.append('userId', userId);
       formData.append('prompt', `Buatkan sitasi dalam format ${citationStyle} untuk sumber berikut:\n\n${input}`);
       formData.append('skipSave', 'true'); // Don't clutter chat history with tool usage
       // We don't have a specific agent picker in sendMessage yet,

@@ -3,9 +3,14 @@
 import dbConnect from '@/lib/mongodb';
 import Project from '@/models/Project';
 import { revalidatePath } from 'next/cache';
+import { getSessionUser } from '@/lib/session';
 
-export async function createProject(name, userId, agentId) {
+export async function createProject(name, agentId) {
   try {
+    const user = await getSessionUser();
+    if (!user) return { success: false, error: "Sesi berakhir. Silakan login kembali." };
+    const userId = user._id.toString();
+
     await dbConnect();
     const newProject = new Project({
       name,
@@ -21,9 +26,12 @@ export async function createProject(name, userId, agentId) {
   }
 }
 
-export async function getProjects(userId) {
-  if (!userId) return [];
+export async function getProjects() {
   try {
+    const user = await getSessionUser();
+    if (!user) return [];
+    const userId = user._id.toString();
+
     await dbConnect();
     const projects = await Project.find({ userId }).sort({ createdAt: -1 }).lean();
     return JSON.parse(JSON.stringify(projects));
@@ -35,8 +43,12 @@ export async function getProjects(userId) {
 
 export async function getProjectDetails(projectId) {
   try {
+    const user = await getSessionUser();
+    if (!user) return null;
+    const userId = user._id.toString();
+
     await dbConnect();
-    const project = await Project.findById(projectId).lean();
+    const project = await Project.findOne({ _id: projectId, userId }).lean();
     return JSON.parse(JSON.stringify(project));
   } catch (error) {
     console.error("Gagal mengambil detail proyek:", error);

@@ -24,7 +24,7 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
     if (!name.trim()) return;
 
     setIsLoading(true);
-    const result = await createProject(name, userId, agentId);
+    const result = await createProject(name, agentId);
 
     if (result.success) {
       startTransition(() => {

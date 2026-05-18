@@ -35,7 +35,7 @@ export default function Sidebar({
     const fetchProjects = async () => {
       if (!userId) return;
       try {
-        const userProjects = await getProjects(userId);
+        const userProjects = await getProjects();
         if (isMounted) {
           setProjects(userProjects);
         }
@@ -64,7 +64,7 @@ export default function Sidebar({
       }
 
       try {
-        const history = await getChatHistory(userId, activeProjectId);
+        const history = await getChatHistory(activeProjectId);
         if (isMounted) {
           setChatGroups(history);
           lastFetchRef.current = { userId, projectId: activeProjectId, pathname };

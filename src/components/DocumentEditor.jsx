@@ -239,7 +239,6 @@ export default function DocumentEditor({ type, userId }) {
 
     startTransition(async () => {
       const formData = new FormData();
-      formData.append('userId', userId);
       formData.append('prompt', initialPrompt);
       formData.append('chatId', chatId);
 
@@ -300,7 +299,6 @@ export default function DocumentEditor({ type, userId }) {
 
     startTransition(async () => {
       const formData = new FormData();
-      formData.append('userId', userId);
       formData.append('chatId', chatId);
       // Sertakan konten editor sebagai konteks digabung dengan prompt
       const currentContent = editor ? editor.getHTML() : content;

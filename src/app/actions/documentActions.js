@@ -3,9 +3,16 @@
 import dbConnect from '@/lib/mongodb';
 import Document from '@/models/Document';
 import { revalidatePath } from 'next/cache';
+import { getSessionUser } from '@/lib/session';
 
-export async function saveDocument(userId, fileName, fileType, content) {
+export async function saveDocument(fileName, fileType, content) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return { success: false, error: "Sesi berakhir. Silakan login kembali." };
+    }
+    const userId = user._id.toString();
+
     await dbConnect();
     
     // Validasi: Jangan simpan jika teks kosong atau simbol aneh
@@ -34,8 +41,11 @@ export async function saveDocument(userId, fileName, fileType, content) {
 
 export async function getDocumentById(docId) {
   try {
+    const user = await getSessionUser();
+    if (!user) return null;
+
     await dbConnect();
-    const doc = await Document.findById(docId).lean();
+    const doc = await Document.findOne({ _id: docId, userId: user._id.toString() }).lean();
     
     if (doc) {
       return { 
@@ -52,10 +62,13 @@ export async function getDocumentById(docId) {
 }
 
 // FITUR TAMBAHAN: Untuk menampilkan daftar file di halaman "Workspace & Tools"
-export async function getDocumentsByUser(userId) {
+export async function getDocumentsByUser() {
   try {
+    const user = await getSessionUser();
+    if (!user) return [];
+
     await dbConnect();
-    const docs = await Document.find({ userId })
+    const docs = await Document.find({ userId: user._id.toString() })
       .select('fileName fileType createdAt') // Jangan ambil 'content' agar ringan saat loading daftar
       .sort({ createdAt: -1 })
       .lean();
@@ -74,8 +87,18 @@ export async function getDocumentsByUser(userId) {
 // FITUR TAMBAHAN: Untuk menghapus file
 export async function deleteDocument(docId) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return { success: false, error: "Sesi berakhir. Silakan login kembali." };
+    }
+
     await dbConnect();
-    await Document.findByIdAndDelete(docId);
+    const deleted = await Document.findOneAndDelete({ _id: docId, userId: user._id.toString() });
+
+    if (!deleted) {
+      return { success: false, error: "Dokumen tidak ditemukan atau Anda tidak memiliki akses." };
+    }
+
     revalidatePath('/dashboard');
     return { success: true };
   } catch (error) {

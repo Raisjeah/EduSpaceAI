@@ -12,5 +12,7 @@ const ChatSchema = new mongoose.Schema({
 ChatSchema.index({ userId: 1, chatId: 1, createdAt: 1 });
 ChatSchema.index({ userId: 1, role: 1, createdAt: -1 });
 ChatSchema.index({ userId: 1, projectId: 1, createdAt: -1 });
+// Added index for Sidebar history grouping (aggregated by chatId)
+ChatSchema.index({ userId: 1, createdAt: -1, chatId: 1 });
 
 export default mongoose.models.Chat || mongoose.model('Chat', ChatSchema);

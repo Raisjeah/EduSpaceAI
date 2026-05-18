@@ -16,12 +16,20 @@ const MAX_PDF_PAGES = 50;                    // Max pages to extract
 const MAX_EXCEL_SHEETS = 5;                  // Max sheets
 const MAX_EXCEL_ROWS_PER_SHEET = 500;        // Max rows per sheet
 
+import { Readable } from 'stream';
+import { finished } from 'stream/promises';
+
 async function saveTempFile(file) {
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
   const tempDir = os.tmpdir();
-  const tempPath = path.join(tempDir, `upload_${Date.now()}_${file.name.replace(/\s+/g, '_')}`);
-  await fs.promises.writeFile(tempPath, buffer);
+  // Sanitasi file name untuk mencegah path traversal
+  const safeName = path.basename(file.name).replace(/\s+/g, '_');
+  const tempPath = path.join(tempDir, `upload_${Date.now()}_${safeName}`);
+
+  const writableStream = fs.createWriteStream(tempPath);
+  const readableStream = Readable.fromWeb(file.stream());
+
+  await finished(readableStream.pipe(writableStream));
+
   return tempPath;
 }
 
