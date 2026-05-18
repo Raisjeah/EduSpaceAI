@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, FolderOpen, BrainCircuit, Send, MessageSquare, Sparkles, ChevronRight, FileText, Eraser, Square } from 'lucide-react';
+import { X, FolderOpen, BrainCircuit, Send, MessageSquare, Sparkles, ChevronRight, FileText, Eraser, Square, Bold, Italic, List, Heading2, Strikethrough, Download, FileJson, File as FileIcon } from 'lucide-react';
 import { saveDocument } from '@/app/actions/documentActions';
 import { saveChat, sendMessage } from '@/app/actions/chatActions';
 import { extractFileContent } from '@/app/actions/fileActions'; // server action
@@ -12,6 +12,65 @@ import AiMessage from './AiMessage';
 import ThinkingIndicator from './ThinkingIndicator';
 import { useChat } from '@/context/ChatContext';
 import TextareaAutosize from 'react-textarea-autosize';
+
+// TipTap Imports
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+
+// Export Imports
+import html2pdf from 'html2pdf.js';
+import { asBlob } from 'html-docx-js-typescript';
+import { saveAs } from 'file-saver';
+
+const MenuBar = ({ editor }) => {
+  if (!editor) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1 p-2 bg-slate-50 dark:bg-[#1A1A1A] border-b border-slate-200 dark:border-[#333] rounded-t-[1.5rem]">
+      <button
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        disabled={!editor.can().chain().focus().toggleBold().run()}
+        className={`p-2 rounded hover:bg-slate-200 dark:hover:bg-[#2A2A2A] transition-colors ${editor.isActive('bold') ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'text-slate-600 dark:text-gray-400'}`}
+        title="Bold (Ctrl+B)"
+      >
+        <Bold size={16} />
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        disabled={!editor.can().chain().focus().toggleItalic().run()}
+        className={`p-2 rounded hover:bg-slate-200 dark:hover:bg-[#2A2A2A] transition-colors ${editor.isActive('italic') ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'text-slate-600 dark:text-gray-400'}`}
+        title="Italic (Ctrl+I)"
+      >
+        <Italic size={16} />
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        disabled={!editor.can().chain().focus().toggleStrike().run()}
+        className={`p-2 rounded hover:bg-slate-200 dark:hover:bg-[#2A2A2A] transition-colors ${editor.isActive('strike') ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'text-slate-600 dark:text-gray-400'}`}
+        title="Strikeout"
+      >
+        <Strikethrough size={16} />
+      </button>
+      <div className="w-[1px] bg-slate-200 dark:bg-[#333] mx-1 my-2"></div>
+      <button
+        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+        className={`p-2 rounded hover:bg-slate-200 dark:hover:bg-[#2A2A2A] transition-colors ${editor.isActive('heading', { level: 2 }) ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'text-slate-600 dark:text-gray-400'}`}
+        title="Heading 2"
+      >
+        <Heading2 size={16} />
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        className={`p-2 rounded hover:bg-slate-200 dark:hover:bg-[#2A2A2A] transition-colors ${editor.isActive('bulletList') ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'text-slate-600 dark:text-gray-400'}`}
+        title="Bullet List"
+      >
+        <List size={16} />
+      </button>
+    </div>
+  );
+};
 
 export default function DocumentEditor({ type, userId }) {
   const {
@@ -23,6 +82,19 @@ export default function DocumentEditor({ type, userId }) {
   } = useChat();
 
   const [content, setContent] = useState('');
+  const editor = useEditor({
+    extensions: [StarterKit],
+    content: '',
+    onUpdate: ({ editor }) => {
+      setContent(editor.getHTML());
+    },
+    editorProps: {
+      attributes: {
+        class: 'prose dark:prose-invert prose-sm sm:prose-base max-w-none focus:outline-none min-h-[400px] p-4 md:p-8 text-slate-700 dark:text-gray-300 leading-relaxed'
+      }
+    }
+  });
+
   const [fileName, setFileName] = useState('Belum ada file diunggah');
   const [fileType, setFileType] = useState('text/plain');
   const [isLoading, setIsLoading] = useState(false);
@@ -81,12 +153,23 @@ export default function DocumentEditor({ type, userId }) {
 
       if (result.success) {
         setContent(result.content);
+        if (editor) {
+          editor.commands.setContent(result.content);
+        }
       } else {
-        setContent(`Gagal ekstrak file: ${result.error}`);
+        const errorMsg = `Gagal ekstrak file: ${result.error}`;
+        setContent(errorMsg);
+        if (editor) {
+          editor.commands.setContent(errorMsg);
+        }
       }
     } catch (err) {
       clearInterval(progressInterval);
-      setContent(`Terjadi kesalahan saat mengunggah file.`);
+      const errorMsg = `Terjadi kesalahan saat mengunggah file.`;
+      setContent(errorMsg);
+      if (editor) {
+        editor.commands.setContent(errorMsg);
+      }
     } finally {
       setTimeout(() => {
         setIsLoading(false);
@@ -95,14 +178,55 @@ export default function DocumentEditor({ type, userId }) {
     }
   };
 
+  const handleDownloadPDF = () => {
+    if (!editor) return;
+    const element = document.querySelector('.tiptap');
+    if (!element) return;
+
+    const opt = {
+      margin: 10,
+      filename: `${fileName.split('.')[0] || 'dokumen'}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().from(element).set(opt).save();
+  };
+
+  const handleDownloadDocx = async () => {
+    if (!editor) return;
+    const htmlContent = editor.getHTML();
+    // Add basic styling for docx
+    const fullHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+        </head>
+        <body>
+          ${htmlContent}
+        </body>
+      </html>
+    `;
+
+    try {
+      const blob = await asBlob(fullHtml);
+      saveAs(blob, `${fileName.split('.')[0] || 'dokumen'}.docx`);
+    } catch (error) {
+      console.error("Error generating DOCX:", error);
+    }
+  };
+
   const handleAnalyze = async () => {
-    if (!content || isPending) return;
+    const currentContent = editor ? editor.getHTML() : content;
+    if (!currentContent || isPending) return;
 
     setIsChatOpen(true);
     const chatId = activeChatId || `chat_${Date.now()}`;
     if (!activeChatId) setActiveChatId(chatId);
 
-    const initialPrompt = `Tolong analisis dan berikan saran perbaikan untuk isi dokumen ini (${fileName}):\n\n${content}`;
+    const initialPrompt = `Tolong analisis dan berikan saran perbaikan untuk isi dokumen ini (${fileName}):\n\n${currentContent}`;
 
     // Optimistic UI for Chat
     const userMessage = {
@@ -128,8 +252,11 @@ export default function DocumentEditor({ type, userId }) {
     });
   };
 
-  const handleTextSelection = (e) => {
-    const text = e.target.value.substring(e.target.selectionStart, e.target.selectionEnd);
+  const handleTextSelection = () => {
+    if (!editor) return;
+    const { from, to } = editor.state.selection;
+    const text = editor.state.doc.textBetween(from, to, ' ');
+
     if (text.trim()) {
       setSelection({
         text,
@@ -176,7 +303,8 @@ export default function DocumentEditor({ type, userId }) {
       formData.append('userId', userId);
       formData.append('chatId', chatId);
       // Sertakan konten editor sebagai konteks digabung dengan prompt
-      formData.append('prompt', `[Konteks Editor]:\n${content}\n\nPertanyaan: ${textToSend}`);
+      const currentContent = editor ? editor.getHTML() : content;
+      formData.append('prompt', `[Konteks Editor]:\n${currentContent}\n\nPertanyaan: ${textToSend}`);
 
       const result = await sendMessage(formData);
       if (result.success) {
@@ -218,16 +346,39 @@ export default function DocumentEditor({ type, userId }) {
             </label>
             <span className="text-[11px] text-slate-500 dark:text-gray-500 px-1 truncate font-medium">{fileName}</span>
           </div>
-          <button
-            onClick={handleAnalyze}
-            disabled={!content || isPending}
-            className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors text-[11px] font-bold disabled:opacity-50 shadow-lg shadow-indigo-900/20"
-          >
-            <Sparkles size={14} /> <span>{isChatOpen ? 'Analisis Ulang' : 'Analisis dengan AI'}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="relative group">
+              <button
+                className="flex items-center justify-center gap-2 bg-slate-200 dark:bg-[#242424] hover:bg-slate-300 dark:hover:bg-[#2A2A2A] text-slate-700 dark:text-gray-300 px-3 py-2 rounded-lg transition-colors text-[11px] font-bold"
+              >
+                <Download size={14} /> Unduh
+              </button>
+              <div className="absolute right-0 top-full mt-1 w-32 bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-lg shadow-xl py-1 hidden group-hover:block z-50">
+                <button
+                  onClick={handleDownloadPDF}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-[11px] text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-[#222]"
+                >
+                  <FileIcon size={12} className="text-red-500" /> PDF (.pdf)
+                </button>
+                <button
+                  onClick={handleDownloadDocx}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-[11px] text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-[#222]"
+                >
+                  <FileIcon size={12} className="text-blue-500" /> Word (.docx)
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={handleAnalyze}
+              disabled={!content || isPending}
+              className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors text-[11px] font-bold disabled:opacity-50 shadow-lg shadow-indigo-900/20"
+            >
+              <Sparkles size={14} /> <span>{isChatOpen ? 'Analisis Ulang' : 'Analisis dengan AI'}</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex-1 relative flex flex-col min-h-0">
+        <div className="flex-1 relative flex flex-col min-h-0 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-[1.5rem] shadow-inner transition-colors">
           {isLoading && (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 dark:bg-[#0F0F0F]/80 backdrop-blur-sm rounded-[1.5rem] border border-indigo-500/20">
               <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-2xl shadow-xl border border-slate-200 dark:border-[#333] flex flex-col items-center w-[280px]">
@@ -247,15 +398,22 @@ export default function DocumentEditor({ type, userId }) {
               </div>
             </div>
           )}
-          <textarea
-            ref={textareaRef}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
+          <MenuBar editor={editor} />
+          <div
+            className="flex-1 overflow-y-auto custom-scrollbar"
             onMouseUp={handleTextSelection}
             onKeyUp={handleTextSelection}
-            placeholder="Isi dokumen akan muncul di sini. Kamu bisa mengetik dan mengeditnya secara manual sebelum dianalisis oleh Profesor AI..."
-            className="flex-1 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-[1.5rem] p-4 md:p-8 text-sm md:text-base text-slate-700 dark:text-gray-300 font-mono leading-relaxed outline-none focus:border-indigo-500/40 resize-none custom-scrollbar shadow-inner transition-colors"
-          />
+          >
+            <EditorContent editor={editor} />
+            {!content && !isLoading && (
+              <div className="absolute inset-x-0 top-32 flex flex-col items-center justify-center pointer-events-none opacity-40">
+                <FileText size={48} className="text-slate-400 mb-4" />
+                <p className="text-sm font-medium text-slate-500 dark:text-gray-400">
+                  Isi dokumen akan muncul di sini...
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Floating Toolbar */}
           {selection.show && (
@@ -325,7 +483,10 @@ export default function DocumentEditor({ type, userId }) {
                   content={msg.text}
                   isUser={msg.role === 'user'}
                   isTyping={msg.role === 'model' && idx === messages.length - 1 && isTyping}
-                  onApply={msg.role === 'model' ? (text) => setContent(text) : null}
+                  onApply={msg.role === 'model' ? (text) => {
+                    setContent(text);
+                    if (editor) editor.commands.setContent(text);
+                  } : null}
                 />
               ))}
             </div>
