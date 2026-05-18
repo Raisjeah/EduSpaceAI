@@ -165,7 +165,11 @@ export default function DocumentEditor({ type, userId }) {
       }
     } catch (err) {
       clearInterval(progressInterval);
-      setContent(`Terjadi kesalahan saat mengunggah file.`);
+      const errorMsg = `Terjadi kesalahan saat mengunggah file.`;
+      setContent(errorMsg);
+      if (editor) {
+        editor.commands.setContent(errorMsg);
+      }
     } finally {
       setTimeout(() => {
         setIsLoading(false);
