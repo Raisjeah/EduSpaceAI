@@ -42,23 +42,25 @@ export async function POST(req) {
       },
     });
 
-    // Ambil bagian audio dari respons
-    const audioPart = response.candidates?.[0]?.content?.parts?.find(
-      (part) => part.inlineData && part.inlineData.mimeType.startsWith("audio/")
-    );
-
-    if (!audioPart) {
+    // Ekstrak data dan tipe dengan aman
+    const audioPart = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+    if (!audioPart || !audioPart.inlineData) {
       console.error("Gemini TTS Response:", JSON.stringify(response));
-      throw new Error("Gagal mendapatkan data audio dari Gemini");
+      throw new Error("Audio data missing");
     }
 
-    const audioBuffer = Buffer.from(audioPart.inlineData.data, "base64");
+    const mimeType = audioPart.inlineData.mimeType || "audio/wav";
+    const base64Data = audioPart.inlineData.data;
 
+    // Konversi ke buffer
+    const audioBuffer = Buffer.from(base64Data, "base64");
+
+    // WAJIB set header Content-Type agar browser mengenali file tersebut
     return new Response(audioBuffer, {
       headers: {
-        "Content-Type": audioPart.inlineData.mimeType || "audio/wav",
-        "Cache-Control": "no-cache",
-      },
+        "Content-Type": mimeType,
+        "Cache-Control": "no-cache"
+      }
     });
   } catch (error) {
     console.error("TTS API Error:", error);
