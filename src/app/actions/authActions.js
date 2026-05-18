@@ -56,29 +56,35 @@ async function checkLoginRateLimit(email) {
 
   await dbConnect();
 
-  let attempt = await LoginAttempt.findOne({ email: key });
-
-  if (!attempt || (now.getTime() - attempt.firstAttempt.getTime() > LOGIN_WINDOW_MS)) {
-    // Reset window
-    if (attempt) {
-      attempt.count = 1;
-      attempt.firstAttempt = now;
-      attempt.lastAttempt = now;
-      await attempt.save();
-    } else {
-      await LoginAttempt.create({
-        email: key,
-        count: 1,
-        firstAttempt: now,
-        lastAttempt: now
-      });
+  const attempt = await LoginAttempt.findOneAndUpdate(
+    { email: key },
+    [
+      {
+        $set: {
+          windowExpired: {
+            $gt: [{ $subtract: ['$$NOW', '$firstAttempt'] }, LOGIN_WINDOW_MS],
+          },
+        },
+      },
+      {
+        $set: {
+          firstAttempt: {
+            $cond: ['$windowExpired', '$$NOW', { $ifNull: ['$firstAttempt', '$$NOW'] }],
+          },
+          count: {
+            $cond: ['$windowExpired', 1, { $add: [{ $ifNull: ['$count', 0] }, 1] }],
+          },
+          lastAttempt: '$$NOW',
+        },
+      },
+      { $unset: 'windowExpired' },
+    ],
+    {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true,
     }
-    return { allowed: true };
-  }
-
-  attempt.count += 1;
-  attempt.lastAttempt = now;
-  await attempt.save();
+  );
 
   if (attempt.count > LOGIN_MAX_ATTEMPTS) {
     return {
