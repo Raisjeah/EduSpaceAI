@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight,
+  ArrowUp,
   ArrowUpRight,
   Search,
   BookOpen,
@@ -21,6 +23,19 @@ const fadeUp = {
   viewport: { once: true, margin: '-80px' },
   transition: { duration: 0.5, ease: 'easeOut' },
 };
+
+const agentModes = [
+  { id: 'profesor', label: 'Profesor', placeholder: 'Bantu rumuskan masalah skripsi tentang pemasaran digital...' },
+  { id: 'deep-search', label: 'Deep Search', placeholder: 'Cari jurnal Scopus terbaru tentang machine learning di pendidikan...' },
+  { id: 'editor', label: 'Editor', placeholder: 'Perbaiki parafrase paragraf metodologi penelitian...' },
+  { id: 'visual', label: 'Visual', placeholder: 'Buat diagram alur kerangka penelitian kuantitatif...' },
+];
+
+const suggestedPrompts = [
+  'Cara membuat batasan masalah?',
+  'Tips mencari jurnal Scopus?',
+  'Bagaimana parafrase sesuai PUEBI?',
+];
 
 const capabilities = [
   {
@@ -120,46 +135,146 @@ function SectionLabel({ children }) {
 }
 
 export default function LandingPage() {
+  const router = useRouter();
   const [openFaq, setOpenFaq] = useState(0);
+  const [activeMode, setActiveMode] = useState(agentModes[0].id);
+  const [prompt, setPrompt] = useState('');
+
+  const activeModeData = agentModes.find((m) => m.id === activeMode) ?? agentModes[0];
+
+  const goToLoginWithPrompt = (q) => {
+    const trimmed = (q ?? '').trim();
+    if (trimmed) {
+      router.push(`/auth/login?prompt=${encodeURIComponent(trimmed)}`);
+    } else {
+      router.push('/auth/login');
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    goToLoginWithPrompt(prompt);
+  };
 
   return (
     <div className="flex flex-col h-full overflow-y-auto custom-scrollbar bg-white dark:bg-[#0F0F0F] text-slate-900 dark:text-gray-200">
       {/* Hero */}
-      <section className="relative flex-none pt-24 md:pt-36 pb-20 md:pb-28 px-6">
-        <div className="max-w-5xl mx-auto">
+      <section className="relative flex-none pt-20 md:pt-32 pb-20 md:pb-28 px-6 overflow-hidden">
+        {/* Subtle indigo glow */}
+        <div className="absolute inset-0 -z-10 pointer-events-none">
+          <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[640px] h-[640px] bg-indigo-500/[0.06] dark:bg-indigo-500/[0.08] blur-[140px] rounded-full" />
+        </div>
+
+        <div className="max-w-3xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
+            className="text-center"
           >
             <div className="text-[11px] font-medium text-slate-400 dark:text-gray-500 tracking-[0.2em] uppercase mb-6">
               /asisten riset akademik
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[72px] font-semibold tracking-[-0.02em] leading-[1.05] text-slate-900 dark:text-white mb-8 max-w-4xl">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-[-0.02em] leading-[1.05] text-slate-900 dark:text-white mb-6">
               Riset akademik yang lebih terstruktur, dari draf sampai sidang.
             </h1>
-            <p className="text-lg md:text-xl text-slate-500 dark:text-gray-400 leading-relaxed max-w-2xl mb-10">
-              EduSpaceAI membantumu menulis skripsi dan jurnal dengan agen AI yang memahami konteks dokumenmu, mencarikan referensi yang valid, dan menjaga gaya bahasamu tetap sesuai kaidah.
-            </p>
-            <div className="flex flex-col sm:flex-row items-start gap-3 mb-6">
-              <Link
-                href="/auth/login"
-                className="group flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full font-medium text-sm transition-opacity hover:opacity-90"
-              >
-                Mulai gratis
-                <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-              <Link
-                href="/pricing"
-                className="flex items-center justify-center gap-2 px-6 py-3 text-slate-600 dark:text-gray-300 rounded-full font-medium text-sm border border-slate-200 dark:border-[#2A2A2A] hover:border-slate-300 dark:hover:border-[#3A3A3A] transition-colors"
-              >
-                Lihat harga
-              </Link>
-            </div>
-            <p className="text-sm text-slate-400 dark:text-gray-500">
-              Tanpa kartu kredit. Cukup masuk dengan akun Google.
+            <p className="text-base md:text-lg text-slate-500 dark:text-gray-400 leading-relaxed max-w-2xl mx-auto mb-10">
+              Agen AI yang memahami konteks dokumenmu, mencarikan referensi valid, dan menjaga gaya bahasa tetap sesuai kaidah.
             </p>
           </motion.div>
+
+          {/* Chat input mock */}
+          <motion.form
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: 'easeOut' }}
+            onSubmit={handleSubmit}
+            className="relative rounded-2xl border border-slate-200 dark:border-[#1F1F1F] bg-white dark:bg-[#121212] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.04)] dark:shadow-none p-3"
+          >
+            <div className="flex flex-wrap gap-1.5 mb-3 px-1">
+              {agentModes.map((mode) => (
+                <button
+                  key={mode.id}
+                  type="button"
+                  onClick={() => setActiveMode(mode.id)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                    activeMode === mode.id
+                      ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20'
+                      : 'text-slate-500 dark:text-gray-500 border border-transparent hover:bg-slate-100 dark:hover:bg-[#1A1A1A]'
+                  }`}
+                >
+                  {mode.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-end gap-2 px-1 pb-1">
+              <input
+                name="prompt"
+                type="text"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder={activeModeData.placeholder}
+                className="flex-1 bg-transparent outline-none text-sm md:text-base text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 py-2 min-w-0"
+              />
+              <button
+                type="submit"
+                aria-label="Kirim pertanyaan"
+                className="w-9 h-9 flex-shrink-0 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center transition-colors"
+              >
+                <ArrowUp size={16} />
+              </button>
+            </div>
+          </motion.form>
+
+          {/* Suggested prompts */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mt-4 flex flex-wrap gap-2 justify-center"
+          >
+            {suggestedPrompts.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => goToLoginWithPrompt(p)}
+                className="text-xs text-slate-500 dark:text-gray-400 px-3 py-1.5 rounded-full border border-slate-200 dark:border-[#1F1F1F] hover:border-indigo-500/30 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-500/5 transition-colors"
+              >
+                {p}
+              </button>
+            ))}
+          </motion.div>
+
+          {/* CTAs */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3"
+          >
+            <Link
+              href="/auth/login"
+              className="group inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-sm font-medium transition-colors w-full sm:w-auto"
+            >
+              Mulai gratis
+              <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+            <Link
+              href="/pricing"
+              className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 text-indigo-600 dark:text-indigo-400 bg-indigo-500/[0.06] hover:bg-indigo-500/10 border border-indigo-500/20 rounded-full text-sm font-medium transition-colors w-full sm:w-auto"
+            >
+              Lihat harga
+            </Link>
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="mt-4 text-xs text-slate-400 dark:text-gray-500 text-center"
+          >
+            Tanpa kartu kredit. Cukup masuk dengan akun Google.
+          </motion.p>
         </div>
       </section>
 
@@ -181,7 +296,7 @@ export default function LandingPage() {
                 transition={{ ...fadeUp.transition, delay: i * 0.05 }}
                 className="bg-white dark:bg-[#0F0F0F] p-8 md:p-10"
               >
-                <div className="text-xs font-medium text-slate-400 dark:text-gray-500 tabular-nums mb-6">
+                <div className="text-xs font-medium text-indigo-500/70 dark:text-indigo-400/70 tabular-nums mb-6">
                   {String(i + 1).padStart(2, '0')}
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 leading-snug">
@@ -217,10 +332,12 @@ export default function LandingPage() {
                   key={agent.name}
                   {...fadeUp}
                   transition={{ ...fadeUp.transition, delay: i * 0.05 }}
-                  className="group p-8 rounded-2xl border border-slate-200 dark:border-[#1F1F1F] bg-white dark:bg-[#121212] hover:border-slate-300 dark:hover:border-[#2A2A2A] transition-colors"
+                  className="group p-8 rounded-2xl border border-slate-200 dark:border-[#1F1F1F] bg-white dark:bg-[#121212] hover:border-indigo-500/30 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-8">
-                    <Icon size={20} className="text-slate-400 dark:text-gray-500" strokeWidth={1.5} />
+                    <div className="w-9 h-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                      <Icon size={16} strokeWidth={1.75} />
+                    </div>
                     <span className="text-[10px] font-medium text-slate-400 dark:text-gray-500 tracking-[0.15em] uppercase tabular-nums">
                       0{i + 1}
                     </span>
@@ -259,7 +376,7 @@ export default function LandingPage() {
                 transition={{ ...fadeUp.transition, delay: i * 0.05 }}
                 className="relative"
               >
-                <div className="text-[11px] font-medium text-slate-400 dark:text-gray-500 tracking-[0.2em] uppercase tabular-nums mb-6 pb-6 border-b border-slate-100 dark:border-[#1F1F1F]">
+                <div className="text-[11px] font-medium text-indigo-500/80 dark:text-indigo-400/80 tracking-[0.2em] uppercase tabular-nums mb-6 pb-6 border-b border-slate-100 dark:border-[#1F1F1F]">
                   {step.number}
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-3 leading-snug">
@@ -297,10 +414,10 @@ export default function LandingPage() {
                     onClick={() => setOpenFaq(isOpen ? -1 : i)}
                     className="w-full py-6 flex items-center justify-between gap-6 text-left group"
                   >
-                    <span className="text-base md:text-lg font-medium text-slate-900 dark:text-white group-hover:text-slate-600 dark:group-hover:text-gray-300 transition-colors">
+                    <span className="text-base md:text-lg font-medium text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                       {faq.q}
                     </span>
-                    <span className="flex-shrink-0 text-slate-400 dark:text-gray-500">
+                    <span className={`flex-shrink-0 transition-colors ${isOpen ? 'text-indigo-500' : 'text-slate-400 dark:text-gray-500'}`}>
                       {isOpen ? <Minus size={18} strokeWidth={1.5} /> : <Plus size={18} strokeWidth={1.5} />}
                     </span>
                   </button>
@@ -327,9 +444,12 @@ export default function LandingPage() {
       </section>
 
       {/* Closing CTA */}
-      <section className="relative flex-none py-24 md:py-32 px-6 border-t border-slate-100 dark:border-[#1A1A1A]">
+      <section className="relative flex-none py-24 md:py-32 px-6 border-t border-slate-100 dark:border-[#1A1A1A] overflow-hidden">
+        <div className="absolute inset-0 -z-10 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] bg-indigo-500/[0.06] dark:bg-indigo-500/[0.08] blur-[140px] rounded-full" />
+        </div>
         <motion.div {...fadeUp} className="max-w-3xl mx-auto text-center">
-          <div className="text-[11px] font-medium text-slate-400 dark:text-gray-500 tracking-[0.2em] uppercase mb-4">
+          <div className="text-[11px] font-medium text-indigo-500/80 dark:text-indigo-400/80 tracking-[0.2em] uppercase mb-4">
             /mulai sekarang
           </div>
           <h2 className="text-3xl md:text-5xl font-semibold tracking-[-0.02em] text-slate-900 dark:text-white leading-tight mb-6">
@@ -341,10 +461,10 @@ export default function LandingPage() {
           <div className="flex items-center justify-center gap-3">
             <Link
               href="/auth/login"
-              className="group inline-flex items-center gap-2 px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full font-medium text-sm transition-opacity hover:opacity-90"
+              className="group inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-sm font-medium transition-colors"
             >
               Mulai gratis
-              <ArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </Link>
           </div>
         </motion.div>
