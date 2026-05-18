@@ -15,22 +15,29 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
+  const audioUrlRef = useRef(null);
+
+  const cleanupAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (audioUrlRef.current) {
+      URL.revokeObjectURL(audioUrlRef.current);
+      audioUrlRef.current = null;
+    }
+  };
 
   useEffect(() => {
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
+      cleanupAudio();
     };
   }, []);
 
   const handleReadAloud = async () => {
     if (isPlaying) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      }
+      cleanupAudio();
+      setIsPlaying(false);
       return;
     }
 
@@ -51,9 +58,8 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
 
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
+      cleanupAudio();
+      audioUrlRef.current = audioUrl;
 
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
@@ -65,20 +71,22 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
 
       audio.onended = () => {
         setIsPlaying(false);
-        URL.revokeObjectURL(audioUrl);
+        cleanupAudio();
       };
 
       audio.onerror = () => {
         setIsPlaying(false);
         setIsLoadingAudio(false);
+        cleanupAudio();
         console.error('Audio playback error');
       };
 
-      audio.play();
+      await audio.play();
     } catch (error) {
       console.error('Error reading aloud:', error);
       setIsLoadingAudio(false);
       setIsPlaying(false);
+      cleanupAudio();
     }
   };
 

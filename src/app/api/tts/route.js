@@ -1,10 +1,25 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/session";
+import { checkUsageLimit } from "@/lib/subscription";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export async function POST(req) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: "Sesi berakhir. Silakan login kembali." }, { status: 401 });
+    }
+
+    const usage = await checkUsageLimit(user);
+    if (!usage.allowed) {
+      return NextResponse.json(
+        { error: `Batas pesan harian tercapai (${usage.limit} pesan/hari). Silakan upgrade ke paket yang lebih tinggi.` },
+        { status: 429 }
+      );
+    }
+
     const { text } = await req.json();
 
     if (!text) {
