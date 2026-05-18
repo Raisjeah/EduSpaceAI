@@ -1,8 +1,8 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import Anthropic from "@anthropic-ai/sdk";
 import { deepSearchEngine } from "./deepSearchEngine";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
@@ -129,22 +129,18 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
     }
 
     // Gemini Models
-    const model = genAI.getGenerativeModel({
+    const chat = ai.chats.create({
       model: sdkModel,
-      systemInstruction: config.instruction,
-      tools: config.tools || [],
-    });
-
-    const chat = model.startChat({
-      history: history,
-      generationConfig: {
+      config: {
+        systemInstruction: config.instruction,
+        tools: config.tools || [],
         maxOutputTokens: 4096,
         temperature: 0.7,
       },
+      history: history,
     });
 
-    const result = await chat.sendMessage([prompt, ...fileParts]);
-    const response = await result.response;
+    const response = await chat.sendMessage({ message: [prompt, ...fileParts] });
 
     // Image-generation model output (base64 inline data).
     if (sdkModel.endsWith('image-preview')) {
@@ -161,7 +157,7 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
       }
     }
 
-    return response.text();
+    return response.text;
   } catch (error) {
     console.error("AI SDK Error:", error);
     if (typeof error?.message === 'string' && error.message.toLowerCase().includes('quota')) {

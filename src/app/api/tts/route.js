@@ -1,9 +1,9 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { checkUsageLimit } from "@/lib/subscription";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function POST(req) {
   try {
@@ -27,14 +27,10 @@ export async function POST(req) {
     }
 
     // Gunakan model gemini-2.5-flash-tts sesuai permintaan
-    const model = genAI.getGenerativeModel({
+    const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-tts",
-    });
-
-    // Panggil model dengan konfigurasi suara "Kore"
-    const result = await model.generateContent({
       contents: [{ role: "user", parts: [{ text }] }],
-      generationConfig: {
+      config: {
         responseModalities: ["AUDIO"],
         speechConfig: {
           voiceConfig: {
@@ -45,8 +41,6 @@ export async function POST(req) {
         },
       },
     });
-
-    const response = await result.response;
 
     // Ambil bagian audio dari respons
     const audioPart = response.candidates?.[0]?.content?.parts?.find(
