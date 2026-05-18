@@ -5,6 +5,7 @@ import dbConnect from '@/lib/mongodb';
 import Plan from '@/models/Plan';
 import Subscription from '@/models/Subscription';
 import { getSessionUser } from '@/lib/session';
+import crypto from 'crypto';
 
 const snap = new midtransClient.Snap({
   isProduction: process.env.MIDTRANS_IS_PRODUCTION === 'true',
@@ -33,7 +34,8 @@ export async function createTransaction(planName) {
       throw new Error('Data paket tidak ditemukan di database.');
     }
 
-    const orderId = `SUBS-${Date.now()}-${userId.substring(0, 5)}`;
+    const randomStr = crypto.randomBytes(4).toString('hex').toUpperCase();
+    const orderId = `SUBS-${Date.now()}-${randomStr}`;
 
     // Apply 70% discount for ULTRA for new users
     let finalPrice = plan.price;

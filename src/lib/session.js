@@ -18,7 +18,10 @@ export async function getSessionUser() {
 
     if (!token) return null;
 
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET, {
+      issuer: 'eduspace-ai',
+      audience: 'eduspace-app'
+    });
     await dbConnect();
     const user = await User.findById(decoded.userId).select('-password');
 

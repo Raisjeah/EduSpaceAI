@@ -3,6 +3,28 @@ import User from '@/models/User';
 import UsageCounter from '@/models/UsageCounter';
 import dbConnect from '@/lib/mongodb';
 
+// Simple in-memory cache for plans
+const planCache = {
+  data: {},
+  lastFetch: 0,
+  ttl: 1000 * 60 * 5, // 5 minutes cache
+};
+
+async function getCachedPlan(planName) {
+  const now = Date.now();
+  if (planCache.data[planName] && now - planCache.lastFetch < planCache.ttl) {
+    return planCache.data[planName];
+  }
+
+  await dbConnect();
+  const planDoc = await Plan.findOne({ name: planName }).lean();
+  if (planDoc) {
+    planCache.data[planName] = planDoc;
+    planCache.lastFetch = now;
+  }
+  return planDoc;
+}
+
 export const TIERS = {
   FREE: 'FREE',
   CLASSIC: 'CLASSIC',
@@ -63,9 +85,8 @@ async function getEffectivePlan(user) {
 }
 
 export async function checkFeatureAccess(user, feature) {
-  await dbConnect();
   const planName = await getEffectivePlan(user);
-  const planDoc = await Plan.findOne({ name: planName }).lean();
+  const planDoc = await getCachedPlan(planName);
 
   if (!planDoc) return false;
 
@@ -104,10 +125,11 @@ export async function getDailyUsage(userId) {
  * Only increments when the user is under their plan's daily message_limit.
  */
 export async function checkUsageLimit(user) {
-  await dbConnect();
   const planName = await getEffectivePlan(user);
-  let planDoc = await Plan.findOne({ name: planName }).lean();
+  let planDoc = await getCachedPlan(planName);
   if (!planDoc) planDoc = { name: 'FREE', message_limit: 20 };
+
+  await dbConnect();
 
   const day = utcDayKey();
   const userId = String(user._id);

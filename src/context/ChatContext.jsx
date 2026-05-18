@@ -61,20 +61,24 @@ export function ChatProvider({ children }) {
     const words = fullResponse.split(' ');
     let currentText = '';
     let wordIndex = 0;
+    const batchSize = 5; // Update 5 words at a time to reduce re-renders
 
     const interval = setInterval(() => {
       if (wordIndex < words.length) {
-        currentText += (wordIndex === 0 ? '' : ' ') + words[wordIndex];
+        for (let i = 0; i < batchSize && wordIndex < words.length; i++) {
+          currentText += (wordIndex === 0 && i === 0 ? '' : ' ') + words[wordIndex];
+          wordIndex++;
+        }
+
         setChatMessages(id, prev => prev.map(m =>
           m._id === aiMessageId ? { ...m, text: currentText } : m
         ));
-        wordIndex++;
       } else {
         setChatStatus(id, { isTyping: false });
         clearInterval(interval);
         delete typewriterIntervals.current[id];
       }
-    }, 30);
+    }, 50); // Slightly slower tick but more content per tick
 
     typewriterIntervals.current[id] = interval;
   }, [setChatMessages, setChatStatus]);

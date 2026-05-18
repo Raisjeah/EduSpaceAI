@@ -8,9 +8,22 @@ import { extractFileContent } from './fileActions';
 import { checkUsageLimit, getModelByPlan, TIERS, checkFeatureAccess, isModelAllowed } from '@/lib/subscription';
 import { getSessionUser } from '@/lib/session';
 
+// Sanitization function for user content to prevent prompt injection
+function sanitizeUserContent(text) {
+  if (!text) return "";
+  return text
+    .replace(/(?:ignore|disregard|skip|forget|delete|reset)\b.*?\b(?:instructions|prompt|rules|context|previous)/gi, "[INSTRUCTION_FILTERED]")
+    .replace(/\b(system prompt|assistant:|developer:|user:|act as|you are a|instruction:|output:|input:|respond as)\b/gi, "[KEYWORD_FILTERED]")
+    .replace(/[^\x20-\x7E\s\r\n]/g, ""); // Remove non-printable characters
+}
+
 // 1. Fungsi Simpan Chat
-export async function saveChat(role, text, userId, chatId, projectId = null) {
+export async function saveChat(role, text, chatId, projectId = null) {
   try {
+    const user = await getSessionUser();
+    if (!user) return { success: false, error: "Sesi berakhir." };
+    const userId = user._id.toString();
+
     await dbConnect();
     const newChat = new Chat({ 
       role, 
@@ -45,8 +58,12 @@ export async function sendMessage(formData) {
 
     const userId = user._id.toString();
 
-    // A. Check Usage Limit
-    const usage = await checkUsageLimit(user);
+    // A. Parallel Database calls
+    const [usage, project] = await Promise.all([
+      checkUsageLimit(user),
+      projectId ? Project.findOne({ _id: projectId, userId }).lean() : Promise.resolve(null)
+    ]);
+
     if (!usage.allowed) {
       return {
         success: false,
@@ -55,20 +72,19 @@ export async function sendMessage(formData) {
     }
 
     let fileParts = [];
-    let agentId = 'default';
+    let agentId = project?.agentId || 'default';
 
-    // Jika ada projectId, ambil agentId dari project
-    if (projectId) {
-      const project = await Project.findById(projectId).lean();
-      if (project) {
-        agentId = project.agentId;
-      }
-    }
+    // B. & C. Feature Access & Memory check in parallel
+    const [hasMemoryAccess, hasImageAccess, hasFileAccess] = await Promise.all([
+      checkFeatureAccess(user, 'long_memory'),
+      checkFeatureAccess(user, 'image_upload'),
+      checkFeatureAccess(user, 'file_upload')
+    ]);
 
     // B. Handle File Upload
     if (file && file.size > 0) {
       const isImage = file.type.startsWith('image/');
-      const hasAccess = await checkFeatureAccess(user, isImage ? 'image_upload' : 'file_upload');
+      const hasAccess = isImage ? hasImageAccess : hasFileAccess;
 
       if (!hasAccess) {
         return {
@@ -92,7 +108,8 @@ export async function sendMessage(formData) {
         formData.append('userId', userId);
         const extractionResult = await extractFileContent(formData);
         if (extractionResult.success) {
-          prompt = `[Konteks Dokumen: ${extractionResult.fileName}]\n${extractionResult.content}\n\nPertanyaan: ${prompt || 'Tolong ringkas dokumen ini.'}`;
+          const sanitizedDocContent = sanitizeUserContent(extractionResult.content);
+          prompt = `[Konteks Dokumen: ${extractionResult.fileName}]\n${sanitizedDocContent}\n\nPertanyaan: ${prompt || 'Tolong ringkas dokumen ini.'}`;
         } else {
           return { success: false, error: extractionResult.error };
         }
@@ -100,7 +117,6 @@ export async function sendMessage(formData) {
     }
 
     // C. Long-term Memory retrieval
-    const hasMemoryAccess = await checkFeatureAccess(user, 'long_memory');
     if (hasMemoryAccess) {
       const memories = await UserMemory.find({ user_id: userId }).limit(5).sort({ created_at: -1 }).lean();
       if (memories.length > 0) {
@@ -129,10 +145,13 @@ export async function sendMessage(formData) {
        modelName = getModelByPlan(user.current_plan);
     }
 
-    // E. History
+    // E. History - Limit to last 50 messages to prevent performance bottleneck
     const previousMessages = await Chat.find({ userId, chatId })
-      .sort({ createdAt: 1 })
+      .sort({ createdAt: -1 })
+      .limit(50)
       .lean();
+
+    previousMessages.reverse();
 
     const historyMessages = skipSave ? previousMessages.slice(0, -1) : previousMessages;
 
@@ -142,13 +161,13 @@ export async function sendMessage(formData) {
     }));
 
     if (!skipSave) {
-      await saveChat('user', prompt, userId, chatId, projectId);
+      await saveChat('user', prompt, chatId, projectId);
     }
 
     // F. Get AI Response
     const aiResponse = await getGeminiResponse(prompt, historyForGemini, fileParts, agentId, modelName);
 
-    await saveChat('model', aiResponse, userId, chatId, projectId);
+    await saveChat('model', aiResponse, chatId, projectId);
 
     return { 
       success: true, 
@@ -163,9 +182,12 @@ export async function sendMessage(formData) {
 }
 
 // 3. Fungsi List History untuk Sidebar
-export async function getChatHistory(userId, projectId = null) {
-  if (!userId) return [];
+export async function getChatHistory(projectId = null) {
   try {
+    const user = await getSessionUser();
+    if (!user) return [];
+    const userId = user._id.toString();
+
     await dbConnect();
     const match = { userId };
     if (projectId) {
@@ -199,8 +221,12 @@ export async function getChatHistory(userId, projectId = null) {
 }
 
 // 4. Fungsi Ambil Detail Chat saat History diklik
-export async function getChatDetails(chatId, userId) {
+export async function getChatDetails(chatId) {
   try {
+    const user = await getSessionUser();
+    if (!user) return [];
+    const userId = user._id.toString();
+
     await dbConnect();
     const messages = await Chat.find({ chatId, userId }).sort({ createdAt: 1 }).lean();
     return messages.map(m => ({

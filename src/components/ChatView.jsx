@@ -118,7 +118,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         setIsLoadingChat(true);
       }
 
-      getChatDetails(activeChatId, userId).then(res => {
+      getChatDetails(activeChatId).then(res => {
         // Jangan menimpa jika sedang ada proses pengetikan AI (mencegah jumpy UI)
         setChatMessages(activeChatId, prev => {
           if (prev.length > 0 && (isTyping || isThinking)) return prev;
@@ -184,7 +184,6 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
     startTransition(async () => {
       const formData = new FormData();
-      formData.append('userId', userId);
       formData.append('prompt', textToSend);
       formData.append('modelId', selectedModel);
       if (currentId !== 'new') formData.append('chatId', currentId);
