@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import { ThumbsUp, ThumbsDown, Copy, Check } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Copy, Check, Volume2, Loader2, StopCircle } from 'lucide-react';
 import Mermaid from './Mermaid';
 import 'katex/dist/katex.min.css';
 
@@ -12,6 +12,75 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleReadAloud = async () => {
+    if (isPlaying) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      }
+      return;
+    }
+
+    try {
+      setIsLoadingAudio(true);
+      const response = await fetch('/api/tts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: content }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Gagal memproses audio');
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+
+      audio.onplay = () => {
+        setIsPlaying(true);
+        setIsLoadingAudio(false);
+      };
+
+      audio.onended = () => {
+        setIsPlaying(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      audio.onerror = () => {
+        setIsPlaying(false);
+        setIsLoadingAudio(false);
+        console.error('Audio playback error');
+      };
+
+      audio.play();
+    } catch (error) {
+      console.error('Error reading aloud:', error);
+      setIsLoadingAudio(false);
+      setIsPlaying(false);
+    }
+  };
 
   const handleCopy = async () => {
     if (imageData) return; // Can't copy image as text
@@ -132,20 +201,41 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
             <ThumbsDown size={16} />
           </button>
           {!imageData && (
-            <button
-              onClick={handleCopy}
-              className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-[#1E1E1E] transition-colors flex items-center gap-1.5"
-              title="Salin Pesan"
-            >
-              {copied ? (
-                <>
-                  <Check size={16} className="text-green-500" />
-                  <span className="text-[10px] font-medium text-green-500">Tersalin!</span>
-                </>
-              ) : (
-                <Copy size={16} />
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCopy}
+                className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-[#1E1E1E] transition-colors flex items-center gap-1.5"
+                title="Salin Pesan"
+              >
+                {copied ? (
+                  <>
+                    <Check size={16} className="text-green-500" />
+                    <span className="text-[10px] font-medium text-green-500">Tersalin!</span>
+                  </>
+                ) : (
+                  <Copy size={16} />
+                )}
+              </button>
+
+              <button
+                onClick={handleReadAloud}
+                disabled={isLoadingAudio}
+                className={`p-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
+                  isPlaying
+                    ? 'text-indigo-500 bg-indigo-500/10'
+                    : 'text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-[#1E1E1E]'
+                }`}
+                title={isPlaying ? "Berhenti" : "Dengarkan"}
+              >
+                {isLoadingAudio ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : isPlaying ? (
+                  <StopCircle size={16} />
+                ) : (
+                  <Volume2 size={16} />
+                )}
+              </button>
+            </div>
           )}
         </div>
         )}
