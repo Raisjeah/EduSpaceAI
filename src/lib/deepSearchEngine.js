@@ -1,8 +1,8 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { search } from "./tavily";
 import { fetchPageContent } from "./jina";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Whitelist of model IDs supported by deep-search reasoning loops.
 // Image-only models cannot be used here, so they are not listed.
@@ -36,12 +36,6 @@ export async function deepSearchEngine(userQuery, history = [], fileParts = [], 
   try {
     const selectedModelName = getValidModelName(modelName);
 
-    // Using gemini-2.5-flash for faster intermediate steps
-    const analyzerModel = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-      generationConfig: { responseMimeType: "application/json" }
-    });
-
     // Format fileParts for context awareness
     const fileContext = fileParts.length > 0
       ? `\n\nASSET TAMBAHAN (Gambar/File):\n(User telah mengunggah ${fileParts.length} file yang dilampirkan dalam pesan ini sebagai referensi visual atau data.)`
@@ -71,11 +65,15 @@ export async function deepSearchEngine(userQuery, history = [], fileParts = [], 
     `;
 
     const analyzerResult = await withTimeout(
-      analyzerModel.generateContent(analyzerPrompt),
+      ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: analyzerPrompt,
+        config: { responseMimeType: "application/json" }
+      }),
       10000,
       'Query Analyzer'
     );
-    const analyzerText = analyzerResult.response.text();
+    const analyzerText = analyzerResult.text;
     let subQueries = [];
 
     try {
@@ -176,7 +174,6 @@ ${sanitizeContent(ctx.extractedContent)}
     }).join('\n');
 
     // STEP 4: ANALYST AGENT
-    const analystModel = genAI.getGenerativeModel({ model: selectedModelName });
     const analystPrompt = `
       Tugasmu adalah menganalisis kumpulan konten web berikut untuk menjawab pertanyaan pengguna dengan mempertimbangkan konteks percakapan sebelumnya.
       ${fileContext}
@@ -201,11 +198,14 @@ ${sanitizeContent(ctx.extractedContent)}
     `;
 
     const analystResult = await withTimeout(
-      analystModel.generateContent([analystPrompt, ...fileParts]),
+      ai.models.generateContent({
+        model: selectedModelName,
+        contents: [analystPrompt, ...fileParts],
+      }),
       15000,
       'Analyst Agent'
     );
-    const factualContext = analystResult.response.text();
+    const factualContext = analystResult.text;
 
     // Verified Source List for Citation Consistency
     const verifiedSources = rerankedResults.map(r => `- ${r.title}: ${r.url}`).join('\n');
@@ -253,13 +253,15 @@ ${sanitizeContent(ctx.extractedContent)}
       "${userQuery}"
     `;
 
-    const writerModel = genAI.getGenerativeModel({ model: selectedModelName });
     const finalResult = await withTimeout(
-      writerModel.generateContent([writerPrompt, ...fileParts]),
+      ai.models.generateContent({
+        model: selectedModelName,
+        contents: [writerPrompt, ...fileParts],
+      }),
       15000,
       'Writer Agent'
     );
-    return finalResult.response.text();
+    return finalResult.text;
 
   } catch (error) {
     console.error("Deep Search Engine Error:", error);
