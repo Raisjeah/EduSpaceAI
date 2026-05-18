@@ -41,6 +41,7 @@ export default function DocumentEditor({ type, userId }) {
 
   // Selection state
   const [selection, setSelection] = useState({ text: '', show: false });
+  const [lastEditorPrompt, setLastEditorPrompt] = useState('');
 
   const chatEndRef = useRef(null);
   const textareaRef = useRef(null);
@@ -103,6 +104,7 @@ export default function DocumentEditor({ type, userId }) {
     if (!activeChatId) setActiveChatId(chatId);
 
     const initialPrompt = `Tolong analisis dan berikan saran perbaikan untuk isi dokumen ini (${fileName}):\n\n${content}`;
+    setLastEditorPrompt('Tolong analisis dokumen ini.');
 
     // Optimistic UI for Chat
     const userMessage = {
@@ -159,6 +161,7 @@ export default function DocumentEditor({ type, userId }) {
     const textToSend = overrideInput || chatInput;
     if (!textToSend.trim() || isPending) return;
 
+    setLastEditorPrompt(textToSend);
     setChatInput('');
     const chatId = activeChatId || `chat_${Date.now()}`;
     if (!activeChatId) setActiveChatId(chatId);
@@ -231,7 +234,7 @@ export default function DocumentEditor({ type, userId }) {
           {isLoading && (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 dark:bg-[#0F0F0F]/80 backdrop-blur-sm rounded-[1.5rem] border border-indigo-500/20">
               <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-2xl shadow-xl border border-slate-200 dark:border-[#333] flex flex-col items-center w-[280px]">
-                <ThinkingIndicator />
+                <ThinkingIndicator prompt="Mengekstrak konten file" agentId="editor" />
                 <p className="text-xs font-bold text-slate-600 dark:text-gray-300 mt-2">
                   {extractProgress < 100 ? 'Mengekstrak Konten File...' : 'Berhasil Diekstrak!'}
                 </p>
@@ -331,7 +334,7 @@ export default function DocumentEditor({ type, userId }) {
             </div>
           )}
           {isThinking && (
-            <ThinkingIndicator />
+            <ThinkingIndicator prompt={lastEditorPrompt} agentId="editor" />
           )}
           <div ref={chatEndRef} />
         </div>

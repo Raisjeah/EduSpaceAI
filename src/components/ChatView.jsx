@@ -49,6 +49,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const [thoughtTraces, setThoughtTraces] = useState([]);
   const [upgradeModal, setUpgradeModal] = useState({ isOpen: false, feature: '' });
   const [isLoadingChat, setIsLoadingChat] = useState(false);
+  const [lastUserPrompt, setLastUserPrompt] = useState('');
   const chatEndRef = useRef(null);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -157,6 +158,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const handleSend = async (overrideInput, isAutoTrigger = false) => {
     const textToSend = overrideInput || input;
     if ((!textToSend.trim() && !selectedFile) || (isPending && !isAutoTrigger)) return;
+
+    setLastUserPrompt(textToSend);
 
     if (!isAutoTrigger) {
       const userMessage = {
@@ -416,7 +419,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
               )}
               {(isThinking || isUploading) && (
                 <div className="px-1 flex flex-col gap-2">
-                  <ThinkingIndicator />
+                  <ThinkingIndicator prompt={lastUserPrompt} agentId={project?.agentId} />
                   {isUploading && (
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800/30 rounded-lg w-fit animate-pulse">
                       <FileText size={12} className="text-indigo-500" />
