@@ -8,7 +8,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const clientToken = process.env.GEMINI_API_KEY_3;
+  const clientToken = process.env.GEMINI_API_KEY_2;
 
   if (!clientToken) {
     return NextResponse.json(
