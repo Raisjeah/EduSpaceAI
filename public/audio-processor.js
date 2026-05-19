@@ -2,7 +2,7 @@
 class AudioProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
-    this.targetSampleRate = 16000;
+    this.targetSampleRate = 24000;
     this.buffer = [];
   }
 
