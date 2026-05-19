@@ -89,7 +89,7 @@ const LiveCallDashboard = () => {
           wsRef.current.send(JSON.stringify({
             realtimeInput: {
               mediaChunks: [{
-                mimeType: "audio/pcm;rate=24000",
+                mimeType: "audio/l16;rate=16000",
                 data: base64Data
               }]
             }
