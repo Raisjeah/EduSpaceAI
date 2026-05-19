@@ -36,6 +36,10 @@ const LiveCallDashboard = () => {
   const playAudioFromQueue = useCallback(async () => {
     if (isPlaying.current || audioQueue.current.length === 0 || !audioContextRef.current) return;
 
+    if (audioContextRef.current.state === 'suspended') {
+      await audioContextRef.current.resume();
+    }
+
     isPlaying.current = true;
     const chunk = audioQueue.current.shift();
 
@@ -67,6 +71,9 @@ const LiveCallDashboard = () => {
   const initAudio = useCallback(async () => {
     try {
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+      if (audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume();
+      }
       streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       await audioContextRef.current.audioWorklet.addModule('/audio-processor.js');
