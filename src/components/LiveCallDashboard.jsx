@@ -70,7 +70,7 @@ const LiveCallDashboard = () => {
 
   const initAudio = useCallback(async () => {
     try {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
       if (audioContextRef.current.state === 'suspended') {
         await audioContextRef.current.resume();
       }
@@ -83,7 +83,7 @@ const LiveCallDashboard = () => {
 
       processorRef.current.port.onmessage = (event) => {
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && !isMutedRef.current) {
-          const pcmData = new Int16Array(event.data);
+          const pcmData = new Int16Array(event.data.buffer);
           const uint8Array = new Uint8Array(pcmData.buffer);
           let binary = '';
           for (let i = 0; i < uint8Array.length; i++) {
@@ -94,7 +94,7 @@ const LiveCallDashboard = () => {
           wsRef.current.send(JSON.stringify({
             realtimeInput: {
               mediaChunks: [{
-                mimeType: 'audio/l16;rate=16000',
+                mimeType: `audio/pcm;rate=${event.data.sampleRate}`,
                 data: base64Data
               }]
             }
@@ -114,6 +114,10 @@ const LiveCallDashboard = () => {
   const connectWebSocket = useCallback(async () => {
     try {
       const response = await fetch('/api/live');
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || `Live token request failed (${response.status})`);
+      }
       const { token } = await response.json();
 
       if (!token) {
@@ -177,6 +181,11 @@ const LiveCallDashboard = () => {
                 audioQueue.current.push(pcmData);
                 playAudioFromQueue();
               }
+            }
+
+            if (message?.error) {
+              console.error("Gemini Live API error:", message.error);
+              setStatusMessage(`Live error: ${message.error.message || 'unknown error'}`);
             }
           }
         } catch (e) {
