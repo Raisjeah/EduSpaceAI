@@ -34,7 +34,7 @@ export default function MainLayout({ children }) {
     const isInternalPage = !isAuthPage && !isHomePage && !isPricingPage && !isLegalPage;
 
     // Redirect ke login hanya jika benar-benar tidak ada userId (bukan transisi loading)
-    if (!userId && isInternalPage) {
+    if (!userId && isInternalPage && pathname !== '/chat/live') {
       router.replace(`/auth/login?callbackUrl=${encodeURIComponent(pathname)}`);
     }
     // Redirect ke home jika sudah login tapi mencoba akses halaman auth
@@ -49,7 +49,8 @@ export default function MainLayout({ children }) {
   const isAuthPage = pathname.startsWith('/auth');
 
   const isHomePage = pathname === '/';
-  const isChatPage = pathname.startsWith('/chat');
+  const isChatPage = pathname.startsWith('/chat') && pathname !== '/chat/live';
+  const isLiveCallPage = pathname === '/chat/live';
   const isProjectPage = pathname.startsWith('/project');
 
   // Key untuk AnimatePresence agar transisi dari "/", "/chat/:id", atau "/project/:id" tidak re-render layout
@@ -61,8 +62,8 @@ export default function MainLayout({ children }) {
     return <LoadingScreen />;
   }
 
-  // Jika di halaman auth, tampilkan children saja tanpa sidebar/header
-  if (isAuthPage) {
+  // Jika di halaman auth atau live call, tampilkan children saja tanpa sidebar/header
+  if (isAuthPage || isLiveCallPage) {
     return <div className="min-h-[100dvh] bg-white dark:bg-[#0F0F0F] text-slate-900 dark:text-gray-200">{children}</div>;
   }
 
