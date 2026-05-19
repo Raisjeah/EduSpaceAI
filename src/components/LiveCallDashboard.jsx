@@ -46,7 +46,7 @@ const LiveCallDashboard = () => {
         float32Data[i] = chunk[i] / 32768.0;
       }
 
-      const audioBuffer = audioContextRef.current.createBuffer(1, float32Data.length, 24000);
+      const audioBuffer = audioContextRef.current.createBuffer(1, float32Data.length, 16000);
       audioBuffer.getChannelData(0).set(float32Data);
 
       const source = audioContextRef.current.createBufferSource();
