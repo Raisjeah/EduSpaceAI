@@ -77,19 +77,17 @@ const LiveCallDashboard = () => {
       processorRef.current.port.onmessage = (event) => {
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && !isMutedRef.current) {
           const pcmData = new Int16Array(event.data);
-          // Standard btoa only handles characters up to 255.
-          // For binary data, we use a slightly more robust way.
+          const uint8Array = new Uint8Array(pcmData.buffer);
           let binary = '';
-          const bytes = new Uint8Array(pcmData.buffer);
-          for (let i = 0; i < bytes.byteLength; i++) {
-            binary += String.fromCharCode(bytes[i]);
+          for (let i = 0; i < uint8Array.length; i++) {
+            binary += String.fromCharCode(uint8Array[i]);
           }
           const base64Data = btoa(binary);
 
           wsRef.current.send(JSON.stringify({
             realtimeInput: {
               mediaChunks: [{
-                mimeType: "audio/l16;rate=16000",
+                mimeType: 'audio/l16;rate=16000',
                 data: base64Data
               }]
             }
@@ -150,16 +148,25 @@ const LiveCallDashboard = () => {
             const message = JSON.parse(event.data);
 
             if (message.serverContent?.modelTurn?.parts) {
-              const audioPart = message.serverContent.modelTurn.parts.find(p => p.inlineData?.mimeType === 'audio/pcm');
+              const audioPart = message.serverContent.modelTurn.parts.find((part) => {
+                const inlineData = part.inlineData;
+                return inlineData?.data && inlineData?.mimeType?.toLowerCase().startsWith('audio/');
+              });
               if (audioPart) {
                 const binaryString = atob(audioPart.inlineData.data);
                 const len = binaryString.length;
-                const bytes = new Uint8Array(len);
+                let bytes = new Uint8Array(len);
                 for (let i = 0; i < len; i++) {
                   bytes[i] = binaryString.charCodeAt(i);
                 }
-                // Byte alignment fix: ensure even length for Int16Array
-                const pcmData = new Int16Array(bytes.buffer, 0, bytes.buffer.byteLength >> 1);
+                // Validate even byte length for Int16Array
+                if (bytes.length % 2 !== 0) {
+                  console.warn("Odd byte length, padding with zero");
+                  const padded = new Uint8Array(bytes.length + 1);
+                  padded.set(bytes);
+                  bytes = padded;
+                }
+                const pcmData = new Int16Array(bytes.buffer);
                 audioQueue.current.push(pcmData);
                 playAudioFromQueue();
               }
