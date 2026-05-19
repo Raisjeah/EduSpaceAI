@@ -13,9 +13,11 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import useAuth from '@/hooks/useAuth';
 
 const LiveCallDashboard = () => {
   const router = useRouter();
+  const { userId, isLoading: authLoading } = useAuth();
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOn, setIsVideoOn] = useState(false);
   const [isConnecting, setIsConnecting] = useState(true);
@@ -30,7 +32,12 @@ const LiveCallDashboard = () => {
   const sourceRef = useRef(null);
   const audioQueue = useRef([]);
   const isPlaying = useRef(false);
-  const isMutedRef = useRef(false);
+  const isMutedRef = useRef(isMuted);
+
+  // Sync isMuted state to ref to avoid stale closure in AudioWorklet handler
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+  }, [isMuted]);
 
   // Audio Playback logic
   const playAudioFromQueue = useCallback(async () => {
@@ -77,8 +84,6 @@ const LiveCallDashboard = () => {
       processorRef.current.port.onmessage = (event) => {
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && !isMutedRef.current) {
           const pcmData = new Int16Array(event.data);
-          // Standard btoa only handles characters up to 255.
-          // For binary data, we use a slightly more robust way.
           const binary = String.fromCharCode(...new Uint8Array(pcmData.buffer));
           const base64Data = btoa(binary);
 
@@ -104,15 +109,12 @@ const LiveCallDashboard = () => {
 
   const connectWebSocket = useCallback(async () => {
     try {
-      const response = await fetch('/api/live');
-      const { token } = await response.json();
+      // Trigger proxy initialization
+      await fetch('/api/live-proxy');
 
-      if (!token) {
-        setStatusMessage("Sesi gagal dimulai. Coba lagi.");
-        return;
-      }
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const url = `${protocol}//${window.location.host}/api/live-proxy`;
 
-      const url = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${token}`;
       const ws = new WebSocket(url);
       wsRef.current = ws;
 
@@ -170,10 +172,13 @@ const LiveCallDashboard = () => {
   }, [playAudioFromQueue]);
 
   useEffect(() => {
-    isMutedRef.current = isMuted;
-  }, [isMuted]);
+    // Early return if authentication is not confirmed
+    if (authLoading) return;
+    if (!userId) {
+      router.replace('/auth/login');
+      return;
+    }
 
-  useEffect(() => {
     initAudio().then(success => {
       if (success) {
         connectWebSocket();
@@ -185,7 +190,7 @@ const LiveCallDashboard = () => {
       if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
       if (audioContextRef.current) audioContextRef.current.close();
     };
-  }, []); // Run once on mount
+  }, [authLoading, userId, router, initAudio, connectWebSocket]);
 
   const handleEndCall = useCallback(() => {
     if (wsRef.current) wsRef.current.close();
