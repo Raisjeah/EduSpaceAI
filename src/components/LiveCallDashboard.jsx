@@ -135,21 +135,32 @@ const LiveCallDashboard = () => {
       };
 
       ws.onmessage = async (event) => {
-        const message = JSON.parse(event.data);
-
-        if (message.serverContent?.modelTurn?.parts) {
-          const audioPart = message.serverContent.modelTurn.parts.find(p => p.inlineData?.mimeType === 'audio/pcm');
-          if (audioPart) {
-            const binaryString = atob(audioPart.inlineData.data);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-              bytes[i] = binaryString.charCodeAt(i);
-            }
-            const pcmData = new Int16Array(bytes.buffer);
+        try {
+          if (event.data instanceof Blob) {
+            const arrayBuffer = await event.data.arrayBuffer();
+            const pcmData = new Int16Array(arrayBuffer);
             audioQueue.current.push(pcmData);
             playAudioFromQueue();
+          } else {
+            const message = JSON.parse(event.data);
+
+            if (message.serverContent?.modelTurn?.parts) {
+              const audioPart = message.serverContent.modelTurn.parts.find(p => p.inlineData?.mimeType === 'audio/pcm');
+              if (audioPart) {
+                const binaryString = atob(audioPart.inlineData.data);
+                const len = binaryString.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                  bytes[i] = binaryString.charCodeAt(i);
+                }
+                const pcmData = new Int16Array(bytes.buffer);
+                audioQueue.current.push(pcmData);
+                playAudioFromQueue();
+              }
+            }
           }
+        } catch (e) {
+          console.error("Error handling message:", e);
         }
       };
 
@@ -189,7 +200,7 @@ const LiveCallDashboard = () => {
 
   const handleEndCall = useCallback(() => {
     if (wsRef.current) wsRef.current.close();
-    router.push('/chat');
+    router.push('/');
   }, [router]);
 
   return (
@@ -202,7 +213,7 @@ const LiveCallDashboard = () => {
           <span className="text-sm font-medium tracking-wider text-blue-100">LIVE</span>
         </div>
         <button
-          onClick={() => router.push('/chat')}
+          onClick={() => router.push('/')}
           className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all"
         >
           <Keyboard className="w-5 h-5 text-gray-400" />
