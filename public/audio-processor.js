@@ -2,7 +2,8 @@
 class AudioProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
-    this.targetSampleRate = 24000;
+    // Gemini Live expects input PCM16 at 16kHz for realtimeInput.mediaChunks.
+    this.targetSampleRate = 16000;
     this.buffer = [];
   }
 
@@ -30,7 +31,10 @@ class AudioProcessor extends AudioWorkletProcessor {
           resampledData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
         }
 
-        this.port.postMessage(resampledData.buffer, [resampledData.buffer]);
+        this.port.postMessage({
+          buffer: resampledData.buffer,
+          sampleRate: this.targetSampleRate,
+        }, [resampledData.buffer]);
         this.buffer = this.buffer.slice(Math.floor(128 * ratio));
       }
     }
