@@ -18,7 +18,7 @@ export default function Header({ setIsSidebarOpen }) {
                 <img
                   src="/logo.png"
                   alt="EduSpaceAI Logo"
-                  className="w-full h-full object-contain invert dark:invert-0"
+                  className="w-full h-full object-contain"
                 />
               </div>
               <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white hidden sm:block">EduSpaceAI</span>
