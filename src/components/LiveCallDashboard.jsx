@@ -30,6 +30,7 @@ const LiveCallDashboard = () => {
   const sourceRef = useRef(null);
   const audioQueue = useRef([]);
   const isPlaying = useRef(false);
+  const isMutedRef = useRef(false);
 
   // Audio Playback logic
   const playAudioFromQueue = useCallback(async () => {
@@ -74,7 +75,7 @@ const LiveCallDashboard = () => {
       processorRef.current = new AudioWorkletNode(audioContextRef.current, 'audio-processor');
 
       processorRef.current.port.onmessage = (event) => {
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && !isMuted) {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && !isMutedRef.current) {
           const pcmData = new Int16Array(event.data);
           // Standard btoa only handles characters up to 255.
           // For binary data, we use a slightly more robust way.
@@ -99,19 +100,19 @@ const LiveCallDashboard = () => {
       setStatusMessage("Gagal mengakses mikrofon.");
       return false;
     }
-  }, [isMuted]);
+  }, []);
 
   const connectWebSocket = useCallback(async () => {
     try {
       const response = await fetch('/api/live');
-      const { apiKey } = await response.json();
+      const { token } = await response.json();
 
-      if (!apiKey) {
+      if (!token) {
         setStatusMessage("Sesi gagal dimulai. Coba lagi.");
         return;
       }
 
-      const url = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${apiKey}`;
+      const url = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${token}`;
       const ws = new WebSocket(url);
       wsRef.current = ws;
 
@@ -167,6 +168,10 @@ const LiveCallDashboard = () => {
       setStatusMessage("Gagal menyambungkan.");
     }
   }, [playAudioFromQueue]);
+
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+  }, [isMuted]);
 
   useEffect(() => {
     initAudio().then(success => {

@@ -8,9 +8,14 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Providing the API Key to the frontend for the direct WebSocket connection.
-  // In a production environment, this could be a short-lived token or a proxy.
-  return NextResponse.json({
-    apiKey: process.env.GEMINI_API_KEY
-  });
+  const clientToken = process.env.GEMINI_LIVE_CLIENT_TOKEN;
+
+  if (!clientToken) {
+    return NextResponse.json(
+      { error: "Live token is not configured on the server." },
+      { status: 503 }
+    );
+  }
+
+  return NextResponse.json({ token: clientToken });
 }
