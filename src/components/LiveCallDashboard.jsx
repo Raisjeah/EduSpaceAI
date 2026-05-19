@@ -148,7 +148,10 @@ const LiveCallDashboard = () => {
             const message = JSON.parse(event.data);
 
             if (message.serverContent?.modelTurn?.parts) {
-              const audioPart = message.serverContent.modelTurn.parts.find(p => p.inlineData?.mimeType === 'audio/l16;rate=16000');
+              const audioPart = message.serverContent.modelTurn.parts.find((part) => {
+                const inlineData = part.inlineData;
+                return inlineData?.data && inlineData?.mimeType?.toLowerCase().startsWith('audio/');
+              });
               if (audioPart) {
                 const binaryString = atob(audioPart.inlineData.data);
                 const len = binaryString.length;
