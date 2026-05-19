@@ -31,6 +31,7 @@ const LiveCallDashboard = () => {
   const audioQueue = useRef([]);
   const isPlaying = useRef(false);
   const isMutedRef = useRef(false);
+  const outputSampleRateRef = useRef(16000); // Default Gemini Live sample rate
 
   // Audio Playback logic
   const playAudioFromQueue = useCallback(async () => {
@@ -50,7 +51,7 @@ const LiveCallDashboard = () => {
         float32Data[i] = chunk[i] / 32768.0;
       }
 
-      const audioBuffer = audioContextRef.current.createBuffer(1, float32Data.length, 24000);
+      const audioBuffer = audioContextRef.current.createBuffer(1, float32Data.length, outputSampleRateRef.current);
       audioBuffer.getChannelData(0).set(float32Data);
 
       const source = audioContextRef.current.createBufferSource();
@@ -134,7 +135,14 @@ const LiveCallDashboard = () => {
           setup: {
             model: "models/gemini-2.5-flash-native-audio-preview-12-2025",
             generationConfig: {
-              responseModalities: ["AUDIO"]
+              responseModalities: ["AUDIO"],
+              speechConfig: {
+                voiceConfig: {
+                  prebuiltVoiceConfig: {
+                    voiceName: "Kore"
+                  }
+                }
+              },
             },
             systemInstruction: {
               parts: [{ text: "Bertindaklah sebagai Dosen Pembimbing Akademik EduSpaceAI yang bijak, responsif, dan edukatif bernama Prof. Kore. Jawablah langsung menggunakan bahasa suara yang natural." }]
@@ -153,6 +161,12 @@ const LiveCallDashboard = () => {
             const arrayBuffer = await event.data.arrayBuffer();
             // Byte alignment fix: ensure even length for Int16Array
             const pcmData = new Int16Array(arrayBuffer, 0, arrayBuffer.byteLength >> 1);
+
+            // For Blob handling, ensure we use the stored sample rate (default 16000)
+            if (!outputSampleRateRef.current) {
+              outputSampleRateRef.current = 16000;
+            }
+
             audioQueue.current.push(pcmData);
             playAudioFromQueue();
           } else {
@@ -164,6 +178,12 @@ const LiveCallDashboard = () => {
                 return inlineData?.data && inlineData?.mimeType?.toLowerCase().startsWith('audio/');
               });
               if (audioPart) {
+                const mimeType = audioPart.inlineData.mimeType;
+                const rateMatch = mimeType.match(/rate=(\d+)/);
+                if (rateMatch) {
+                  outputSampleRateRef.current = parseInt(rateMatch[1], 10);
+                }
+
                 const binaryString = atob(audioPart.inlineData.data);
                 const len = binaryString.length;
                 let bytes = new Uint8Array(len);
