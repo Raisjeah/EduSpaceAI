@@ -46,7 +46,7 @@ const LiveCallDashboard = () => {
         float32Data[i] = chunk[i] / 32768.0;
       }
 
-      const audioBuffer = audioContextRef.current.createBuffer(1, float32Data.length, 16000);
+      const audioBuffer = audioContextRef.current.createBuffer(1, float32Data.length, 24000);
       audioBuffer.getChannelData(0).set(float32Data);
 
       const source = audioContextRef.current.createBufferSource();
@@ -66,7 +66,7 @@ const LiveCallDashboard = () => {
 
   const initAudio = useCallback(async () => {
     try {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
       streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       await audioContextRef.current.audioWorklet.addModule('/audio-processor.js');
@@ -79,13 +79,17 @@ const LiveCallDashboard = () => {
           const pcmData = new Int16Array(event.data);
           // Standard btoa only handles characters up to 255.
           // For binary data, we use a slightly more robust way.
-          const binary = String.fromCharCode(...new Uint8Array(pcmData.buffer));
+          let binary = '';
+          const bytes = new Uint8Array(pcmData.buffer);
+          for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
           const base64Data = btoa(binary);
 
           wsRef.current.send(JSON.stringify({
             realtimeInput: {
               mediaChunks: [{
-                mimeType: "audio/pcm",
+                mimeType: "audio/pcm;rate=24000",
                 data: base64Data
               }]
             }
@@ -138,7 +142,8 @@ const LiveCallDashboard = () => {
         try {
           if (event.data instanceof Blob) {
             const arrayBuffer = await event.data.arrayBuffer();
-            const pcmData = new Int16Array(arrayBuffer);
+            // Byte alignment fix: ensure even length for Int16Array
+            const pcmData = new Int16Array(arrayBuffer, 0, arrayBuffer.byteLength >> 1);
             audioQueue.current.push(pcmData);
             playAudioFromQueue();
           } else {
@@ -153,7 +158,8 @@ const LiveCallDashboard = () => {
                 for (let i = 0; i < len; i++) {
                   bytes[i] = binaryString.charCodeAt(i);
                 }
-                const pcmData = new Int16Array(bytes.buffer);
+                // Byte alignment fix: ensure even length for Int16Array
+                const pcmData = new Int16Array(bytes.buffer, 0, bytes.buffer.byteLength >> 1);
                 audioQueue.current.push(pcmData);
                 playAudioFromQueue();
               }
