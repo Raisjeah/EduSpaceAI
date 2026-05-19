@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3 } from 'lucide-react';
+import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3, Mic } from 'lucide-react';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { getChatHistory } from '@/app/actions/chatActions';
 import { logout } from '@/app/actions/authActions';
@@ -225,6 +225,18 @@ export default function Sidebar({
               }`}
             >
               <Wrench size={16} /> <span className="font-medium">Tools & File Editor</span>
+            </Link>
+
+            <Link
+              href="/chat/live"
+              onClick={closeSidebar}
+              className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all text-[12px] mb-2 ${
+                pathname === '/chat/live'
+                ? 'bg-slate-100 dark:bg-[#1A1A1A] text-slate-900 dark:text-white'
+                : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1A1A1A]'
+              }`}
+            >
+              <Mic size={16} /> <span className="font-medium">Voice Call (Live)</span>
             </Link>
 
             {/* Projects Section */}
