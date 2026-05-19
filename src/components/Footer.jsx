@@ -16,7 +16,7 @@ export default function Footer() {
                 <img
                   src="/logo.png"
                   alt="EduSpaceAI"
-                  className="w-full h-full object-contain invert dark:invert-0"
+                  className="w-full h-full object-contain"
                 />
               </div>
               <span className="font-semibold text-base tracking-tight text-slate-900 dark:text-white">

@@ -174,7 +174,7 @@ export default function Sidebar({
                 <img
                   src="/logo.png"
                   alt="EduSpaceAI Logo"
-                  className="w-full h-full object-contain invert dark:invert-0"
+                  className="w-full h-full object-contain"
                 />
               </div>
               <span className="font-bold text-[14px] text-slate-900 dark:text-white tracking-tight transition-colors">EduSpaceAI</span>
