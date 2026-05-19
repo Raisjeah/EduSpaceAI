@@ -237,7 +237,7 @@ const LiveCallDashboard = () => {
              <div className="w-24 h-24 rounded-full border-2 border-blue-500/30 flex items-center justify-center bg-blue-500/5">
                 <div className="w-20 h-20 rounded-full border border-blue-400/50 flex items-center justify-center animate-pulse">
                    <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center">
-                      <span className="text-2xl">👨‍🏫</span>
+                      <span className="text-2xl"></span>
                    </div>
                 </div>
              </div>

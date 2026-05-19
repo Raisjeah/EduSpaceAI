@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { checkUsageLimit } from "@/lib/subscription";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY_2 });
 
 function pcmToWav(pcmBuffer, sampleRate = 24000, numChannels = 1, bitsPerSample = 16) {
   const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
