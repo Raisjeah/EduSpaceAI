@@ -29,53 +29,63 @@ const LiveCallDashboard = () => {
   const processorRef = useRef(null);
   const sourceRef = useRef(null);
   const audioQueue = useRef([]);
-  const isPlaying = useRef(false);
   const isMutedRef = useRef(false);
-  const outputSampleRateRef = useRef(16000); // Default Gemini Live sample rate
+  const outputSampleRateRef = useRef(24000); // Gemini Live standard is 24kHz
+  const nextStartTimeRef = useRef(0);
 
-  // Audio Playback logic
+  // Audio Playback logic - Scheduled for gapless playback
   const playAudioFromQueue = useCallback(async () => {
-    if (isPlaying.current || audioQueue.current.length === 0 || !audioContextRef.current) return;
+    if (audioQueue.current.length === 0 || !audioContextRef.current) return;
 
     if (audioContextRef.current.state === 'suspended') {
       await audioContextRef.current.resume();
     }
 
-    isPlaying.current = true;
-    const chunk = audioQueue.current.shift();
+    while (audioQueue.current.length > 0) {
+      const chunk = audioQueue.current.shift();
+      try {
+        const float32Data = new Float32Array(chunk.length);
+        for (let i = 0; i < chunk.length; i++) {
+          float32Data[i] = chunk[i] / 32768.0;
+        }
 
-    try {
-      // Input is Int16Array from Base64 decode
-      const float32Data = new Float32Array(chunk.length);
-      for (let i = 0; i < chunk.length; i++) {
-        float32Data[i] = chunk[i] / 32768.0;
+        const audioBuffer = audioContextRef.current.createBuffer(1, float32Data.length, outputSampleRateRef.current);
+        audioBuffer.getChannelData(0).set(float32Data);
+
+        const source = audioContextRef.current.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioContextRef.current.destination);
+
+        const currentTime = audioContextRef.current.currentTime;
+        if (nextStartTimeRef.current < currentTime) {
+          nextStartTimeRef.current = currentTime + 0.05; // 50ms buffer for first chunk
+        }
+
+        source.start(nextStartTimeRef.current);
+        nextStartTimeRef.current += audioBuffer.duration;
+      } catch (e) {
+        console.error("Audio playback error:", e);
       }
-
-      const audioBuffer = audioContextRef.current.createBuffer(1, float32Data.length, outputSampleRateRef.current);
-      audioBuffer.getChannelData(0).set(float32Data);
-
-      const source = audioContextRef.current.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(audioContextRef.current.destination);
-      source.onended = () => {
-        isPlaying.current = false;
-        playAudioFromQueue();
-      };
-      source.start();
-    } catch (e) {
-      console.error("Audio playback error:", e);
-      isPlaying.current = false;
-      playAudioFromQueue();
     }
   }, []);
 
   const initAudio = useCallback(async () => {
     try {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      // Force 16kHz for input as required by Gemini Live
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({
+        sampleRate: 16000,
+      });
       if (audioContextRef.current.state === 'suspended') {
         await audioContextRef.current.resume();
       }
-      streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          sampleRate: 16000,
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+        }
+      });
 
       await audioContextRef.current.audioWorklet.addModule('/audio-processor.js');
 
@@ -84,7 +94,7 @@ const LiveCallDashboard = () => {
 
       processorRef.current.port.onmessage = (event) => {
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && !isMutedRef.current) {
-          const pcmData = new Int16Array(event.data.buffer);
+          const pcmData = new Int16Array(event.data);
           const uint8Array = new Uint8Array(pcmData.buffer);
           let binary = '';
           for (let i = 0; i < uint8Array.length; i++) {
@@ -93,10 +103,10 @@ const LiveCallDashboard = () => {
           const base64Data = btoa(binary);
 
           wsRef.current.send(JSON.stringify({
-            realtimeInput: {
-              mediaChunks: [{
-                mimeType: `audio/pcm;rate=${event.data.sampleRate}`,
-                data: base64Data
+            realtime_input: {
+              media_chunks: [{
+                data: base64Data,
+                mime_type: "audio/pcm;rate=16000"
               }]
             }
           }));
@@ -134,17 +144,17 @@ const LiveCallDashboard = () => {
         const setupMessage = {
           setup: {
             model: "models/gemini-2.5-flash-native-audio-preview-12-2025",
-            generationConfig: {
-              responseModalities: ["AUDIO"],
-              speechConfig: {
-                voiceConfig: {
-                  prebuiltVoiceConfig: {
-                    voiceName: "Kore"
+            generation_config: {
+              response_modalities: ["AUDIO"],
+              speech_config: {
+                voice_config: {
+                  prebuilt_voice_config: {
+                    voice_name: "Kore"
                   }
                 }
               },
             },
-            systemInstruction: {
+            system_instruction: {
               parts: [{ text: "Bertindaklah sebagai Dosen Pembimbing Akademik EduSpaceAI yang bijak, responsif, dan edukatif bernama Prof. Kore. Jawablah langsung menggunakan bahasa suara yang natural." }]
             }
           }
@@ -171,20 +181,25 @@ const LiveCallDashboard = () => {
             playAudioFromQueue();
           } else {
             const message = JSON.parse(event.data);
+            const serverContent = message.server_content || message.serverContent;
 
-            if (message.serverContent?.modelTurn?.parts) {
-              const audioPart = message.serverContent.modelTurn.parts.find((part) => {
-                const inlineData = part.inlineData;
-                return inlineData?.data && inlineData?.mimeType?.toLowerCase().startsWith('audio/');
+            if (serverContent?.model_turn?.parts || serverContent?.modelTurn?.parts) {
+              const parts = serverContent?.model_turn?.parts || serverContent?.modelTurn?.parts;
+              const audioPart = parts.find((part) => {
+                const inlineData = part.inline_data || part.inlineData;
+                const mimeType = inlineData?.mime_type || inlineData?.mimeType;
+                return inlineData?.data && mimeType?.toLowerCase().startsWith('audio/');
               });
+
               if (audioPart) {
-                const mimeType = audioPart.inlineData.mimeType;
+                const inlineData = audioPart.inline_data || audioPart.inlineData;
+                const mimeType = inlineData.mime_type || inlineData.mimeType;
                 const rateMatch = mimeType.match(/rate=(\d+)/);
                 if (rateMatch) {
                   outputSampleRateRef.current = parseInt(rateMatch[1], 10);
                 }
 
-                const binaryString = atob(audioPart.inlineData.data);
+                const binaryString = atob(inlineData.data);
                 const len = binaryString.length;
                 let bytes = new Uint8Array(len);
                 for (let i = 0; i < len; i++) {
