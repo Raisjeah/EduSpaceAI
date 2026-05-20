@@ -103,10 +103,10 @@ const LiveCallDashboard = () => {
           const base64Data = btoa(binary);
 
           wsRef.current.send(JSON.stringify({
-            realtime_input: {
-              media_chunks: [{
+            realtimeInput: {
+              mediaChunks: [{
                 data: base64Data,
-                mime_type: "audio/pcm;rate=16000"
+                mimeType: "audio/pcm;rate=16000"
               }]
             }
           }));
@@ -144,17 +144,17 @@ const LiveCallDashboard = () => {
         const setupMessage = {
           setup: {
             model: "models/gemini-2.5-flash-native-audio-preview-12-2025",
-            generation_config: {
-              response_modalities: ["AUDIO"],
-              speech_config: {
-                voice_config: {
-                  prebuilt_voice_config: {
-                    voice_name: "Kore"
+            generationConfig: {
+              responseModalities: ["AUDIO"],
+              speechConfig: {
+                voiceConfig: {
+                  prebuiltVoiceConfig: {
+                    voiceName: "Kore"
                   }
                 }
               },
             },
-            system_instruction: {
+            systemInstruction: {
               parts: [{ text: "Bertindaklah sebagai Dosen Pembimbing Akademik EduSpaceAI yang bijak, responsif, dan edukatif bernama Prof. Kore. Jawablah langsung menggunakan bahasa suara yang natural." }]
             }
           }
