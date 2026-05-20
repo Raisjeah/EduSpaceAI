@@ -2,43 +2,33 @@
 class AudioProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
-    // Gemini Live expects input PCM16 at 16kHz for realtimeInput.mediaChunks.
-    this.targetSampleRate = 16000;
-    this.buffer = [];
+    this.bufferSize = 2048;
+    this.buffer = new Float32Array(this.bufferSize);
+    this.bufferIndex = 0;
   }
 
   process(inputs, outputs, parameters) {
     const input = inputs[0];
-    if (input.length > 0) {
-      const inputData = input[0]; // Assuming mono
-
-      // Simple accumulation
+    if (input && input.length > 0) {
+      const inputData = input[0];
       for (let i = 0; i < inputData.length; i++) {
-        this.buffer.push(inputData[i]);
-      }
-
-      // If we have enough data to resample
-      // sampleRate is the native browser sample rate
-      const ratio = sampleRate / this.targetSampleRate;
-
-      while (this.buffer.length > ratio * 128) { // Process in small chunks
-        const resampledData = new Int16Array(128);
-        for (let i = 0; i < 128; i++) {
-          const index = Math.floor(i * ratio);
-          // Convert Float32 to Int16
-          let s = this.buffer[index];
-          s = Math.max(-1, Math.min(1, s));
-          resampledData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+        this.buffer[this.bufferIndex++] = inputData[i];
+        if (this.bufferIndex >= this.bufferSize) {
+          this.sendAndResetBuffer();
         }
-
-        this.port.postMessage({
-          buffer: resampledData.buffer,
-          sampleRate: this.targetSampleRate,
-        }, [resampledData.buffer]);
-        this.buffer = this.buffer.slice(Math.floor(128 * ratio));
       }
     }
     return true;
+  }
+
+  sendAndResetBuffer() {
+    const int16Data = new Int16Array(this.bufferSize);
+    for (let i = 0; i < this.bufferSize; i++) {
+      let s = Math.max(-1, Math.min(1, this.buffer[i]));
+      int16Data[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+    }
+    this.port.postMessage(int16Data.buffer, [int16Data.buffer]);
+    this.bufferIndex = 0;
   }
 }
 
