@@ -2,6 +2,7 @@
 
 import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3, Mic, Trash2 } from 'lucide-react';
 import { useEffect, useState, useMemo, useRef } from 'react';
+import { useLayout } from '@/context/LayoutContext';
 import { getChatHistory, deleteChatHistory } from '@/app/actions/chatActions';
 import { logout } from '@/app/actions/authActions';
 import { getProjects } from '@/app/actions/projectActions';
@@ -11,10 +12,9 @@ import useAuth from '@/hooks/useAuth';
 import ProjectModal from './ProjectModal';
 
 export default function Sidebar({ 
-  isSidebarOpen, 
-  setIsSidebarOpen, 
   userId
 }) {
+  const { isSidebarOpen, setIsSidebarOpen } = useLayout();
   const [chatGroups, setChatGroups] = useState([]);
   const [projects, setProjects] = useState([]);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);

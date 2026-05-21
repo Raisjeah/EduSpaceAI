@@ -1,8 +1,9 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLayout } from '@/context/LayoutContext';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import LoadingScreen from '@/components/LoadingScreen';
@@ -10,7 +11,7 @@ import useAuth from '@/hooks/useAuth';
 import Toast from '@/components/Toast';
 
 export default function MainLayout({ children }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { isSidebarOpen, setIsSidebarOpen } = useLayout();
   const [hasMounted, setHasMounted] = useState(false);
 
   const pathname = usePathname();
@@ -87,14 +88,12 @@ export default function MainLayout({ children }) {
 
       <Suspense fallback={null}>
         <Sidebar
-          isSidebarOpen={isSidebarOpen}
-          setIsSidebarOpen={setIsSidebarOpen}
           userId={userId}
         />
       </Suspense>
 
-      <main className="flex-1 flex flex-col h-[100dvh] min-w-0 relative overflow-hidden">
-        <Header setIsSidebarOpen={setIsSidebarOpen} />
+      <main className={`flex-1 flex flex-col h-[100dvh] min-w-0 relative overflow-hidden transition-all duration-300 ${isSidebarOpen ? 'ml-[280px] md:ml-[280px]' : 'ml-0'}`}>
+        <Header />
 
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
           <AnimatePresence mode="wait">
