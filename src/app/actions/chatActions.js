@@ -213,10 +213,31 @@ export async function getChatHistory(projectId = null) {
         ? chat.lastMessage.substring(0, 30) + "..." 
         : chat.lastMessage,
       createdAt: chat.createdAt?.toString(),
+      projectId: projectId
     }));
   } catch (error) {
     console.error("Gagal ambil history:", error);
     return [];
+  }
+}
+
+// 5. Fungsi Hapus History Chat
+export async function deleteChatHistory(chatId) {
+  try {
+    const user = await getSessionUser();
+    if (!user) return { success: false, error: "Sesi berakhir." };
+    const userId = user._id.toString();
+
+    await dbConnect();
+    const result = await Chat.deleteMany({ chatId, userId });
+
+    return {
+      success: true,
+      deletedCount: result.deletedCount
+    };
+  } catch (error) {
+    console.error("Gagal menghapus history:", error);
+    return { success: false, error: "Gagal menghapus percakapan." };
   }
 }
 

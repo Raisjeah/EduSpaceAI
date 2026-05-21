@@ -4,13 +4,35 @@ import { Menu, User, Sparkles, ArrowRight } from 'lucide-react';
 import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';
 import { useChat } from '@/context/ChatContext';
+import { useEffect, useState } from 'react';
 
 export default function Header({ setIsSidebarOpen }) {
   const { userId, user } = useAuth();
   const { activeChatTitle } = useChat();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = (e) => {
+      // Listen to scroll events on the chat container (if it exists)
+      const target = e.target;
+      if (target.classList && target.classList.contains('custom-scrollbar')) {
+        setIsScrolled(target.scrollTop > 10);
+      } else {
+        const scrollY = window.scrollY;
+        setIsScrolled(scrollY > 10);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    return () => window.removeEventListener('scroll', handleScroll, { capture: true });
+  }, []);
 
   return (
-    <header className="flex justify-between items-center p-4 sticky top-0 z-20 bg-white dark:bg-[#0F0F0F] border-b border-slate-200 dark:border-[#1E1E1E] flex-none transition-colors duration-200">
+    <header className={`flex justify-between items-center p-4 sticky top-0 z-50 transition-all duration-300 ${
+      isScrolled
+        ? 'bg-white/70 dark:bg-[#0F0F0F]/70 backdrop-blur-md shadow-md border-b border-slate-200/50 dark:border-white/5'
+        : 'bg-transparent border-transparent'
+    } flex-none`}>
       <div className="flex items-center gap-3 min-w-0">
         {!userId ? (
           <Link href="/" className="flex items-center gap-2">
@@ -25,11 +47,14 @@ export default function Header({ setIsSidebarOpen }) {
           </Link>
         ) : (
           <>
-            <button onClick={() => setIsSidebarOpen(true)} className="text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors shrink-0">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-neutral-900/5 dark:bg-white/5 hover:bg-neutral-900/10 dark:hover:bg-white/10 text-slate-600 dark:text-gray-400 transition-all shrink-0"
+            >
               <Menu size={20} />
             </button>
             <div className="flex flex-col min-w-0">
-               <h1 className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[120px] sm:max-w-[200px] md:max-w-[300px]">
+               <h1 className={`text-[12px] font-medium text-slate-500 dark:text-gray-400 truncate max-w-[120px] sm:max-w-[200px] md:max-w-[300px] transition-all duration-500 ${isScrolled ? 'opacity-0 -translate-y-2' : 'opacity-100 translate-y-0'}`}>
                  {activeChatTitle}
                </h1>
             </div>

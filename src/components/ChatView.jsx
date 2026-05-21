@@ -62,6 +62,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
   const [thoughtTraces, setThoughtTraces] = useState([]);
+  const [dynamicStatus, setDynamicStatus] = useState("Dosen AI sedang berpikir...");
+  const statusIntervalRef = useRef(null);
   const [upgradeModal, setUpgradeModal] = useState({ isOpen: false, feature: '' });
   const [isLoadingChat, setIsLoadingChat] = useState(false);
   const chatEndRef = useRef(null);
@@ -173,6 +175,37 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     const textToSend = overrideInput || input;
     if ((!textToSend.trim() && !selectedFile) || (isPending && !isAutoTrigger)) return;
 
+    // --- Dynamic Status Setup ---
+    const presets = {
+      academic: ["Membaca file referensi...", "Menganalisis bab terkait...", "Menyusun struktur penjelasan...", "Memfinalisasi materi akademik..."],
+      search: ["Membuka mesin pencari...", "Menjelajahi situs terkait...", "Menyaring informasi valid...", "Merangkum hasil penelusuran..."],
+      coding: ["Membaca baris kode...", "Menganalisis logika fungsi...", "Melacak potensi bug...", "Menyusun perbaikan kode..."],
+      default: ["Menerima pesan...", "Memikirkan jawaban terbaik...", "Menyusun respons..."]
+    };
+
+    let selectedPreset = presets.default;
+    const lowerInput = textToSend.toLowerCase();
+    if (/bab|skripsi|materi|kuliah|akademik|tugas/.test(lowerInput)) {
+      selectedPreset = presets.academic;
+    } else if (/cari|search|website|link|googling|internet/.test(lowerInput) || project?.agentId === 'deep-search') {
+      selectedPreset = presets.search;
+    } else if (/kode|code|bug|sql|error|function|script|coding/.test(lowerInput)) {
+      selectedPreset = presets.coding;
+    }
+
+    let statusIndex = 0;
+    setDynamicStatus(selectedPreset[0]);
+    if (statusIntervalRef.current) clearInterval(statusIntervalRef.current);
+
+    statusIntervalRef.current = setInterval(() => {
+      statusIndex++;
+      if (statusIndex < selectedPreset.length) {
+        setDynamicStatus(selectedPreset[statusIndex]);
+      } else {
+        clearInterval(statusIntervalRef.current);
+      }
+    }, 2000);
+
     if (!isAutoTrigger) {
       const userMessage = {
         role: 'user',
@@ -222,8 +255,10 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         }
 
         // --- TYPEWRITER EFFECT ---
+        if (statusIntervalRef.current) clearInterval(statusIntervalRef.current);
         runTypewriter(result.chatId, result.aiResponse);
       } else {
+        if (statusIntervalRef.current) clearInterval(statusIntervalRef.current);
         setIsThinking(false);
         if (result.error?.includes('Batas')) {
           setUpgradeModal({ isOpen: true, feature: 'Pesan Harian' });
@@ -283,8 +318,32 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
   const agentTheme = project ? getAgentTheme(project.agentId) : getAgentTheme('default');
 
+  const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
+  const [isFooterScrolled, setIsFooterScrolled] = useState(false);
+  const chatContainerRef = useRef(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!chatContainerRef.current) return;
+      const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+
+      setIsHeaderScrolled(scrollTop > 20);
+      setIsFooterScrolled(scrollTop + clientHeight < scrollHeight - 20);
+    };
+
+    const currentRef = chatContainerRef.current;
+    if (currentRef) {
+      currentRef.addEventListener('scroll', handleScroll);
+      // Initial check
+      handleScroll();
+    }
+    return () => {
+      if (currentRef) currentRef.removeEventListener('scroll', handleScroll);
+    };
+  }, [messages]);
+
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-[#0F0F0F] overflow-hidden transition-colors duration-200">
+    <div className="flex flex-col h-[100dvh] bg-white dark:bg-[#0F0F0F] overflow-hidden transition-colors duration-200">
       <UpgradeModal
         isOpen={upgradeModal.isOpen}
         onClose={() => setUpgradeModal({ ...upgradeModal, isOpen: false })}
@@ -360,8 +419,11 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             </p>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <div className="max-w-4xl mx-auto w-full pt-4 md:pt-8 pb-[120px] md:pb-[140px] px-4 sm:px-6 space-y-8 flex-1 pb-[env(safe-area-inset-bottom)]">
+          <div
+            ref={chatContainerRef}
+            className="flex-1 overflow-y-auto custom-scrollbar"
+          >
+            <div className="max-w-4xl mx-auto w-full pt-4 md:pt-12 pb-[160px] md:pb-[180px] px-4 sm:px-6 space-y-8 flex-1">
               {messages.map((msg, idx) => (
                 <AiMessage
                   key={msg._id || idx}
@@ -381,7 +443,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
               )}
               {(isThinking || isUploading) && (
                 <div className="px-1 flex flex-col gap-2">
-                  <ThinkingIndicator />
+                  <ThinkingIndicator status={dynamicStatus} />
                   {isUploading && (
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800/30 rounded-lg w-fit animate-pulse">
                       <FileText size={12} className="text-indigo-500" />
@@ -395,7 +457,11 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           </div>
         )}
       </div>
-      <div className="p-4 md:p-6 bg-gradient-to-t from-white dark:from-[#0F0F0F] via-white dark:via-[#0F0F0F] to-transparent flex-none">
+      <div className={`fixed bottom-0 left-0 right-0 md:left-[280px] p-4 md:p-6 transition-all duration-300 z-30 ${
+        isFooterScrolled
+          ? 'bg-white/70 dark:bg-[#0F0F0F]/70 backdrop-blur-md shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] border-t border-slate-200/50 dark:border-white/5'
+          : 'bg-transparent border-transparent'
+      }`}>
         <div className="max-w-4xl mx-auto flex flex-col gap-3">
           <div className="flex justify-center">
             <AnimatePresence>
@@ -567,9 +633,6 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
         )}
       </AnimatePresence>
 
-      <div className="flex items-center px-1 mb-1.5">
-        {modelSelector}
-      </div>
       <div className="relative liquid-glass rounded-2xl p-2 flex items-end gap-1 focus-within:border-indigo-500/50 transition-all shadow-2xl">
         <div className="relative">
           <AnimatePresence>
@@ -640,22 +703,25 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           placeholder="Tanya apa saja ke Dosen AI-mu..."
           className="flex-1 bg-transparent border-none outline-none py-2.5 px-3 text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
         />
-        <Link
-          href="/chat/live"
-          className="w-10 h-10 rounded-xl flex items-center justify-center bg-slate-200 dark:bg-[#2A2A2A] text-slate-500 dark:text-gray-400 hover:bg-indigo-500/10 hover:text-indigo-500 transition-all"
-          title="Voice Call (Live)"
-        >
-          <Mic size={18} />
-        </Link>
-        <button
-          onClick={(e) => { e.preventDefault(); handleSend(); }}
-          disabled={disabled || (!input.trim() && !selectedFile)}
-          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-            (input.trim() || selectedFile) && !disabled ? 'bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/40 hover:scale-105' : 'bg-white/10 text-slate-400 dark:text-gray-600'
-          }`}
-        >
-          <ArrowUp size={18} />
-        </button>
+        <div className="flex items-center gap-1">
+          {modelSelector}
+          <Link
+            href="/chat/live"
+            className="w-9 h-9 rounded-xl flex items-center justify-center bg-neutral-900/5 dark:bg-white/5 text-slate-500 dark:text-gray-400 hover:bg-indigo-500/10 hover:text-indigo-500 transition-all"
+            title="Voice Call (Live)"
+          >
+            <Mic size={16} />
+          </Link>
+          <button
+            onClick={(e) => { e.preventDefault(); handleSend(); }}
+            disabled={disabled || (!input.trim() && !selectedFile)}
+            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+              (input.trim() || selectedFile) && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40 hover:scale-105' : 'bg-white/5 text-slate-400 dark:text-gray-600'
+            }`}
+          >
+            <ArrowUp size={16} />
+          </button>
+        </div>
       </div>
     </div>
   );
