@@ -6,6 +6,7 @@ import useAuth from '@/hooks/useAuth';
 import { createTransaction } from '@/app/actions/subscriptionActions';
 import { Check, Sparkles, Zap, Crown, ShieldCheck, PartyPopper } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import FloatingOrbs from '@/components/FloatingOrbs';
 
 const plans = [
   {
@@ -146,15 +147,16 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-white dark:bg-[#0F0F0F] py-12 px-6 transition-colors">
+    <div className="flex-1 overflow-y-auto bg-transparent py-12 px-6 transition-colors relative">
+      <FloatingOrbs />
       <AnimatePresence>
         {showSuccessModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white dark:bg-[#1A1A1A] rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border border-slate-200 dark:border-white/10"
+              className="liquid-glass rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl"
             >
               <div className="w-20 h-20 bg-green-100 dark:bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
                 <PartyPopper size={40} className="text-green-600 dark:text-green-500" />
@@ -196,10 +198,10 @@ export default function PricingPage() {
         {plans.map((plan) => (
           <div
             key={plan.id}
-            className={`relative flex flex-col p-8 rounded-3xl border transition-all ${
+            className={`relative flex flex-col p-8 rounded-3xl transition-all ${
               plan.recommended
-                ? 'border-indigo-600 bg-indigo-50/30 dark:bg-indigo-600/5 shadow-xl scale-105 z-10'
-                : 'border-slate-200 dark:border-[#2A2A2A] bg-white dark:bg-[#151515]'
+                ? 'bg-gradient-to-br from-indigo-600/20 to-indigo-500/10 border-indigo-500 shadow-2xl scale-105 z-10 backdrop-blur-xl'
+                : 'liquid-glass'
             }`}
           >
             {plan.recommended && (
@@ -253,11 +255,11 @@ export default function PricingPage() {
         ))}
       </div>
 
-      <div className="mt-20 max-w-4xl mx-auto">
+      <div className="mt-20 max-w-4xl mx-auto relative z-10">
         <h2 className="text-2xl font-bold text-center mb-8 text-slate-900 dark:text-white">Perbandingan Fitur</h2>
-        <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-[#2A2A2A]">
+        <div className="overflow-hidden rounded-2xl liquid-glass">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 dark:bg-[#1A1A1A] border-b border-slate-200 dark:border-[#2A2A2A]">
+            <thead className="bg-white/5 border-b border-white/10">
               <tr>
                 <th className="px-6 py-4 font-bold text-slate-900 dark:text-white">Fitur</th>
                 <th className="px-6 py-4 font-bold text-slate-900 dark:text-white text-center">FREE</th>

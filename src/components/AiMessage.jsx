@@ -115,7 +115,7 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
     return (
       <div className="w-full flex justify-end">
         <div className="w-fit max-w-[85%] flex flex-row-reverse gap-4">
-          <div className="p-4 rounded-2xl bg-indigo-600/10 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 backdrop-blur-md text-slate-800 dark:text-white rounded-tr-none leading-relaxed transition-all">
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/10 backdrop-blur-xl border border-white/20 text-slate-800 dark:text-white rounded-tr-none leading-relaxed transition-all shadow-lg">
             <div className="markdown-content prose dark:prose-invert prose-sm max-w-none leading-relaxed prose-p:my-1 prose-headings:mb-2 prose-headings:mt-4">
               <ReactMarkdown
                 remarkPlugins={[remarkMath]}
@@ -147,7 +147,7 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
       <div className="w-full max-w-none flex flex-col">
         <div className="py-6 w-full leading-relaxed transition-all">
           {imageData ? (
-            <div className="relative group rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-lg max-w-2xl">
+            <div className="relative group rounded-2xl overflow-hidden liquid-glass shadow-2xl max-w-2xl">
               <img
                 src={`data:${imageData.mimeType};base64,${imageData.base64Data}`}
                 alt="AI Generated"
@@ -196,14 +196,14 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
         <div className="flex items-center gap-2 mt-4 ml-0.5 animate-in fade-in duration-500">
           <button
             onClick={() => { setLiked(!liked); if (!liked) setDisliked(false); }}
-            className={`p-1.5 rounded-lg transition-colors ${liked ? 'text-indigo-500 bg-indigo-500/10' : 'text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-[#1E1E1E]'}`}
+            className={`p-1.5 rounded-lg transition-all ${liked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'}`}
             title="Suka"
           >
             <ThumbsUp size={16} />
           </button>
           <button
             onClick={() => { setDisliked(!disliked); if (!disliked) setLiked(false); }}
-            className={`p-1.5 rounded-lg transition-colors ${disliked ? 'text-indigo-500 bg-indigo-500/10' : 'text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-[#1E1E1E]'}`}
+            className={`p-1.5 rounded-lg transition-all ${disliked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'}`}
             title="Tidak Suka"
           >
             <ThumbsDown size={16} />
@@ -212,7 +212,7 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
             <div className="flex items-center gap-2">
               <button
                 onClick={handleCopy}
-                className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-[#1E1E1E] transition-colors flex items-center gap-1.5"
+                className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent transition-all flex items-center gap-1.5"
                 title="Salin Pesan"
               >
                 {copied ? (
@@ -228,10 +228,10 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
               <button
                 onClick={handleReadAloud}
                 disabled={isLoadingAudio}
-                className={`p-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
+                className={`p-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                   isPlaying
-                    ? 'text-indigo-500 bg-indigo-500/10'
-                    : 'text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-[#1E1E1E]'
+                    ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30'
+                    : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'
                 }`}
                 title={isPlaying ? "Berhenti" : "Dengarkan"}
               >

@@ -11,6 +11,16 @@ module.exports = {
       screens: {
         'xs': '375px',
       },
+      backdropBlur: {
+        'xs': '2px',
+      },
+      colors: {
+        glass: {
+          light: 'rgba(255, 255, 255, 0.1)',
+          dark: 'rgba(0, 0, 0, 0.2)',
+          border: 'rgba(255, 255, 255, 0.15)',
+        },
+      },
       animation: {
         'shimmer': 'shimmer 2s linear infinite',
         'liquid-flow': 'liquid-flow 12s ease-in-out infinite',
