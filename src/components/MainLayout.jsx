@@ -81,7 +81,7 @@ export default function MainLayout({ children }) {
       {/* Overlay Sidebar */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
+          className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -92,7 +92,7 @@ export default function MainLayout({ children }) {
         />
       </Suspense>
 
-      <main className={`flex-1 flex flex-col h-[100dvh] min-w-0 relative overflow-hidden transition-all duration-300 ${isSidebarOpen ? 'ml-[280px] md:ml-[280px]' : 'ml-0'}`}>
+      <main className={`flex-1 flex flex-col h-[100dvh] min-w-0 relative overflow-hidden transition-all duration-300 ${isSidebarOpen ? 'md:ml-[280px]' : 'ml-0'}`}>
         <Header />
 
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">

@@ -461,13 +461,9 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       </div>
       <div
         className={`fixed bottom-0 right-0 p-4 md:p-6 transition-all duration-300 z-30 ${
-          isSidebarOpen ? 'left-[280px] md:left-[280px]' : 'left-0'
-        } ${
-        isFooterScrolled
-          ? 'bg-white/70 dark:bg-[#0F0F0F]/70 backdrop-blur-md shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] border-t border-slate-200/50 dark:border-white/5'
-          : 'bg-transparent border-transparent'
-      }`}>
-        <div className="max-w-4xl mx-auto flex flex-col gap-3">
+          isSidebarOpen ? 'left-0 md:left-[280px]' : 'left-0'
+        } bg-transparent pointer-events-none`}>
+        <div className="max-w-4xl mx-auto flex flex-col gap-3 pointer-events-auto">
           <div className="flex justify-center">
             <AnimatePresence>
               {isTyping && (
@@ -476,7 +472,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
                   onClick={() => stopTypewriter(currentId)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[11px] font-bold text-slate-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 hover:border-red-200 transition-all shadow-sm mb-2"
+                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[11px] font-bold text-slate-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 hover:border-red-200 transition-all shadow-sm mb-2 pointer-events-auto"
                 >
                   <Square size={12} fill="currentColor" /> Berhenti Menghasilkan
                 </motion.button>
@@ -638,7 +634,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
         )}
       </AnimatePresence>
 
-      <div className="relative bg-transparent border border-slate-200 dark:border-white/10 rounded-2xl p-1.5 flex items-end gap-1 focus-within:border-indigo-500/30 transition-all shadow-sm">
+      <div className="relative bg-white dark:bg-[#151515] border border-slate-200 dark:border-white/10 rounded-[24px] p-1.5 flex items-end gap-1 focus-within:border-indigo-500/30 transition-all shadow-2xl pointer-events-auto">
         <div className="relative">
           <AnimatePresence>
             {showNudge && !isActionSheetOpen && (
@@ -712,10 +708,14 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           {modelSelector}
           <Link
             href="/chat/live"
-            className="w-9 h-9 rounded-xl flex items-center justify-center bg-neutral-900/5 dark:bg-white/5 text-slate-500 dark:text-gray-400 hover:bg-indigo-500/10 hover:text-indigo-500 transition-all"
+            className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-105 transition-all shadow-md"
             title="Voice Call (Live)"
           >
-            <Mic size={16} />
+            <div className="flex items-center gap-0.5">
+              <div className="w-0.5 h-2.5 bg-current rounded-full" />
+              <div className="w-0.5 h-4 bg-current rounded-full" />
+              <div className="w-0.5 h-2.5 bg-current rounded-full" />
+            </div>
           </Link>
           <button
             onClick={(e) => { e.preventDefault(); handleSend(); }}
