@@ -161,7 +161,9 @@ export default function Sidebar({
   return (
     <>
       <aside className={`
-        fixed top-0 left-0 h-full z-50 bg-white dark:bg-[#0F0F0F] border-r border-slate-200 dark:border-[#1E1E1E]
+        fixed top-0 left-0 h-full z-50
+        bg-gradient-to-b from-white/80 to-white/60 dark:from-black/80 dark:to-black/60
+        backdrop-blur-2xl border-r border-white/20 dark:border-white/10
         transform transition-transform duration-300 ease-in-out flex-shrink-0
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         w-[85vw] max-w-[280px] sm:w-[280px] transition-colors duration-200
@@ -208,7 +210,7 @@ export default function Sidebar({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari history..."
-                className="w-full bg-slate-100 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-xl py-2 pl-8 pr-3 sm:pr-4 text-[11px] sm:text-[12px] text-slate-900 dark:text-white outline-none focus:border-indigo-500/50 transition-colors"
+                className="w-full liquid-glass rounded-xl py-2 pl-8 pr-3 sm:pr-4 text-[11px] sm:text-[12px] text-slate-900 dark:text-white outline-none focus:border-indigo-500/50 transition-all"
               />
             </div>
           </div>
@@ -220,8 +222,8 @@ export default function Sidebar({
               onClick={closeSidebar}
               className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all text-[12px] mb-2 ${
                 pathname === '/tools'
-                ? 'bg-slate-100 dark:bg-[#1A1A1A] text-slate-900 dark:text-white'
-                : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1A1A1A]'
+                ? 'bg-white/20 dark:bg-white/10 backdrop-blur-md border border-white/20 text-slate-900 dark:text-white shadow-sm'
+                : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/10'
               }`}
             >
               <Wrench size={16} /> <span className="font-medium">Tools & File Editor</span>
@@ -232,8 +234,8 @@ export default function Sidebar({
               onClick={closeSidebar}
               className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all text-[12px] mb-2 ${
                 pathname === '/chat/live'
-                ? 'bg-slate-100 dark:bg-[#1A1A1A] text-slate-900 dark:text-white'
-                : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1A1A1A]'
+                ? 'bg-white/20 dark:bg-white/10 backdrop-blur-md border border-white/20 text-slate-900 dark:text-white shadow-sm'
+                : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/10'
               }`}
             >
               <Mic size={16} /> <span className="font-medium">Voice Call (Live)</span>
@@ -256,7 +258,7 @@ export default function Sidebar({
                         onClick={closeSidebar}
                         className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[11px] transition-all border-l-2 ${
                           isActive
-                          ? theme.active
+                          ? `${theme.active} backdrop-blur-md shadow-sm`
                           : `text-slate-500 dark:text-gray-400 ${theme.hover} hover:text-slate-900 dark:hover:text-gray-200 border-transparent`
                         }`}
                       >
@@ -310,12 +312,12 @@ export default function Sidebar({
           </nav>
 
           {/* User Profile or Login Button */}
-          <div className="mt-auto pt-4 border-t border-slate-200 dark:border-[#1E1E1E]">
+          <div className="mt-auto pt-4 border-t border-white/10">
             {userId ? (
-              <div className="space-y-4 px-2">
-                <div className="flex items-center justify-between">
+              <div className="space-y-4 px-2 py-3 bg-white/5 dark:bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10">
+                <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-inner overflow-hidden">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg overflow-hidden border border-white/20">
                       {user?.image ? (
                         <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
                       ) : (
@@ -324,7 +326,7 @@ export default function Sidebar({
                     </div>
                     <div className="flex flex-col">
                         <span className="text-[12px] font-bold text-slate-800 dark:text-gray-200 truncate max-w-[120px]">{user?.name || 'Anon'}</span>
-                        <span className="text-[9px] text-slate-400 dark:text-gray-500">Free Account</span>
+                        <span className="text-[9px] font-medium text-indigo-500 dark:text-indigo-400">{user?.current_plan || 'FREE'}</span>
                     </div>
                   </div>
                 </div>

@@ -16,6 +16,7 @@ import {
   Minus,
 } from 'lucide-react';
 import Footer from '@/components/Footer';
+import FloatingOrbs from './FloatingOrbs';
 
 const fadeUp = {
   initial: { opacity: 0, y: 16 },
@@ -157,28 +158,26 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto custom-scrollbar bg-white dark:bg-[#0F0F0F] text-slate-900 dark:text-gray-200">
+    <div className="flex flex-col h-full overflow-y-auto custom-scrollbar bg-transparent text-slate-900 dark:text-gray-200">
       {/* Hero */}
       <section className="relative flex-none pt-20 md:pt-32 pb-20 md:pb-28 px-6 overflow-hidden">
-        {/* Subtle indigo glow */}
-        <div className="absolute inset-0 -z-10 pointer-events-none">
-          <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[640px] h-[640px] bg-indigo-500/[0.06] dark:bg-indigo-500/[0.08] blur-[140px] rounded-full" />
-        </div>
+        {/* Animated Gradient Background with Floating Orbs */}
+        <FloatingOrbs />
 
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="text-center"
+            className="text-center liquid-glass p-8 md:p-12 rounded-[32px] mb-12"
           >
-            <div className="text-[11px] font-medium text-slate-400 dark:text-gray-500 tracking-[0.2em] uppercase mb-6">
+            <div className="text-[11px] font-medium text-indigo-500 dark:text-indigo-400 tracking-[0.2em] uppercase mb-6">
               /asisten riset akademik
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-[-0.02em] leading-[1.05] text-slate-900 dark:text-white mb-6">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-[-0.02em] leading-[1.05] text-slate-900 dark:text-white mb-6">
               Riset akademik yang lebih terstruktur, dari draf sampai sidang.
             </h1>
-            <p className="text-base md:text-lg text-slate-500 dark:text-gray-400 leading-relaxed max-w-2xl mx-auto mb-10">
+            <p className="text-base md:text-lg text-slate-500 dark:text-gray-400 leading-relaxed max-w-2xl mx-auto">
               Agen AI yang memahami konteks dokumenmu, mencarikan referensi valid, dan menjaga gaya bahasa tetap sesuai kaidah.
             </p>
           </motion.div>
@@ -189,7 +188,7 @@ export default function LandingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1, ease: 'easeOut' }}
             onSubmit={handleSubmit}
-            className="relative rounded-2xl border border-slate-200 dark:border-[#1F1F1F] bg-white dark:bg-[#121212] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.04)] dark:shadow-none p-3"
+            className="relative rounded-2xl border border-white/20 bg-white/10 dark:bg-black/20 backdrop-blur-xl shadow-2xl p-3"
           >
             <div className="flex flex-wrap gap-1.5 mb-3 px-1">
               {agentModes.map((mode) => (
@@ -197,10 +196,10 @@ export default function LandingPage() {
                   key={mode.id}
                   type="button"
                   onClick={() => setActiveMode(mode.id)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-300 ${
                     activeMode === mode.id
-                      ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20'
-                      : 'text-slate-500 dark:text-gray-500 border border-transparent hover:bg-slate-100 dark:hover:bg-[#1A1A1A]'
+                      ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
+                      : 'text-slate-500 dark:text-gray-400 border border-white/10 bg-white/5 hover:bg-white/10'
                   }`}
                 >
                   {mode.label}
@@ -219,7 +218,7 @@ export default function LandingPage() {
               <button
                 type="submit"
                 aria-label="Kirim pertanyaan"
-                className="w-9 h-9 flex-shrink-0 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center transition-colors"
+                className="w-9 h-9 flex-shrink-0 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 hover:scale-105 text-white flex items-center justify-center transition-all shadow-lg shadow-indigo-600/20"
               >
                 <ArrowUp size={16} />
               </button>
@@ -231,14 +230,14 @@ export default function LandingPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="mt-4 flex flex-wrap gap-2 justify-center"
+            className="mt-6 flex flex-wrap gap-2 justify-center"
           >
             {suggestedPrompts.map((p) => (
               <button
                 key={p}
                 type="button"
                 onClick={() => goToLoginWithPrompt(p)}
-                className="text-xs text-slate-500 dark:text-gray-400 px-3 py-1.5 rounded-full border border-slate-200 dark:border-[#1F1F1F] hover:border-indigo-500/30 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-500/5 transition-colors"
+                className="text-xs text-slate-600 dark:text-gray-300 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-indigo-500/30 transition-all"
               >
                 {p}
               </button>
@@ -250,18 +249,18 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3"
+            className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4"
           >
             <Link
               href="/auth/login"
-              className="group inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-sm font-medium transition-colors w-full sm:w-auto"
+              className="group inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-tr from-indigo-600 to-indigo-500 hover:shadow-indigo-500/40 text-white rounded-full text-sm font-bold transition-all w-full sm:w-auto shadow-xl"
             >
               Mulai gratis
-              <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
               href="/pricing"
-              className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 text-indigo-600 dark:text-indigo-400 bg-indigo-500/[0.06] hover:bg-indigo-500/10 border border-indigo-500/20 rounded-full text-sm font-medium transition-colors w-full sm:w-auto"
+              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 text-slate-700 dark:text-white bg-white/5 dark:bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-sm font-bold transition-all w-full sm:w-auto hover:bg-white/20"
             >
               Lihat harga
             </Link>
@@ -288,18 +287,18 @@ export default function LandingPage() {
             </h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-slate-100 dark:bg-[#1A1A1A] border-t border-b border-slate-100 dark:border-[#1A1A1A]">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {capabilities.map((item, i) => (
               <motion.div
                 key={item.title}
                 {...fadeUp}
                 transition={{ ...fadeUp.transition, delay: i * 0.05 }}
-                className="bg-white dark:bg-[#0F0F0F] p-8 md:p-10"
+                className="liquid-glass p-8 md:p-10 rounded-[24px]"
               >
-                <div className="text-xs font-medium text-indigo-500/70 dark:text-indigo-400/70 tabular-nums mb-6">
+                <div className="text-xs font-bold text-indigo-500 dark:text-indigo-400 tabular-nums mb-6">
                   {String(i + 1).padStart(2, '0')}
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-3 leading-snug">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3 leading-snug">
                   {item.title}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed">
@@ -324,7 +323,7 @@ export default function LandingPage() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {agents.map((agent, i) => {
               const Icon = [BookOpen, Search, Edit3, Workflow][i];
               return (
@@ -332,20 +331,20 @@ export default function LandingPage() {
                   key={agent.name}
                   {...fadeUp}
                   transition={{ ...fadeUp.transition, delay: i * 0.05 }}
-                  className="group p-8 rounded-2xl border border-slate-200 dark:border-[#1F1F1F] bg-white dark:bg-[#121212] hover:border-indigo-500/30 transition-colors"
+                  className="liquid-glass group p-8 rounded-[24px] hover:border-indigo-500/30 transition-all duration-300 hover:translate-y-[-4px]"
                 >
                   <div className="flex items-start justify-between mb-8">
-                    <div className="w-9 h-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                      <Icon size={16} strokeWidth={1.75} />
+                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                      <Icon size={20} strokeWidth={2} />
                     </div>
-                    <span className="text-[10px] font-medium text-slate-400 dark:text-gray-500 tracking-[0.15em] uppercase tabular-nums">
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-gray-500 tracking-[0.15em] uppercase tabular-nums">
                       0{i + 1}
                     </span>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
                     {agent.name}
                   </h3>
-                  <p className="text-xs text-slate-400 dark:text-gray-500 mb-4">
+                  <p className="text-xs font-medium text-indigo-500 dark:text-indigo-400/80 mb-4 uppercase tracking-wider">
                     {agent.role}
                   </p>
                   <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed">
@@ -401,24 +400,24 @@ export default function LandingPage() {
             </h2>
           </motion.div>
 
-          <div className="border-t border-slate-200 dark:border-[#1F1F1F]">
+          <div className="space-y-4">
             {faqs.map((faq, i) => {
               const isOpen = openFaq === i;
               return (
                 <div
                   key={faq.q}
-                  className="border-b border-slate-200 dark:border-[#1F1F1F]"
+                  className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden transition-all"
                 >
                   <button
                     type="button"
                     onClick={() => setOpenFaq(isOpen ? -1 : i)}
-                    className="w-full py-6 flex items-center justify-between gap-6 text-left group"
+                    className="w-full px-6 py-6 flex items-center justify-between gap-6 text-left group"
                   >
-                    <span className="text-base md:text-lg font-medium text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    <span className="text-base md:text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-500 transition-colors">
                       {faq.q}
                     </span>
-                    <span className={`flex-shrink-0 transition-colors ${isOpen ? 'text-indigo-500' : 'text-slate-400 dark:text-gray-500'}`}>
-                      {isOpen ? <Minus size={18} strokeWidth={1.5} /> : <Plus size={18} strokeWidth={1.5} />}
+                    <span className={`flex-shrink-0 transition-all duration-300 ${isOpen ? 'text-indigo-500 rotate-180' : 'text-slate-400 dark:text-gray-500'}`}>
+                      {isOpen ? <Minus size={18} strokeWidth={2} /> : <Plus size={18} strokeWidth={2} />}
                     </span>
                   </button>
                   <AnimatePresence initial={false}>
@@ -427,10 +426,9 @@ export default function LandingPage() {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2, ease: 'easeOut' }}
-                        className="overflow-hidden"
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
                       >
-                        <p className="pb-6 pr-12 text-sm md:text-base text-slate-500 dark:text-gray-400 leading-relaxed">
+                        <p className="px-6 pb-6 text-sm md:text-base text-slate-500 dark:text-gray-400 leading-relaxed">
                           {faq.a}
                         </p>
                       </motion.div>
@@ -444,27 +442,25 @@ export default function LandingPage() {
       </section>
 
       {/* Closing CTA */}
-      <section className="relative flex-none py-24 md:py-32 px-6 border-t border-slate-100 dark:border-[#1A1A1A] overflow-hidden">
-        <div className="absolute inset-0 -z-10 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] bg-indigo-500/[0.06] dark:bg-indigo-500/[0.08] blur-[140px] rounded-full" />
-        </div>
-        <motion.div {...fadeUp} className="max-w-3xl mx-auto text-center">
-          <div className="text-[11px] font-medium text-indigo-500/80 dark:text-indigo-400/80 tracking-[0.2em] uppercase mb-4">
+      <section className="relative flex-none py-24 md:py-32 px-6 overflow-hidden">
+        <FloatingOrbs />
+        <motion.div {...fadeUp} className="max-w-4xl mx-auto text-center liquid-glass p-12 md:p-20 rounded-[40px]">
+          <div className="text-[11px] font-bold text-indigo-500 dark:text-indigo-400 tracking-[0.2em] uppercase mb-6">
             /mulai sekarang
           </div>
-          <h2 className="text-3xl md:text-5xl font-semibold tracking-[-0.02em] text-slate-900 dark:text-white leading-tight mb-6">
+          <h2 className="text-3xl md:text-5xl font-bold tracking-[-0.02em] text-slate-900 dark:text-white leading-tight mb-8">
             Selesaikan riset berikutnya dengan lebih tenang.
           </h2>
-          <p className="text-base md:text-lg text-slate-500 dark:text-gray-400 max-w-xl mx-auto mb-10 leading-relaxed">
+          <p className="text-base md:text-lg text-slate-500 dark:text-gray-400 max-w-xl mx-auto mb-12 leading-relaxed">
             Buat akun gratis dan coba workspace EduSpaceAI dalam hitungan menit.
           </p>
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center">
             <Link
               href="/auth/login"
-              className="group inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-sm font-medium transition-colors"
+              className="group inline-flex items-center gap-3 px-10 py-4 bg-gradient-to-tr from-indigo-600 to-indigo-500 hover:shadow-indigo-500/40 text-white rounded-full text-base font-bold transition-all shadow-xl"
             >
-              Mulai gratis
-              <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              Mulai gratis sekarang
+              <ArrowUpRight size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
             </Link>
           </div>
         </motion.div>

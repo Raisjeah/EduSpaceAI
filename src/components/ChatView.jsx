@@ -10,6 +10,7 @@ import { getProjectDetails } from '@/app/actions/projectActions';
 import AiMessage from './AiMessage';
 import ThinkingIndicator from './ThinkingIndicator';
 import ModelSelector from './ModelSelector';
+import FloatingOrbs from './FloatingOrbs';
 import useAuth from '@/hooks/useAuth';
 import UpgradeModal from './UpgradeModal';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -277,7 +278,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       />
       {/* Project Header (If in project) */}
       {project && (
-        <div className={`px-4 md:px-6 py-3 border-b ${agentTheme.border} ${agentTheme.bg} flex items-center justify-between z-10 flex-none transition-colors duration-200`}>
+        <div className={`px-4 md:px-6 py-3 border-b ${agentTheme.border} bg-white/10 dark:bg-black/20 backdrop-blur-xl flex items-center justify-between z-10 flex-none transition-all`}>
           <div className="flex items-center gap-2 md:gap-4">
             <Link
               href="/"
@@ -326,8 +327,9 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             </div>
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6">
-            <div className="w-16 h-16 bg-indigo-600/20 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30">
+          <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 relative overflow-hidden">
+            <FloatingOrbs />
+            <div className="w-16 h-16 bg-indigo-600/20 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30 backdrop-blur-xl">
               <span className="text-2xl text-indigo-500">
                 {project ? '📂' : '🎓'}
               </span>
@@ -478,9 +480,9 @@ function SuggestionChip({ label, icon, onClick, isLink, theme }) {
   return (
     <Component
       onClick={onClick} 
-      className={`flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-xl text-[11px] text-slate-600 dark:text-gray-400 ${hoverText} ${hoverBorder} transition-all cursor-pointer w-full md:w-auto md:inline-flex`}
+      className={`flex items-center gap-2 px-4 py-2 bg-white/5 dark:bg-white/10 backdrop-blur-md border border-white/10 rounded-xl text-[11px] text-slate-600 dark:text-gray-300 ${hoverText} ${hoverBorder} transition-all cursor-pointer w-full md:w-auto md:inline-flex shadow-sm hover:shadow-md hover:bg-white/20`}
     >
-      {icon} <span className="truncate">{label}</span>
+      {icon} <span className="truncate font-medium">{label}</span>
     </Component>
   );
 }
@@ -532,7 +534,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute bottom-full left-0 mb-4 w-52 sm:w-56 max-w-[85vw] bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2A2A2A] rounded-2xl shadow-2xl p-2 z-50 backdrop-blur-xl bg-white/90 dark:bg-[#1A1A1A]/90"
+            className="absolute bottom-full left-0 mb-4 w-52 sm:w-56 max-w-[85vw] liquid-glass rounded-2xl shadow-2xl p-2 z-50"
           >
             <div className="flex flex-col gap-1">
               <button
@@ -576,7 +578,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
             initial={{ opacity: 0, y: 5, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 5, scale: 0.9 }}
-            className="flex items-center gap-3 mb-3 ml-1 p-2 bg-slate-50 dark:bg-[#1A1A1A] rounded-2xl w-fit border border-slate-200 dark:border-[#2A2A2A] shadow-sm group"
+            className="flex items-center gap-3 mb-3 ml-1 p-2 bg-white/10 dark:bg-black/20 backdrop-blur-md rounded-2xl w-fit border border-white/20 shadow-xl group"
           >
             {selectedFile.preview ? (
               <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 dark:border-[#333]">
@@ -601,7 +603,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
         )}
       </AnimatePresence>
 
-      <div className="relative bg-slate-100 dark:bg-[#1E1E1E] rounded-2xl p-2 flex items-end gap-1 border border-slate-200 dark:border-[#2A2A2A] focus-within:border-indigo-500/50 transition-all shadow-2xl">
+      <div className="relative liquid-glass rounded-2xl p-2 flex items-end gap-1 focus-within:border-indigo-500/50 transition-all shadow-2xl">
         <div className="relative">
           <AnimatePresence>
             {showNudge && !isActionSheetOpen && (
@@ -682,7 +684,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           onClick={(e) => { e.preventDefault(); handleSend(); }}
           disabled={disabled || (!input.trim() && !selectedFile)}
           className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-            (input.trim() || selectedFile) && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40' : 'bg-slate-200 dark:bg-[#2A2A2A] text-slate-400 dark:text-gray-600'
+            (input.trim() || selectedFile) && !disabled ? 'bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/40 hover:scale-105' : 'bg-white/10 text-slate-400 dark:text-gray-600'
           }`}
         >
           <ArrowUp size={18} />
