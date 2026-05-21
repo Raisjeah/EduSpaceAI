@@ -468,14 +468,10 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         userId={userId}
       />
       <div
-        className={`fixed bottom-0 right-0 p-4 md:p-6 transition-all duration-300 z-30 ${
+        className={`fixed bottom-0 right-0 p-4 md:p-6 transition-all duration-300 z-30 pointer-events-none ${
           isSidebarOpen ? 'left-0 md:left-[280px]' : 'left-0'
-        } ${
-        isFooterScrolled
-          ? 'bg-white/70 dark:bg-[#0F0F0F]/70 backdrop-blur-md shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] border-t border-slate-200/50 dark:border-white/5'
-          : 'bg-transparent border-transparent'
-      }`}>
-        <div className="max-w-4xl mx-auto flex flex-col gap-3">
+        }`}>
+        <div className="max-w-4xl mx-auto flex flex-col gap-3 pointer-events-auto">
           <div className="flex justify-center">
             <AnimatePresence>
               {isTyping && (
@@ -649,7 +645,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
         )}
       </AnimatePresence>
 
-      <div className="relative bg-transparent border border-slate-200 dark:border-white/10 rounded-2xl p-1.5 flex items-end gap-1 focus-within:border-indigo-500/30 transition-all shadow-sm">
+      <div className="relative bg-white dark:bg-[#151515] border border-slate-200 dark:border-white/10 rounded-[24px] p-1.5 flex items-end gap-1 focus-within:border-indigo-500/30 transition-all shadow-2xl">
         <div className="relative flex items-center">
           <AnimatePresence>
             {isToolsSheetOpen && (

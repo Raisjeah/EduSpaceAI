@@ -217,7 +217,7 @@ export default function Sidebar({
           </div>
 
           {/* Button New Chat / New Project */}
-          <div className="flex flex-col gap-0.5 mb-6">
+          <div className="flex flex-col gap-0.5 mb-3">
             <Link
               href="/"
               onClick={closeSidebar}

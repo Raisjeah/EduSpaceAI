@@ -17,8 +17,9 @@ export default function Header() {
     const handleScroll = (e) => {
       // Listen to scroll events on the chat container (if it exists)
       const target = e.target;
-      if (target.classList && target.classList.contains('custom-scrollbar')) {
-        setIsScrolled(target.scrollTop > 10);
+      const scrollable = target.closest('.custom-scrollbar');
+      if (scrollable) {
+        setIsScrolled(scrollable.scrollTop > 10);
       } else {
         const scrollY = window.scrollY;
         setIsScrolled(scrollY > 10);
