@@ -463,7 +463,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         className={`fixed bottom-0 right-0 p-4 md:p-6 transition-all duration-300 z-30 ${
           isSidebarOpen ? 'left-0 md:left-[280px]' : 'left-0'
         } bg-transparent pointer-events-none`}>
-        <div className="max-w-4xl mx-auto flex flex-col gap-3">
+        <div className="max-w-4xl mx-auto flex flex-col gap-3 pointer-events-auto">
           <div className="flex justify-center">
             <AnimatePresence>
               {isTyping && (
