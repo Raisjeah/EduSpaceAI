@@ -123,12 +123,21 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
                 components={{
                   code({ node, inline, className, children, ...props }) {
                     const match = /language-(\w+)/.exec(className || '');
-                    return !inline && match && match[1] === 'mermaid' ? (
+                    if (inline) {
+                      return (
+                        <code className={className} {...props}>
+                          {children}
+                        </code>
+                      );
+                    }
+                    return match && match[1] === 'mermaid' ? (
                       <Mermaid chart={String(children).replace(/\n$/, '')} />
                     ) : (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
+                      <div className="overflow-x-auto max-w-full">
+                        <code className={className} {...props}>
+                          {children}
+                        </code>
+                      </div>
                     );
                   }
                 }}
@@ -168,19 +177,28 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
               </div>
             </div>
           ) : (
-            <div className="markdown-content prose dark:prose-invert prose-base text-base max-w-none leading-relaxed">
+            <div className="markdown-content prose dark:prose-invert prose-sm md:prose-base max-w-none leading-relaxed">
               <ReactMarkdown
                 remarkPlugins={[remarkMath]}
                 rehypePlugins={[rehypeKatex]}
                 components={{
                   code({ node, inline, className, children, ...props }) {
                     const match = /language-(\w+)/.exec(className || '');
-                    return !inline && match && match[1] === 'mermaid' ? (
+                    if (inline) {
+                      return (
+                        <code className={className} {...props}>
+                          {children}
+                        </code>
+                      );
+                    }
+                    return match && match[1] === 'mermaid' ? (
                       <Mermaid chart={String(children).replace(/\n$/, '')} />
                     ) : (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
+                      <div className="overflow-x-auto max-w-full">
+                        <code className={className} {...props}>
+                          {children}
+                        </code>
+                      </div>
                     );
                   }
                 }}
