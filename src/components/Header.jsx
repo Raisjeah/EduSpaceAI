@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu, User, Sparkles, ArrowRight } from 'lucide-react';
+import { Menu, User, Sparkles, ArrowRight, Wrench } from 'lucide-react';
 import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';
 import { useChat } from '@/context/ChatContext';
@@ -77,13 +77,22 @@ export default function Header() {
           )}
 
           {userId && (
-            <Link
-              href="/pricing"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-500 text-xs font-bold hover:bg-amber-500/20 transition-all"
-            >
-              <Sparkles size={14} />
-              {user?.current_plan === 'FREE' ? 'Upgrade Pro' : user?.current_plan}
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/tools"
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-300 text-xs font-bold hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+              >
+                <Wrench size={14} />
+                Tools
+              </Link>
+              <Link
+                href="/pricing"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-500 text-xs font-bold hover:bg-amber-500/20 transition-all"
+              >
+                <Sparkles size={14} />
+                {user?.current_plan === 'FREE' ? 'Upgrade Pro' : user?.current_plan}
+              </Link>
+            </div>
           )}
 
           {userId && (

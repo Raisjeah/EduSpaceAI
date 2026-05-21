@@ -469,7 +469,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       />
       <div
         className={`fixed bottom-0 right-0 p-4 md:p-6 transition-all duration-300 z-30 ${
-          isSidebarOpen ? 'left-[280px] md:left-[280px]' : 'left-0'
+          isSidebarOpen ? 'left-0 md:left-[280px]' : 'left-0'
         } ${
         isFooterScrolled
           ? 'bg-white/70 dark:bg-[#0F0F0F]/70 backdrop-blur-md shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] border-t border-slate-200/50 dark:border-white/5'
