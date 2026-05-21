@@ -18,6 +18,20 @@ import Link from 'next/link';
 
 export default function ChatView({ userId, activeChatId, projectId }) {
   const { user } = useAuth();
+  const [greeting, setGreeting] = useState('');
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour >= 4 && hour < 11) {
+      setGreeting('Selamat pagi ☀️ Ada yang bisa EduSpaceAI bantu hari ini?');
+    } else if (hour >= 11 && hour < 15) {
+      setGreeting('Selamat siang 🌤️ Ada yang bisa EduSpaceAI bantu hari ini?');
+    } else if (hour >= 15 && hour < 18) {
+      setGreeting('Selamat sore 🌅 Ada yang bisa EduSpaceAI bantu hari ini?');
+    } else {
+      setGreeting('Selamat malam 🌙 Ada yang bisa EduSpaceAI bantu hari ini?');
+    }
+  }, []);
   const {
     chatData,
     setChatMessages,
@@ -328,72 +342,22 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           </div>
         ) : messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 relative overflow-hidden">
-            <FloatingOrbs />
+            <div className="hidden md:block">
+              <FloatingOrbs />
+            </div>
             <div className="w-16 h-16 bg-indigo-600/20 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30 backdrop-blur-xl">
               <span className="text-2xl text-indigo-500">
                 {project ? '📂' : '🎓'}
               </span>
             </div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2 text-center">
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-2 text-center px-4">
               {project ? project.name : 'EduSpaceAI'}
             </h1>
-            <p className="text-slate-600 dark:text-gray-400 mb-6 text-center max-w-sm">
+            <p className="text-slate-600 dark:text-gray-400 mb-6 text-center max-w-sm text-sm md:text-base px-4 font-medium">
               {project
                 ? `Sedang menggunakan agen ${getAgentName(project.agentId)} untuk membantumu di project ini.`
-                : 'Dosen pribadi bertenaga AI yang siap bantu skripsi, tugas, dan belajarmu.'}
+                : greeting}
             </p>
-            <div className="w-full max-w-2xl text-center">
-              {project?.agentId === 'deep-search' ? (
-                <div className="flex flex-wrap justify-center gap-3">
-                   <SuggestionChip theme={agentTheme} icon={<Search size={12}/>} label="Cari berita terbaru AI" onClick={() => handleSend("Apa berita terbaru tentang perkembangan AI minggu ini?")} />
-                   <SuggestionChip theme={agentTheme} icon={<Rocket size={12}/>} label="Tren Teknologi 2025" onClick={() => handleSend("Apa tren teknologi utama yang diprediksi untuk tahun 2025?")} />
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 text-left">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 px-1">
-                      <GraduationCap size={14} className="text-indigo-500" />
-                      <p className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest">Skripsi & Riset</p>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <SuggestionChip theme={agentTheme} label="Bimbingan Skripsi" onClick={() => handleSend("Saya butuh bantuan bimbingan skripsi, bisa mulai dari mana?")} />
-                      <SuggestionChip theme={agentTheme} label="Cek Judul Skripsi" onClick={() => handleSend("Bantu saya review judul skripsi: [Sebutkan judulmu]")} />
-                      <SuggestionChip theme={agentTheme} label="Cari Rumusan Masalah" onClick={() => handleSend("Bantu saya membuat rumusan masalah untuk topik: [Sebutkan topik]")} />
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 px-1">
-                      <BookOpen size={14} className="text-green-500" />
-                      <p className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest">Bantuan Belajar</p>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <SuggestionChip theme={agentTheme} label="Buat Latihan Soal" onClick={() => handleSend("Buatkan 5 soal pilihan ganda tentang Pemrograman Dasar")} />
-                      <SuggestionChip theme={agentTheme} label="Ringkas Materi" onClick={() => handleSend("Tolong ringkaskan konsep tentang: [Sebutkan konsep]")} />
-                      <SuggestionChip theme={agentTheme} label="Jelaskan Rumus" onClick={() => handleSend("Bantu jelaskan cara kerja rumus ini: [Tulis rumus]")} />
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 px-1">
-                      <Code size={14} className="text-blue-500" />
-                      <p className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest">Coding & IT</p>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <SuggestionChip theme={agentTheme} label="Debug Kode" onClick={() => handleSend("Bantu saya mencari error di kode ini: [Paste kodemu]")} />
-                      <SuggestionChip theme={agentTheme} label="Jelaskan Algoritma" onClick={() => handleSend("Jelaskan cara kerja algoritma Dijkstra dengan bahasa sederhana")} />
-                      <SuggestionChip theme={agentTheme} label="Review Query SQL" onClick={() => handleSend("Bantu optimasi query SQL berikut: [Paste query]")} />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-center pt-8">
-                <Link href="/tools">
-                  <SuggestionChip theme={agentTheme} label="Jelajahi Semua Tools" icon={<Plus size={12}/>} isLink={true} />
-                </Link>
-              </div>
-            </div>
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -433,27 +397,20 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       </div>
       <div className="p-4 md:p-6 bg-gradient-to-t from-white dark:from-[#0F0F0F] via-white dark:via-[#0F0F0F] to-transparent flex-none">
         <div className="max-w-4xl mx-auto flex flex-col gap-3">
-          <div className="flex items-center justify-between px-2">
-             <div className="flex-1 flex justify-center">
-               <AnimatePresence>
-                 {isTyping && (
-                    <motion.button
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      onClick={() => stopTypewriter(currentId)}
-                      className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[11px] font-bold text-slate-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 hover:border-red-200 transition-all shadow-sm"
-                    >
-                      <Square size={12} fill="currentColor" /> Berhenti Menghasilkan
-                    </motion.button>
-                 )}
-               </AnimatePresence>
-             </div>
-             <ModelSelector
-               currentPlan={user?.current_plan || 'FREE'}
-               selectedModel={selectedModel}
-               onSelect={handleModelChange}
-             />
+          <div className="flex justify-center">
+            <AnimatePresence>
+              {isTyping && (
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  onClick={() => stopTypewriter(currentId)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[11px] font-bold text-slate-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 hover:border-red-200 transition-all shadow-sm mb-2"
+                >
+                  <Square size={12} fill="currentColor" /> Berhenti Menghasilkan
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
           <InputBox
             input={input}
@@ -463,6 +420,13 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}
             isNewChat={messages.length === 0}
+            modelSelector={
+              <ModelSelector
+                currentPlan={user?.current_plan || 'FREE'}
+                selectedModel={selectedModel}
+                onSelect={handleModelChange}
+              />
+            }
           />
         </div>
       </div>
@@ -487,7 +451,7 @@ function SuggestionChip({ label, icon, onClick, isLink, theme }) {
   );
 }
 
-function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile, isNewChat }) {
+function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile, isNewChat, modelSelector }) {
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [showNudge, setShowNudge] = useState(false);
   const fileInputRef = useRef(null);
@@ -603,6 +567,9 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
         )}
       </AnimatePresence>
 
+      <div className="flex items-center px-1 mb-1.5">
+        {modelSelector}
+      </div>
       <div className="relative liquid-glass rounded-2xl p-2 flex items-end gap-1 focus-within:border-indigo-500/50 transition-all shadow-2xl">
         <div className="relative">
           <AnimatePresence>

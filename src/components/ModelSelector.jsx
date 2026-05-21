@@ -76,7 +76,7 @@ export default function ModelSelector({ currentPlan, selectedModel, onSelect }) 
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-[#1A1A1A] hover:bg-slate-200 dark:hover:bg-[#252525] border border-slate-200 dark:border-[#333] rounded-lg transition-all text-xs font-medium text-slate-700 dark:text-gray-300"
+        className="flex items-center gap-2 px-3 py-2 bg-white/5 dark:bg-white/10 hover:bg-white/10 border border-white/10 rounded-xl transition-all text-[11px] font-bold text-slate-700 dark:text-gray-300 backdrop-blur-md"
       >
         <span className="flex items-center gap-1.5">
           {activeModel.icon}
@@ -86,7 +86,7 @@ export default function ModelSelector({ currentPlan, selectedModel, onSelect }) 
       </button>
 
       {isOpen && (
-        <div className="absolute bottom-full right-0 mb-2 w-64 sm:w-72 max-w-[90vw] bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="absolute bottom-full left-0 mb-2 w-64 sm:w-72 max-w-[90vw] bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
           <div className="p-2 space-y-1">
             {MODELS_DATA.map((model) => {
               const isLocked = TIER_RANK[model.tier] > userRank;

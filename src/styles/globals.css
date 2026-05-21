@@ -17,12 +17,25 @@
     rgba(255, 255, 255, 0.1) 0%,
     rgba(255, 255, 255, 0.05) 100%
   );
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow:
     0 8px 32px 0 rgba(31, 38, 135, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateZ(0); /* Force GPU acceleration */
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .liquid-glass {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  @media (max-width: 768px) {
+    .liquid-glass {
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+  }
 }
 
 .custom-scrollbar::-webkit-scrollbar {
