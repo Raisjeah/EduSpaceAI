@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useTransition } from 'react';
 import { useChat } from '@/context/ChatContext';
+import { useLayout } from '@/context/LayoutContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import TextareaAutosize from 'react-textarea-autosize';
 import { ChevronDown, Plus, ArrowUp, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File, Square, Code, GraduationCap, Microscope, ArrowLeft, Mic } from 'lucide-react';
@@ -18,6 +19,7 @@ import Link from 'next/link';
 
 export default function ChatView({ userId, activeChatId, projectId }) {
   const { user } = useAuth();
+  const { isSidebarOpen } = useLayout();
   const [greeting, setGreeting] = useState('');
 
   useEffect(() => {
@@ -343,7 +345,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-white dark:bg-[#0F0F0F] overflow-hidden transition-colors duration-200">
+    <div className="flex flex-col h-full bg-white dark:bg-[#0F0F0F] overflow-hidden transition-colors duration-200">
       <UpgradeModal
         isOpen={upgradeModal.isOpen}
         onClose={() => setUpgradeModal({ ...upgradeModal, isOpen: false })}
@@ -457,7 +459,10 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           </div>
         )}
       </div>
-      <div className={`fixed bottom-0 left-0 right-0 md:left-[280px] p-4 md:p-6 transition-all duration-300 z-30 ${
+      <div
+        className={`fixed bottom-0 right-0 p-4 md:p-6 transition-all duration-300 z-30 ${
+          isSidebarOpen ? 'left-[280px] md:left-[280px]' : 'left-0'
+        } ${
         isFooterScrolled
           ? 'bg-white/70 dark:bg-[#0F0F0F]/70 backdrop-blur-md shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] border-t border-slate-200/50 dark:border-white/5'
           : 'bg-transparent border-transparent'
@@ -633,7 +638,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
         )}
       </AnimatePresence>
 
-      <div className="relative liquid-glass rounded-2xl p-2 flex items-end gap-1 focus-within:border-indigo-500/50 transition-all shadow-2xl">
+      <div className="relative bg-transparent border border-slate-200 dark:border-white/10 rounded-2xl p-1.5 flex items-end gap-1 focus-within:border-indigo-500/30 transition-all shadow-sm">
         <div className="relative">
           <AnimatePresence>
             {showNudge && !isActionSheetOpen && (

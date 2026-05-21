@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import MainLayout from '@/components/MainLayout'
 import { AuthProvider } from '@/context/AuthContext'
 import { ChatProvider } from '@/context/ChatContext'
+import { LayoutProvider } from '@/context/LayoutContext'
 import ThemeProvider from '@/components/ThemeProvider'
 import Script from 'next/script'
 
@@ -30,7 +31,9 @@ export default function RootLayout({ children }) {
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
           <AuthProvider>
             <ChatProvider>
-              <MainLayout>{children}</MainLayout>
+              <LayoutProvider>
+                <MainLayout>{children}</MainLayout>
+              </LayoutProvider>
             </ChatProvider>
           </AuthProvider>
         </ThemeProvider>
