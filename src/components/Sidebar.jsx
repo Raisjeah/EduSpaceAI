@@ -1,8 +1,8 @@
 'use client';
 
-import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3, Mic } from 'lucide-react';
+import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3, Mic, Trash2 } from 'lucide-react';
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { getChatHistory } from '@/app/actions/chatActions';
+import { getChatHistory, deleteChatHistory } from '@/app/actions/chatActions';
 import { logout } from '@/app/actions/authActions';
 import { getProjects } from '@/app/actions/projectActions';
 import Link from 'next/link';
@@ -24,10 +24,6 @@ export default function Sidebar({
   const { user, searchQuery, setSearchQuery, fetchUser, showNotification } = useAuth();
   const lastFetchRef = useRef({ userId: null, projectId: null, pathname: null });
 
-  const isProjectRoute = pathname.startsWith('/project/');
-  const projectIdFromPath = isProjectRoute ? pathname.split('/')[2] : null;
-  const projectIdFromQuery = searchParams.get('projectId');
-  const activeProjectId = projectIdFromPath || projectIdFromQuery;
 
   // Projects jarang berubah, jadi cukup fetch saat user berubah
   useEffect(() => {
@@ -47,6 +43,11 @@ export default function Sidebar({
     fetchProjects();
     return () => { isMounted = false; };
   }, [userId]);
+
+  const isProjectRoute = pathname.startsWith('/project/');
+  const projectIdFromPath = isProjectRoute ? pathname.split('/')[2] : null;
+  const projectIdFromQuery = searchParams.get('projectId');
+  const activeProjectId = projectIdFromPath || projectIdFromQuery;
 
   // History chat di-refresh berdasarkan konteks project aktif
   useEffect(() => {
@@ -79,9 +80,18 @@ export default function Sidebar({
   }, [userId, activeProjectId, pathname]);
 
   const groupedChatHistory = useMemo(() => {
+    // Filter history based on mode: if projectId exists, only show chats for that project.
+    // If no projectId, only show chats without project.
+    let currentHistory = chatGroups;
+    if (activeProjectId) {
+      currentHistory = chatGroups.filter(chat => chat.projectId === activeProjectId);
+    } else {
+      currentHistory = chatGroups.filter(chat => !chat.projectId);
+    }
+
     const filtered = !searchQuery.trim()
-      ? chatGroups
-      : chatGroups.filter(group => group.text.toLowerCase().includes(searchQuery.toLowerCase()));
+      ? currentHistory
+      : currentHistory.filter(chat => chat.text.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const groups = {
       today: { label: 'Hari Ini', items: [] },
@@ -124,6 +134,26 @@ export default function Sidebar({
     await fetchUser();
     showNotification('Keluar');
     router.push('/');
+  };
+
+  const handleDeleteChat = async (e, chatId) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (confirm('Hapus percakapan ini secara permanen?')) {
+      try {
+        const result = await deleteChatHistory(chatId);
+        if (result.success) {
+          setChatGroups(prev => prev.filter(chat => chat._id !== chatId));
+          showNotification('Percakapan dihapus');
+          if (pathname.includes(`/chat/${chatId}`)) {
+            router.push('/');
+          }
+        }
+      } catch (err) {
+        console.error("Gagal menghapus:", err);
+      }
+    }
   };
 
   const getAgentIcon = (agentId) => {
@@ -191,14 +221,14 @@ export default function Sidebar({
             <Link
               href="/"
               onClick={closeSidebar}
-              className="flex items-center gap-3 w-full px-3 py-2 text-[13px] font-medium text-slate-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-all"
+              className="flex items-center gap-3 w-full px-3 py-2 text-[13px] font-medium text-slate-700 dark:text-gray-300 hover:bg-white/5 dark:hover:bg-white/5 transition-all"
             >
               <Plus size={18} className="text-slate-500 dark:text-gray-400" />
               <span>Percakapan baru</span>
             </Link>
             <button
               onClick={() => { setIsProjectModalOpen(true); closeSidebar(); }}
-              className="flex items-center gap-3 w-full px-3 py-2 text-[13px] font-medium text-slate-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-all"
+              className="flex items-center gap-3 w-full px-3 py-2 text-[13px] font-medium text-slate-700 dark:text-gray-300 hover:bg-white/5 dark:hover:bg-white/5 transition-all"
             >
               <Briefcase size={18} className="text-slate-500 dark:text-gray-400" />
               <span>Agent</span>
@@ -296,14 +326,21 @@ export default function Sidebar({
                           key={chat._id}
                           href={href}
                           onClick={closeSidebar}
-                          className={`group flex items-center gap-3 px-3 py-2.5 text-[12px] rounded-xl cursor-pointer transition-all border-l-4 ${
+                          className={`group relative flex items-center gap-3 px-3 py-2 text-[13px] cursor-pointer transition-all ${
                             isActive
-                            ? 'bg-slate-100 dark:bg-[#1A1A1A] text-slate-900 dark:text-white border-indigo-500'
-                            : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200 hover:bg-slate-50 dark:hover:bg-[#151515] border-transparent'
+                            ? 'text-slate-900 dark:text-white font-semibold'
+                            : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200'
                           }`}
                         >
-                          <MessageSquare size={14} className={isActive ? 'text-indigo-400' : 'text-gray-600 group-hover:text-indigo-400/50'} />
+                          <MessageSquare size={14} className={isActive ? 'text-indigo-500' : 'text-gray-400 group-hover:text-indigo-400/50'} />
                           <span className="truncate flex-1">{chat.text}</span>
+                          <button
+                            onClick={(e) => handleDeleteChat(e, chat._id)}
+                            className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-500/10 hover:text-red-500 rounded-md transition-all shrink-0"
+                            title="Hapus chat"
+                          >
+                            <Trash2 size={12} />
+                          </button>
                         </Link>
                       );
                     })}
