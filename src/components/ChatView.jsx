@@ -5,7 +5,7 @@ import { useChat } from '@/context/ChatContext';
 import { useLayout } from '@/context/LayoutContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import TextareaAutosize from 'react-textarea-autosize';
-import { ChevronDown, Plus, ArrowUp, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File, Square, Code, GraduationCap, Microscope, ArrowLeft, Mic } from 'lucide-react';
+import { Plus, ArrowUp, X, FileText, Image as ImageIcon, Search, BookOpen, Edit3, Rocket, Camera, Square, ArrowLeft } from 'lucide-react';
 import { sendMessage, getChatDetails } from '@/app/actions/chatActions';
 import { getProjectDetails } from '@/app/actions/projectActions';
 import AiMessage from './AiMessage';
@@ -406,10 +406,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             <div className="hidden md:block">
               <FloatingOrbs />
             </div>
-            <div className="w-16 h-16 bg-indigo-600/20 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30 backdrop-blur-xl">
-              <span className="text-2xl text-indigo-500">
-                {project ? '📂' : '🎓'}
-              </span>
+            <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-4 border border-neutral-700 bg-neutral-900/70 shadow-2xl p-3">
+              <img src="/logo.png" alt="EduSpaceAI Logo" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-2 text-center px-4">
               {project ? project.name : 'EduSpaceAI'}
@@ -536,6 +534,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
   const galleryInputRef = useRef(null);
   const textareaRef = useRef(null);
   const actionSheetRef = useRef(null);
+  const router = useRouter();
 
 
   const handleFileChange = (e) => {
@@ -702,13 +701,19 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           maxRows={8}
           disabled={disabled}
           placeholder="Tanya apa saja ke Dosen AI-mu..."
-          className="flex-1 bg-transparent border-none outline-none py-2.5 px-3 text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
+          className="flex-1 w-full min-w-0 bg-transparent border-none outline-none py-2.5 px-3 text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
         />
-        <div className="flex items-center gap-1">
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex items-center text-xs uppercase font-semibold tracking-wider text-slate-500 dark:text-gray-400 pr-1">
+            <button type="button" onClick={() => router.push('/tools')} className="hover:text-white transition-colors">Tools</button>
+            <span className="mx-2 h-3.5 w-px bg-neutral-600/70" />
+            <button type="button" onClick={() => router.push('/agent')} className="hover:text-white transition-colors">Agent</button>
+          </div>
+          <div className="flex items-center gap-1">
           {modelSelector}
           <Link
             href="/chat/live"
-            className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-105 transition-all shadow-md"
+            className="w-9 h-9 rounded-xl flex items-center justify-center bg-neutral-900/70 text-white hover:scale-105 transition-all shadow-md border border-neutral-700"
             title="Voice Call (Live)"
           >
             <div className="flex items-center gap-0.5">
@@ -726,6 +731,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           >
             <ArrowUp size={16} />
           </button>
+          </div>
         </div>
       </div>
     </div>

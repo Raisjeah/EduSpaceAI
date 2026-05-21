@@ -1,48 +1,25 @@
 'use client';
 
-import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3, Mic, Trash2 } from 'lucide-react';
+import { Plus, User, Menu, LogOut, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useLayout } from '@/context/LayoutContext';
 import { getChatHistory, deleteChatHistory } from '@/app/actions/chatActions';
 import { logout } from '@/app/actions/authActions';
-import { getProjects } from '@/app/actions/projectActions';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import useAuth from '@/hooks/useAuth';
-import ProjectModal from './ProjectModal';
 
 export default function Sidebar({ 
   userId
 }) {
   const { isSidebarOpen, setIsSidebarOpen } = useLayout();
   const [chatGroups, setChatGroups] = useState([]);
-  const [projects, setProjects] = useState([]);
-  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, searchQuery, setSearchQuery, fetchUser, showNotification } = useAuth();
   const lastFetchRef = useRef({ userId: null, projectId: null, pathname: null });
 
-
-  // Projects jarang berubah, jadi cukup fetch saat user berubah
-  useEffect(() => {
-    let isMounted = true;
-    const fetchProjects = async () => {
-      if (!userId) return;
-      try {
-        const userProjects = await getProjects();
-        if (isMounted) {
-          setProjects(userProjects);
-        }
-      } catch (error) {
-        console.error("Gagal memuat project:", error);
-      }
-    };
-
-    fetchProjects();
-    return () => { isMounted = false; };
-  }, [userId]);
 
   const isProjectRoute = pathname.startsWith('/project/');
   const projectIdFromPath = isProjectRoute ? pathname.split('/')[2] : null;
@@ -156,44 +133,13 @@ export default function Sidebar({
     }
   };
 
-  const getAgentIcon = (agentId) => {
-    switch (agentId) {
-      case 'deep-search': return <Search size={14} className="text-blue-400" />;
-      case 'researcher': return <BookOpen size={14} className="text-green-400" />;
-      case 'editor': return <Edit3 size={14} className="text-amber-400" />;
-      default: return <Rocket size={14} className="text-indigo-400" />;
-    }
-  };
-
-  const getAgentTheme = (agentId) => {
-    switch (agentId) {
-      case 'deep-search': return {
-        active: 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500',
-        hover: 'hover:bg-blue-50 dark:hover:bg-blue-900/10'
-      };
-      case 'researcher': return {
-        active: 'bg-green-600/10 text-green-600 dark:text-green-400 border-green-500',
-        hover: 'hover:bg-green-50 dark:hover:bg-green-900/10'
-      };
-      case 'editor': return {
-        active: 'bg-amber-600/10 text-amber-600 dark:text-amber-400 border-amber-500',
-        hover: 'hover:bg-amber-50 dark:hover:bg-amber-900/10'
-      };
-      default: return {
-        active: 'bg-indigo-600/10 text-indigo-600 dark:text-white border-indigo-500',
-        hover: 'hover:bg-indigo-50 dark:hover:bg-indigo-900/10'
-      };
-    }
-  };
-
   const isProjectContext = pathname.startsWith('/project/') || searchParams.has('projectId');
 
   return (
     <>
       <aside className={`
         fixed top-0 left-0 h-full z-50
-        bg-gradient-to-b from-white/80 to-white/60 dark:from-black/80 dark:to-black/60
-        backdrop-blur-xl md:backdrop-blur-2xl border-r border-white/20 dark:border-white/10
+        bg-neutral-900 border-r border-neutral-800/50
         transform transition-transform duration-300 ease-in-out flex-shrink-0
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         w-[85vw] max-w-[280px] sm:w-[280px] transition-colors duration-200
@@ -216,7 +162,7 @@ export default function Sidebar({
             </button>
           </div>
 
-          {/* Button New Chat / New Project */}
+          {/* Button New Chat */}
           <div className="flex flex-col gap-0.5 mb-6">
             <Link
               href="/"
@@ -226,13 +172,6 @@ export default function Sidebar({
               <Plus size={18} className="text-slate-500 dark:text-gray-400" />
               <span>Percakapan baru</span>
             </Link>
-            <button
-              onClick={() => { setIsProjectModalOpen(true); closeSidebar(); }}
-              className="flex items-center gap-3 w-full px-3 py-2 text-[13px] font-medium text-slate-700 dark:text-gray-300 hover:bg-white/5 dark:hover:bg-white/5 transition-all"
-            >
-              <Briefcase size={18} className="text-slate-500 dark:text-gray-400" />
-              <span>Agent</span>
-            </button>
 
             {/* Search Input In Sidebar */}
             <div className="relative mt-2">
@@ -249,59 +188,6 @@ export default function Sidebar({
 
           {/* Navigation */}
           <nav className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            <Link
-              href="/tools"
-              onClick={closeSidebar}
-              className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all text-[12px] mb-2 ${
-                pathname === '/tools'
-                ? 'bg-white/20 dark:bg-white/10 backdrop-blur-md border border-white/20 text-slate-900 dark:text-white shadow-sm'
-                : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <Wrench size={16} /> <span className="font-medium">Tools & File Editor</span>
-            </Link>
-
-            <Link
-              href="/chat/live"
-              onClick={closeSidebar}
-              className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all text-[12px] mb-2 ${
-                pathname === '/chat/live'
-                ? 'bg-white/20 dark:bg-white/10 backdrop-blur-md border border-white/20 text-slate-900 dark:text-white shadow-sm'
-                : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <Mic size={16} /> <span className="font-medium">Voice Call (Live)</span>
-            </Link>
-
-            {/* Projects Section */}
-            {projects.length > 0 && (
-              <div className="mt-4 mb-2">
-                <div className="px-3 mb-2 text-[10px] font-bold text-slate-400 dark:text-gray-500 tracking-[0.1em] uppercase">WorkSpace Agents</div>
-                <div className="space-y-1 max-h-[150px] overflow-y-auto custom-scrollbar pr-1">
-                  {projects.map(project => {
-                    const isPathActive = pathname === `/project/${project._id}`;
-                    const isQueryActive = searchParams.get('projectId') === project._id;
-                    const isActive = isPathActive || isQueryActive;
-                    const theme = getAgentTheme(project.agentId);
-                    return (
-                      <Link
-                        key={project._id}
-                        href={`/project/${project._id}`}
-                        onClick={closeSidebar}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[11px] transition-all border-l-2 ${
-                          isActive
-                          ? `${theme.active} backdrop-blur-md shadow-sm`
-                          : `text-slate-500 dark:text-gray-400 ${theme.hover} hover:text-slate-900 dark:hover:text-gray-200 border-transparent`
-                        }`}
-                      >
-                        {getAgentIcon(project.agentId)}
-                        <span className="truncate">{project.name}</span>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
 
             <div className="mt-4 mb-3 px-3 text-[10px] font-bold text-slate-400 dark:text-gray-500 tracking-[0.1em] uppercase">
               {isProjectContext ? 'Riwayat Agent' : 'Riwayat Belajar'}
@@ -332,7 +218,6 @@ export default function Sidebar({
                             : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200'
                           }`}
                         >
-                          <MessageSquare size={14} className={isActive ? 'text-indigo-500' : 'text-gray-400 group-hover:text-indigo-400/50'} />
                           <span className="truncate flex-1">{chat.text}</span>
                           <button
                             onClick={(e) => handleDeleteChat(e, chat._id)}
@@ -392,11 +277,6 @@ export default function Sidebar({
         </div>
       </aside>
 
-      <ProjectModal
-        isOpen={isProjectModalOpen}
-        onClose={() => setIsProjectModalOpen(false)}
-        userId={userId}
-      />
     </>
   );
 }
