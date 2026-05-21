@@ -148,7 +148,9 @@ export default function PricingPage() {
 
   return (
     <div className="flex-1 overflow-y-auto bg-transparent py-12 px-6 transition-colors relative">
-      <FloatingOrbs />
+      <div className="hidden md:block">
+        <FloatingOrbs />
+      </div>
       <AnimatePresence>
         {showSuccessModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">

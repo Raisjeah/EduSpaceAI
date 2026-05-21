@@ -162,7 +162,9 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="relative flex-none pt-20 md:pt-32 pb-20 md:pb-28 px-6 overflow-hidden">
         {/* Animated Gradient Background with Floating Orbs */}
-        <FloatingOrbs />
+        <div className="hidden md:block">
+          <FloatingOrbs />
+        </div>
 
         <div className="max-w-3xl mx-auto relative z-10">
           <motion.div
@@ -443,7 +445,9 @@ export default function LandingPage() {
 
       {/* Closing CTA */}
       <section className="relative flex-none py-24 md:py-32 px-6 overflow-hidden">
-        <FloatingOrbs />
+        <div className="hidden md:block">
+          <FloatingOrbs />
+        </div>
         <motion.div {...fadeUp} className="max-w-4xl mx-auto text-center liquid-glass p-12 md:p-20 rounded-[40px]">
           <div className="text-[11px] font-bold text-indigo-500 dark:text-indigo-400 tracking-[0.2em] uppercase mb-6">
             /mulai sekarang

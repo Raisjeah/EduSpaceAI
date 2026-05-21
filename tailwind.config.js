@@ -13,6 +13,7 @@ module.exports = {
       },
       backdropBlur: {
         'xs': '2px',
+        'mobile': '8px',
       },
       colors: {
         glass: {
