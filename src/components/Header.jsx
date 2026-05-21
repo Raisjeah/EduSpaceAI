@@ -30,7 +30,7 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="flex justify-between items-start p-3 sticky top-0 z-50 bg-transparent flex-none pointer-events-none">
+    <header className="flex justify-between items-start p-3 sticky top-0 z-50 bg-transparent flex-none pointer-events-auto">
       {/* Center Title - only visible when scrolled */}
       <div className="absolute left-1/2 -translate-x-1/2 w-max pointer-events-none z-10 top-3">
           <h1 className={`text-[11px] font-light text-slate-500 dark:text-gray-300 tracking-wide transition-all duration-500 ${isScrolled ? 'opacity-100 translate-y-0 drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]' : 'opacity-0 -translate-y-4'}`}>
