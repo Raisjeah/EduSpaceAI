@@ -187,19 +187,21 @@ export default function Sidebar({
           </div>
 
           {/* Button New Chat / New Project */}
-          <div className="flex flex-col gap-2 mb-6">
+          <div className="flex flex-col gap-0.5 mb-6">
             <Link
               href="/"
               onClick={closeSidebar}
-              className="flex items-center justify-center gap-2 w-full py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all text-white shadow-lg shadow-indigo-900/20"
+              className="flex items-center gap-3 w-full px-3 py-2 text-[13px] font-medium text-slate-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-all"
             >
-              <Plus size={16} /> <span className="text-[12px] font-semibold">Percakapan Baru</span>
+              <Plus size={18} className="text-slate-500 dark:text-gray-400" />
+              <span>Percakapan baru</span>
             </Link>
             <button
               onClick={() => { setIsProjectModalOpen(true); closeSidebar(); }}
-              className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-100 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] hover:bg-slate-200 dark:hover:bg-[#242424] rounded-xl transition-all text-slate-600 dark:text-gray-300"
+              className="flex items-center gap-3 w-full px-3 py-2 text-[13px] font-medium text-slate-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-all"
             >
-              <Briefcase size={14} /> <span className="text-[11px] font-semibold">Agent Baru</span>
+              <Briefcase size={18} className="text-slate-500 dark:text-gray-400" />
+              <span>Agent</span>
             </button>
 
             {/* Search Input In Sidebar */}
