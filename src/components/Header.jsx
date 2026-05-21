@@ -30,9 +30,9 @@ export default function Header() {
   }, []);
 
   return (
-    <header className={`flex justify-between items-center p-1.5 sticky top-0 z-50 transition-all duration-300 ${
+    <header className={`flex justify-between items-center p-1.5 sticky top-0 z-50 transition-all duration-500 ${
       isScrolled
-        ? 'bg-white/70 dark:bg-[#0F0F0F]/70 backdrop-blur-md shadow-md border-b border-slate-200/50 dark:border-white/5'
+        ? 'bg-white/80 dark:bg-[#0F0F0F]/80 backdrop-blur-xl backdrop-saturate-150 shadow-sm shadow-black/5 dark:shadow-black/20 border-b border-slate-200/30 dark:border-white/10'
         : 'bg-transparent border-transparent'
     } flex-none`}>
       {/* Center Title - only visible when scrolled */}

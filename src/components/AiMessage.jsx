@@ -115,7 +115,7 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
     return (
       <div className="w-full flex justify-end">
         <div className="w-fit max-w-[85%] flex flex-row-reverse gap-4">
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/10 backdrop-blur-xl border border-white/20 text-slate-800 dark:text-white rounded-tr-none leading-relaxed transition-all shadow-lg">
+          <div className="p-3 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/10 backdrop-blur-xl border border-white/20 text-slate-800 dark:text-white rounded-tr-none leading-relaxed transition-all shadow-lg">
             <div className="markdown-content prose dark:prose-invert prose-sm max-w-none leading-relaxed prose-p:my-1 prose-headings:mb-2 prose-headings:mt-4">
               <ReactMarkdown
                 remarkPlugins={[remarkMath]}
@@ -145,7 +145,7 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
   return (
     <div className="w-full flex justify-start">
       <div className="w-full max-w-none flex flex-col">
-        <div className="py-6 w-full leading-relaxed transition-all">
+        <div className="py-4 w-full leading-relaxed transition-all">
           {imageData ? (
             <div className="relative group rounded-2xl overflow-hidden liquid-glass shadow-2xl max-w-2xl">
               <img
@@ -168,7 +168,7 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
               </div>
             </div>
           ) : (
-            <div className="markdown-content prose dark:prose-invert prose-base text-base max-w-none leading-relaxed">
+            <div className="markdown-content prose dark:prose-invert prose-sm max-w-none leading-relaxed">
               <ReactMarkdown
                 remarkPlugins={[remarkMath]}
                 rehypePlugins={[rehypeKatex]}
@@ -231,7 +231,7 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
                 className={`p-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                   isPlaying
                     ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30'
-                    : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'
+                    : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 dark:hover:bg-black/10 border border-transparent'
                 }`}
                 title={isPlaying ? "Berhenti" : "Dengarkan"}
               >

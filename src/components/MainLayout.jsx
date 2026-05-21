@@ -81,7 +81,7 @@ export default function MainLayout({ children }) {
       {/* Overlay Sidebar */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
+          className="fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}

@@ -200,9 +200,9 @@ export default function Sidebar({
       `}>
         <div className="flex flex-col h-full p-4">
           {/* Header / Brand */}
-          <div className="flex items-center justify-between mb-6 px-2">
+          <div className="flex items-center justify-between mb-3 px-2">
             <Link href="/" className="flex items-center gap-2" onClick={closeSidebar}>
-              <div className="w-10 h-10 flex items-center justify-center">
+              <div className="w-8 h-8 flex items-center justify-center">
                 <img
                   src="/logo.png"
                   alt="EduSpaceAI Logo"
@@ -226,16 +226,9 @@ export default function Sidebar({
               <Plus size={18} className="text-slate-500 dark:text-gray-400" />
               <span>Percakapan baru</span>
             </Link>
-            <button
-              onClick={() => { setIsProjectModalOpen(true); closeSidebar(); }}
-              className="flex items-center gap-3 w-full px-3 py-2 text-[13px] font-medium text-slate-700 dark:text-gray-300 hover:bg-white/5 dark:hover:bg-white/5 transition-all"
-            >
-              <Briefcase size={18} className="text-slate-500 dark:text-gray-400" />
-              <span>Agent</span>
-            </button>
 
             {/* Search Input In Sidebar */}
-            <div className="relative mt-2">
+            <div className="relative mt-1">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
@@ -249,35 +242,11 @@ export default function Sidebar({
 
           {/* Navigation */}
           <nav className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            <Link
-              href="/tools"
-              onClick={closeSidebar}
-              className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all text-[12px] mb-2 ${
-                pathname === '/tools'
-                ? 'bg-white/20 dark:bg-white/10 backdrop-blur-md border border-white/20 text-slate-900 dark:text-white shadow-sm'
-                : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <Wrench size={16} /> <span className="font-medium">Tools & File Editor</span>
-            </Link>
-
-            <Link
-              href="/chat/live"
-              onClick={closeSidebar}
-              className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all text-[12px] mb-2 ${
-                pathname === '/chat/live'
-                ? 'bg-white/20 dark:bg-white/10 backdrop-blur-md border border-white/20 text-slate-900 dark:text-white shadow-sm'
-                : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <Mic size={16} /> <span className="font-medium">Voice Call (Live)</span>
-            </Link>
-
             {/* Projects Section */}
             {projects.length > 0 && (
-              <div className="mt-4 mb-2">
+              <div className="mt-2 mb-1">
                 <div className="px-3 mb-2 text-[10px] font-bold text-slate-400 dark:text-gray-500 tracking-[0.1em] uppercase">WorkSpace Agents</div>
-                <div className="space-y-1 max-h-[150px] overflow-y-auto custom-scrollbar pr-1">
+                <div className="space-y-1 max-h-[100px] overflow-y-auto custom-scrollbar pr-1">
                   {projects.map(project => {
                     const isPathActive = pathname === `/project/${project._id}`;
                     const isQueryActive = searchParams.get('projectId') === project._id;

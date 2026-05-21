@@ -5,13 +5,14 @@ import { useChat } from '@/context/ChatContext';
 import { useLayout } from '@/context/LayoutContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import TextareaAutosize from 'react-textarea-autosize';
-import { ChevronDown, Plus, ArrowUp, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File, Square, Code, GraduationCap, Microscope, ArrowLeft, Mic } from 'lucide-react';
+import { ChevronDown, Plus, ArrowUp, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File, Square, Code, GraduationCap, Microscope, ArrowLeft, Mic, Wrench, FileSpreadsheet, Share2, Quote, BrainCircuit } from 'lucide-react';
 import { sendMessage, getChatDetails } from '@/app/actions/chatActions';
 import { getProjectDetails } from '@/app/actions/projectActions';
 import AiMessage from './AiMessage';
 import ThinkingIndicator from './ThinkingIndicator';
 import ModelSelector from './ModelSelector';
 import FloatingOrbs from './FloatingOrbs';
+import ProjectModal from './ProjectModal';
 import useAuth from '@/hooks/useAuth';
 import UpgradeModal from './UpgradeModal';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -67,6 +68,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const [dynamicStatus, setDynamicStatus] = useState("Dosen AI sedang berpikir...");
   const statusIntervalRef = useRef(null);
   const [upgradeModal, setUpgradeModal] = useState({ isOpen: false, feature: '' });
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [isLoadingChat, setIsLoadingChat] = useState(false);
   const chatEndRef = useRef(null);
   const router = useRouter();
@@ -459,6 +461,12 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           </div>
         )}
       </div>
+
+      <ProjectModal
+        isOpen={isProjectModalOpen}
+        onClose={() => setIsProjectModalOpen(false)}
+        userId={userId}
+      />
       <div
         className={`fixed bottom-0 right-0 p-4 md:p-6 transition-all duration-300 z-30 ${
           isSidebarOpen ? 'left-[280px] md:left-[280px]' : 'left-0'
@@ -491,6 +499,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}
             isNewChat={messages.length === 0}
+            setIsProjectModalOpen={setIsProjectModalOpen}
             modelSelector={
               <ModelSelector
                 currentPlan={user?.current_plan || 'FREE'}
@@ -522,10 +531,12 @@ function SuggestionChip({ label, icon, onClick, isLink, theme }) {
   );
 }
 
-function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile, isNewChat, modelSelector }) {
+function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile, isNewChat, setIsProjectModalOpen, modelSelector }) {
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
+  const [isToolsSheetOpen, setIsToolsSheetOpen] = useState(false);
   const [showNudge, setShowNudge] = useState(false);
   const fileInputRef = useRef(null);
+  const toolsSheetRef = useRef(null);
 
   // Show nudge for new chats after a delay
   useEffect(() => {
@@ -639,9 +650,54 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
       </AnimatePresence>
 
       <div className="relative bg-transparent border border-slate-200 dark:border-white/10 rounded-2xl p-1.5 flex items-end gap-1 focus-within:border-indigo-500/30 transition-all shadow-sm">
-        <div className="relative">
+        <div className="relative flex items-center">
           <AnimatePresence>
-            {showNudge && !isActionSheetOpen && (
+            {isToolsSheetOpen && (
+              <>
+              <div
+                className="fixed inset-0 z-40 cursor-default"
+                onClick={() => setIsToolsSheetOpen(false)}
+              />
+              <motion.div
+                ref={toolsSheetRef}
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className="absolute bottom-full left-0 mb-4 w-64 max-w-[90vw] liquid-glass rounded-2xl shadow-2xl p-2 z-50 overflow-hidden"
+              >
+                <div className="px-3 py-2 mb-1 border-b border-white/10">
+                  <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Workspace & Tools</h3>
+                </div>
+                <div className="flex flex-col gap-0.5 max-h-[300px] overflow-y-auto custom-scrollbar">
+                  {[
+                    { id: 'pdf', title: 'Analisis PDF', icon: <FileText size={16} className="text-red-400" />, link: '/editor/pdf' },
+                    { id: 'doc', title: 'Analisis DOC', icon: <BookOpen size={16} className="text-blue-400" />, link: '/editor/doc' },
+                    { id: 'xls', title: 'Data Excel/CSV', icon: <FileSpreadsheet size={16} className="text-green-400" />, link: '/editor/xls' },
+                    { id: 'skripsi', title: 'Asisten Skripsi', icon: <BrainCircuit size={16} className="text-indigo-400" />, link: '/editor/skripsi' },
+                    { id: 'soal', title: 'Generator Soal', icon: <Edit3 size={16} className="text-amber-400" />, link: '/editor/soal' },
+                    { id: 'visualizer', title: 'Concept Mapper', icon: <Share2 size={16} className="text-purple-400" />, link: '/editor/visualizer' },
+                    { id: 'citation', title: 'Citation Gen', icon: <Quote size={16} className="text-pink-400" />, link: '/tools/citation' },
+                    { id: 'live', title: 'Voice Call (Live)', icon: <Mic size={16} className="text-indigo-500" />, link: '/chat/live' },
+                  ].map((tool) => (
+                    <Link
+                      key={tool.id}
+                      href={tool.link}
+                      className="flex items-center gap-3 px-3 py-2.5 hover:bg-white/10 rounded-xl transition-all group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        {tool.icon}
+                      </div>
+                      <span className="text-xs font-medium text-slate-700 dark:text-gray-200">{tool.title}</span>
+                    </Link>
+                  ))}
+                </div>
+              </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {showNudge && !isActionSheetOpen && !isToolsSheetOpen && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.5, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -656,6 +712,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           <button
             onClick={() => {
               setIsActionSheetOpen(!isActionSheetOpen);
+              setIsToolsSheetOpen(false);
               setShowNudge(false);
             }}
             className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
@@ -663,8 +720,32 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               ? 'bg-indigo-600 text-white rotate-45'
               : 'text-slate-400 dark:text-gray-500 hover:text-indigo-400'
             } ${showNudge && !isActionSheetOpen ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-[#0F0F0F] animate-pulse' : ''}`}
+            title="Tambah File"
           >
             <Plus size={20} />
+          </button>
+
+          <button
+            onClick={() => {
+              setIsToolsSheetOpen(!isToolsSheetOpen);
+              setIsActionSheetOpen(false);
+            }}
+            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
+              isToolsSheetOpen
+              ? 'bg-indigo-500/20 text-indigo-500'
+              : 'text-slate-400 dark:text-gray-500 hover:text-indigo-400'
+            }`}
+            title="Tools & Workspace"
+          >
+            <Wrench size={18} />
+          </button>
+
+          <button
+            onClick={() => setIsProjectModalOpen(true)}
+            className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 dark:text-gray-500 hover:text-indigo-400 transition-all shrink-0"
+            title="Workspace Agent"
+          >
+            <Briefcase size={18} />
           </button>
         </div>
 
