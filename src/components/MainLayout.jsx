@@ -79,21 +79,13 @@ export default function MainLayout({ children }) {
         />
       )}
 
-      {/* Overlay Sidebar */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
       <Suspense fallback={null}>
         <Sidebar
           userId={userId}
         />
       </Suspense>
 
-      <main className={`flex-1 flex flex-col h-[100dvh] min-w-0 relative overflow-hidden transition-all duration-300 ${isSidebarOpen ? 'md:ml-[280px]' : 'ml-0'}`}>
+      <main className={`flex-1 flex flex-col h-[100dvh] min-w-0 relative overflow-hidden transition-all duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-[280px] md:translate-x-0 md:ml-[280px]' : 'translate-x-0 ml-0'}`}>
         <Header />
 
         <ProjectModal

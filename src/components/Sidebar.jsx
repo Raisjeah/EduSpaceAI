@@ -197,11 +197,8 @@ export default function Sidebar({
         w-[85vw] max-w-[280px] sm:w-[280px] transition-colors duration-200
       `}>
         <div className="flex flex-col h-full p-4">
-          <div className="flex justify-end mb-2">
-             <button onClick={() => setIsSidebarOpen(false)} className="text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors md:hidden">
-                <Menu size={18} />
-              </button>
-          </div>
+          {/* Spacer for floating header button area */}
+          <div className="h-14 md:hidden" />
 
           {/* Button New Chat */}
           <div className="flex flex-col gap-0.5 mb-6">
