@@ -1,16 +1,18 @@
 'use client';
 
-import { Menu, User, Sparkles, ArrowRight } from 'lucide-react';
+import { Menu, User, Sparkles, ArrowRight, X } from 'lucide-react';
 import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';
 import { useChat } from '@/context/ChatContext';
 import { useLayout } from '@/context/LayoutContext';
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function Header() {
   const { userId, user } = useAuth();
   const { activeChatTitle } = useChat();
-  const { setIsSidebarOpen } = useLayout();
+  const { isSidebarOpen, setIsSidebarOpen } = useLayout();
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -29,14 +31,18 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll, { capture: true });
   }, []);
 
+  const isDashboardPage = pathname.startsWith('/project') || pathname.startsWith('/tools');
+
   return (
     <header className="flex justify-between items-center p-4 sticky top-0 z-50 bg-transparent pointer-events-none flex-none">
-      {/* Center Title - only visible when scrolled */}
-      <div className="absolute left-1/2 -translate-x-1/2 w-max pointer-events-none z-10">
-          <h1 className={`px-4 py-1.5 rounded-full bg-white/70 dark:bg-[#0F0F0F]/70 backdrop-blur-md border border-slate-200/50 dark:border-white/5 shadow-sm text-[11px] font-bold text-slate-500 dark:text-gray-400 tracking-wide transition-all duration-500 ${isScrolled ? 'opacity-100 translate-y-2' : 'opacity-0 -translate-y-4'}`}>
-            {activeChatTitle}
-          </h1>
-      </div>
+      {/* Center Title - only visible when scrolled and not on dashboard */}
+      {!isDashboardPage && (
+        <div className="absolute left-1/2 -translate-x-1/2 w-max pointer-events-none z-10">
+            <h1 className={`px-4 py-1.5 rounded-full bg-white/70 dark:bg-[#0F0F0F]/70 backdrop-blur-md border border-slate-200/50 dark:border-white/5 shadow-sm text-[11px] font-bold text-slate-500 dark:text-gray-400 tracking-wide transition-all duration-500 ${isScrolled ? 'opacity-100 translate-y-2' : 'opacity-0 -translate-y-4'}`}>
+              {activeChatTitle}
+            </h1>
+        </div>
+      )}
 
       <div className="flex items-center gap-3 min-w-0">
         {!userId ? (
@@ -52,10 +58,10 @@ export default function Header() {
           </Link>
         ) : (
           <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/80 dark:bg-neutral-900/70 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl backdrop-blur-md text-slate-600 dark:text-gray-400 transition-all shrink-0 pointer-events-auto hover:scale-105"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="w-11 h-11 flex items-center justify-center rounded-full bg-neutral-900/80 border border-neutral-800/50 shadow-xl backdrop-blur-md text-white transition-all shrink-0 pointer-events-auto hover:scale-105"
           >
-            <Menu size={20} />
+            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         )}
       </div>
@@ -72,26 +78,26 @@ export default function Header() {
             </Link>
           )}
 
-          {userId && (
-            <Link
-              href="/pricing"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 dark:bg-neutral-900/70 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl backdrop-blur-md text-amber-600 dark:text-amber-500 text-xs font-bold hover:scale-105 transition-all pointer-events-auto"
-            >
-              <Sparkles size={14} />
-              {user?.current_plan === 'FREE' ? 'Upgrade Pro' : user?.current_plan}
-            </Link>
-          )}
+          {userId && !isDashboardPage && (
+            <>
+              <Link
+                href="/pricing"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neutral-900/80 border border-neutral-800/50 shadow-xl backdrop-blur-md text-amber-500 text-xs font-bold hover:scale-105 transition-all pointer-events-auto"
+              >
+                <Sparkles size={14} />
+                {user?.current_plan === 'FREE' ? 'Upgrade Pro' : user?.current_plan}
+              </Link>
 
-          {userId && (
-            <Link href="/profile" title="Edit Profil" className="pointer-events-auto hover:scale-105 transition-all">
-              <div className="w-10 h-10 rounded-full bg-white/80 dark:bg-neutral-900/70 flex items-center justify-center border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl backdrop-blur-md hover:border-indigo-500/50 transition-all overflow-hidden">
-                {user?.image ? (
-                  <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
-                ) : (
-                  <User size={18} />
-                )}
-              </div>
-            </Link>
+              <Link href="/profile" title="Edit Profil" className="pointer-events-auto hover:scale-105 transition-all">
+                <div className="w-11 h-11 rounded-full bg-neutral-900/80 flex items-center justify-center border border-neutral-800/50 shadow-xl backdrop-blur-md hover:border-indigo-500/50 transition-all overflow-hidden">
+                  {user?.image ? (
+                    <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={18} className="text-white" />
+                  )}
+                </div>
+              </Link>
+            </>
           )}
         </div>
       </div>
