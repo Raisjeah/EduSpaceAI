@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Mic,
   MicOff,
@@ -9,277 +9,61 @@ import {
   Share,
   X,
   Keyboard,
-  Sparkles
+  Sparkles,
+  AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import useGeminiLive from '@/hooks/useGeminiLive';
 
+/**
+ * LiveCallDashboard
+ * Full-screen interface for Gemini Live sessions.
+ * Powers the "Voice Call (Live)" feature.
+ */
 const LiveCallDashboard = () => {
   const router = useRouter();
-  const [isMuted, setIsMuted] = useState(false);
   const [isVideoOn, setIsVideoOn] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(true);
-  const [isConnected, setIsConnected] = useState(false);
-  const [statusMessage, setStatusMessage] = useState("Menghubungkan ke Prof. Kore...");
   const [isMobile, setIsMobile] = useState(false);
+
+  const {
+    isConnected,
+    isConnecting,
+    isMuted,
+    transcript,
+    error,
+    connect,
+    disconnect,
+    toggleMute
+  } = useGeminiLive();
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
-  // WebSocket and Audio Refs
-  const wsRef = useRef(null);
-  const audioContextRef = useRef(null);
-  const streamRef = useRef(null);
-  const processorRef = useRef(null);
-  const sourceRef = useRef(null);
-  const audioQueue = useRef([]);
-  const isMutedRef = useRef(false);
-  const outputSampleRateRef = useRef(24000); // Gemini Live standard is 24kHz
-  const nextStartTimeRef = useRef(0);
-
-  // Audio Playback logic - Scheduled for gapless playback
-  const playAudioFromQueue = useCallback(async () => {
-    if (audioQueue.current.length === 0 || !audioContextRef.current) return;
-
-    if (audioContextRef.current.state === 'suspended') {
-      await audioContextRef.current.resume();
+    // Auto-connect when entering this page if not already connected
+    if (!isConnected && !isConnecting) {
+       connect();
     }
-
-    while (audioQueue.current.length > 0) {
-      const chunk = audioQueue.current.shift();
-      try {
-        const float32Data = new Float32Array(chunk.length);
-        for (let i = 0; i < chunk.length; i++) {
-          float32Data[i] = chunk[i] / 32768.0;
-        }
-
-        const audioBuffer = audioContextRef.current.createBuffer(1, float32Data.length, outputSampleRateRef.current);
-        audioBuffer.getChannelData(0).set(float32Data);
-
-        const source = audioContextRef.current.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(audioContextRef.current.destination);
-
-        const currentTime = audioContextRef.current.currentTime;
-        if (nextStartTimeRef.current < currentTime) {
-          nextStartTimeRef.current = currentTime + 0.05; // 50ms buffer for first chunk
-        }
-
-        source.start(nextStartTimeRef.current);
-        nextStartTimeRef.current += audioBuffer.duration;
-      } catch (e) {
-        console.error("Audio playback error:", e);
-      }
-    }
-  }, []);
-
-  const initAudio = useCallback(async () => {
-    try {
-      // Force 16kHz for input as required by Gemini Live
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({
-        sampleRate: 16000,
-      });
-      if (audioContextRef.current.state === 'suspended') {
-        await audioContextRef.current.resume();
-      }
-      streamRef.current = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          sampleRate: 16000,
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-        }
-      });
-
-      await audioContextRef.current.audioWorklet.addModule('/audio-processor.js');
-
-      sourceRef.current = audioContextRef.current.createMediaStreamSource(streamRef.current);
-      processorRef.current = new AudioWorkletNode(audioContextRef.current, 'audio-processor');
-
-      processorRef.current.port.onmessage = (event) => {
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && !isMutedRef.current) {
-          const pcmData = new Int16Array(event.data);
-          const uint8Array = new Uint8Array(pcmData.buffer);
-          let binary = '';
-          for (let i = 0; i < uint8Array.length; i++) {
-            binary += String.fromCharCode(uint8Array[i]);
-          }
-          const base64Data = btoa(binary);
-
-          wsRef.current.send(JSON.stringify({
-            realtimeInput: {
-              mediaChunks: [{
-                data: base64Data,
-                mimeType: "audio/pcm;rate=16000"
-              }]
-            }
-          }));
-        }
-      };
-
-      sourceRef.current.connect(processorRef.current);
-      return true;
-    } catch (e) {
-      console.error("Audio init error:", e);
-      setStatusMessage("Gagal mengakses mikrofon.");
-      return false;
-    }
-  }, []);
-
-  const connectWebSocket = useCallback(async () => {
-    try {
-      const response = await fetch('/api/live');
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || `Live token request failed (${response.status})`);
-      }
-      const { token } = await response.json();
-
-      if (!token) {
-        setStatusMessage("Sesi gagal dimulai. Coba lagi.");
-        return;
-      }
-
-      const url = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${token}`;
-      const ws = new WebSocket(url);
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        const setupMessage = {
-          setup: {
-            model: "models/gemini-3.1-flash-live-preview",
-            generationConfig: {
-              responseModalities: ["AUDIO"],
-              speechConfig: {
-                voiceConfig: {
-                  prebuiltVoiceConfig: {
-                    voiceName: "Kore"
-                  }
-                }
-              },
-            },
-            systemInstruction: {
-              parts: [{ text: "Bertindaklah sebagai Dosen Pembimbing Akademik EduSpaceAI yang bijak, responsif, dan edukatif bernama Prof. Kore. Jawablah langsung menggunakan bahasa suara yang natural." }]
-            }
-          }
-        };
-        ws.send(JSON.stringify(setupMessage));
-        setIsConnected(true);
-        setIsConnecting(false);
-        setStatusMessage("Terhubung dengan Prof. Kore");
-      };
-
-      ws.onmessage = async (event) => {
-        try {
-          if (event.data instanceof Blob) {
-            const arrayBuffer = await event.data.arrayBuffer();
-            // Byte alignment fix: ensure even length for Int16Array
-            const pcmData = new Int16Array(arrayBuffer, 0, arrayBuffer.byteLength >> 1);
-
-            // For Blob handling, ensure we use the stored sample rate (default 16000)
-            if (!outputSampleRateRef.current) {
-              outputSampleRateRef.current = 16000;
-            }
-
-            audioQueue.current.push(pcmData);
-            playAudioFromQueue();
-          } else {
-            const message = JSON.parse(event.data);
-            const serverContent = message.server_content || message.serverContent;
-
-            if (serverContent?.model_turn?.parts || serverContent?.modelTurn?.parts) {
-              const parts = serverContent?.model_turn?.parts || serverContent?.modelTurn?.parts;
-              const audioPart = parts.find((part) => {
-                const inlineData = part.inline_data || part.inlineData;
-                const mimeType = inlineData?.mime_type || inlineData?.mimeType;
-                return inlineData?.data && mimeType?.toLowerCase().startsWith('audio/');
-              });
-
-              if (audioPart) {
-                const inlineData = audioPart.inline_data || audioPart.inlineData;
-                const mimeType = inlineData.mime_type || inlineData.mimeType;
-                const rateMatch = mimeType.match(/rate=(\d+)/);
-                if (rateMatch) {
-                  outputSampleRateRef.current = parseInt(rateMatch[1], 10);
-                }
-
-                const binaryString = atob(inlineData.data);
-                const len = binaryString.length;
-                let bytes = new Uint8Array(len);
-                for (let i = 0; i < len; i++) {
-                  bytes[i] = binaryString.charCodeAt(i);
-                }
-                // Validate even byte length for Int16Array
-                if (bytes.length % 2 !== 0) {
-                  console.warn("Odd byte length, padding with zero");
-                  const padded = new Uint8Array(bytes.length + 1);
-                  padded.set(bytes);
-                  bytes = padded;
-                }
-                const pcmData = new Int16Array(bytes.buffer);
-                audioQueue.current.push(pcmData);
-                playAudioFromQueue();
-              }
-            }
-
-            if (message?.error) {
-              console.error("Gemini Live API error:", message.error);
-              setStatusMessage(`Live error: ${message.error.message || 'unknown error'}`);
-            }
-          }
-        } catch (e) {
-          console.error("Error handling message:", e);
-        }
-      };
-
-      ws.onerror = (e) => {
-        console.error("WebSocket Error:", e);
-        setStatusMessage("Gangguan koneksi.");
-      };
-
-      ws.onclose = () => {
-        setIsConnected(false);
-        setStatusMessage("Panggilan berakhir.");
-      };
-
-    } catch (e) {
-      console.error("Connection error:", e);
-      setStatusMessage("Gagal menyambungkan.");
-    }
-  }, [playAudioFromQueue]);
-
-  useEffect(() => {
-    isMutedRef.current = isMuted;
-  }, [isMuted]);
-
-  useEffect(() => {
-    initAudio().then(success => {
-      if (success) {
-        connectWebSocket();
-      }
-    });
 
     return () => {
-      if (wsRef.current) wsRef.current.close();
-      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-      if (audioContextRef.current) audioContextRef.current.close();
+      window.removeEventListener('resize', checkMobile);
+      // We don't disconnect on unmount anymore to keep the call alive if the user
+      // just navigates away, but they can end it explicitly.
     };
-  }, []); // Run once on mount
+  }, [connect, isConnected, isConnecting]);
 
   const handleEndCall = useCallback(() => {
-    if (wsRef.current) wsRef.current.close();
+    disconnect();
     router.push('/');
-  }, [router]);
+  }, [disconnect, router]);
 
   return (
     <div className="fixed inset-0 bg-black text-white flex flex-col items-center justify-between overflow-hidden">
       {/* Header */}
       <div className="w-full p-6 flex justify-between items-center z-10">
-        <div className="w-10" /> {/* Spacer */}
+        <div className="w-10" />
         <div className="flex items-center gap-2 px-4 py-1.5 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full">
           <Sparkles className="w-4 h-4 text-blue-400 animate-pulse" />
           <span className="text-sm font-medium tracking-wider text-blue-100">LIVE</span>
@@ -293,41 +77,76 @@ const LiveCallDashboard = () => {
       </div>
 
       {/* Main Visualization Area */}
-      <div className="relative flex-1 w-full flex flex-col items-center justify-center">
-        {/* Ambient Glowing Aura */}
+      <div className="relative flex-1 w-full flex flex-col items-center justify-center px-6">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[300px] h-[300px] bg-blue-600/20 rounded-full blur-[120px] animate-pulse-slow" />
+          <div className={`w-[300px] h-[300px] rounded-full blur-[120px] transition-all duration-1000 ${
+            isConnected ? 'bg-blue-600/20 animate-pulse-slow' : 'bg-red-600/10'
+          }`} />
         </div>
 
-        {/* Status Text */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="z-10 text-center space-y-4"
+          className="z-10 text-center space-y-6 w-full max-w-lg"
         >
           <div className="relative flex justify-center">
-             <div className="w-24 h-24 rounded-full border-2 border-blue-500/30 flex items-center justify-center bg-blue-500/5">
-                <div className="w-20 h-20 rounded-full border border-blue-400/50 flex items-center justify-center animate-pulse">
-                   <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center">
-                      <span className="text-2xl"></span>
+             <div className={`w-24 h-24 rounded-full border-2 flex items-center justify-center transition-colors duration-500 ${
+               isConnected ? 'border-blue-500/30 bg-blue-500/5' : 'border-neutral-700 bg-neutral-900'
+             }`}>
+                <div className={`w-20 h-20 rounded-full border flex items-center justify-center transition-all ${
+                  isConnected ? 'border-blue-400/50 animate-pulse bg-blue-500/10' : 'border-neutral-600'
+                }`}>
+                   <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center overflow-hidden">
+                      <img src="/logo.png" alt="Prof. Kore" className="w-10 h-10 object-contain invert" />
                    </div>
                 </div>
              </div>
              {isConnected && (
-               <div className="absolute bottom-1 right-[calc(50%-48px)] w-4 h-4 bg-green-500 rounded-full border-2 border-black" />
+               <motion.div
+                 initial={{ scale: 0 }}
+                 animate={{ scale: 1 }}
+                 className="absolute bottom-1 right-[calc(50%-48px)] w-4 h-4 bg-green-500 rounded-full border-2 border-black shadow-[0_0_10px_rgba(34,197,94,0.5)]"
+               />
              )}
           </div>
+
           <div className="space-y-1">
-            <h2 className="text-xl font-semibold tracking-tight">Prof. Kore</h2>
-            <p className="text-sm text-blue-400/80 font-medium">Dosen Pembimbing AI</p>
+            <h2 className="text-2xl font-bold tracking-tight">Prof. Kore</h2>
+            <p className="text-sm text-blue-400/80 font-medium uppercase tracking-widest">Dosen Pembimbing AI</p>
           </div>
-          <p className={`text-gray-400 text-sm ${isConnecting ? 'animate-pulse' : ''}`}>{statusMessage}</p>
+
+          <div className="h-24 flex flex-col items-center justify-center space-y-2">
+            <AnimatePresence mode="wait">
+              {error ? (
+                <motion.div
+                  key="error"
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  className="flex items-center gap-2 text-red-400 bg-red-400/10 px-4 py-2 rounded-full border border-red-400/20"
+                >
+                  <AlertCircle size={16} />
+                  <span className="text-sm font-medium">{error}</span>
+                </motion.div>
+              ) : isConnecting ? (
+                <motion.p key="connecting" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-gray-400 animate-pulse">Menghubungkan...</motion.p>
+              ) : isConnected ? (
+                <motion.div key="transcript" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
+                   {transcript.user && (
+                     <p className="text-gray-400 text-sm line-clamp-1 italic">“{transcript.user}”</p>
+                   )}
+                   <p className="text-blue-100 text-lg font-medium leading-tight max-w-md mx-auto">
+                     {transcript.ai || (isMuted ? "Mikrofon dimatikan" : "Siap mendengarkan...")}
+                   </p>
+                </motion.div>
+              ) : (
+                <motion.p key="disconnected" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-gray-500">Panggilan Berakhir</motion.p>
+              )}
+            </AnimatePresence>
+          </div>
         </motion.div>
       </div>
 
-      {/* Bottom Wave - The "Ambient Blue Glowing Wave" */}
       <div className="absolute bottom-0 left-0 right-0 h-64 pointer-events-none overflow-hidden">
-        <div className="absolute bottom-0 w-full h-full opacity-50">
+        <div className={`absolute bottom-0 w-full h-full transition-opacity duration-1000 ${isConnected ? 'opacity-50' : 'opacity-0'}`}>
           <svg viewBox="0 0 1440 320" className="absolute bottom-0 w-full h-auto translate-y-20 scale-110">
             <defs>
               <linearGradient id="wave-grad" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -346,7 +165,6 @@ const LiveCallDashboard = () => {
         </div>
       </div>
 
-      {/* Controller Dock */}
       <div className="w-full max-w-md px-6 pb-12 z-20">
         <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-4 rounded-[32px] flex items-center justify-between shadow-2xl">
           <button
@@ -361,8 +179,9 @@ const LiveCallDashboard = () => {
           </button>
 
           <button
-            onClick={() => setIsMuted(!isMuted)}
-            className={`p-4 rounded-2xl transition-all ${!isMuted ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-red-500/20 text-red-400 border border-red-500/20'}`}
+            onClick={toggleMute}
+            disabled={!isConnected}
+            className={`p-4 rounded-2xl transition-all ${!isMuted ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-red-500/20 text-red-400 border border-red-500/20'} disabled:opacity-50`}
           >
             {!isMuted ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
           </button>
