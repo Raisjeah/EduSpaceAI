@@ -21,6 +21,7 @@ const LiveCallDashboard = () => {
   const [isConnecting, setIsConnecting] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [statusMessage, setStatusMessage] = useState("Menghubungkan ke Prof. Kore...");
+  const [transcript, setTranscript] = useState("");
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -40,18 +41,22 @@ const LiveCallDashboard = () => {
   const isMutedRef = useRef(false);
   const outputSampleRateRef = useRef(24000); // Gemini Live standard is 24kHz
   const nextStartTimeRef = useRef(0);
+  const isProcessingAudioRef = useRef(false);
 
   // Audio Playback logic - Scheduled for gapless playback
   const playAudioFromQueue = useCallback(async () => {
-    if (audioQueue.current.length === 0 || !audioContextRef.current) return;
+    if (audioQueue.current.length === 0 || !audioContextRef.current || isProcessingAudioRef.current) return;
 
-    if (audioContextRef.current.state === 'suspended') {
-      await audioContextRef.current.resume();
-    }
+    isProcessingAudioRef.current = true;
 
-    while (audioQueue.current.length > 0) {
-      const chunk = audioQueue.current.shift();
-      try {
+    try {
+      if (audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume();
+      }
+
+      while (audioQueue.current.length > 0) {
+        const chunk = audioQueue.current.shift();
+
         const float32Data = new Float32Array(chunk.length);
         for (let i = 0; i < chunk.length; i++) {
           float32Data[i] = chunk[i] / 32768.0;
@@ -66,14 +71,16 @@ const LiveCallDashboard = () => {
 
         const currentTime = audioContextRef.current.currentTime;
         if (nextStartTimeRef.current < currentTime) {
-          nextStartTimeRef.current = currentTime + 0.05; // 50ms buffer for first chunk
+          nextStartTimeRef.current = currentTime + 0.01; // Tiny buffer for first chunk
         }
 
         source.start(nextStartTimeRef.current);
         nextStartTimeRef.current += audioBuffer.duration;
-      } catch (e) {
-        console.error("Audio playback error:", e);
       }
+    } catch (e) {
+      console.error("Audio playback error:", e);
+    } finally {
+      isProcessingAudioRef.current = false;
     }
   }, []);
 
@@ -83,9 +90,11 @@ const LiveCallDashboard = () => {
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({
         sampleRate: 16000,
       });
+
       if (audioContextRef.current.state === 'suspended') {
         await audioContextRef.current.resume();
       }
+
       streamRef.current = await navigator.mediaDevices.getUserMedia({
         audio: {
           sampleRate: 16000,
@@ -104,20 +113,25 @@ const LiveCallDashboard = () => {
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && !isMutedRef.current) {
           const pcmData = new Int16Array(event.data);
           const uint8Array = new Uint8Array(pcmData.buffer);
+
+          // Efficient binary to base64 conversion
           let binary = '';
-          for (let i = 0; i < uint8Array.length; i++) {
+          const len = uint8Array.byteLength;
+          for (let i = 0; i < len; i++) {
             binary += String.fromCharCode(uint8Array[i]);
           }
           const base64Data = btoa(binary);
 
-          wsRef.current.send(JSON.stringify({
-            realtimeInput: {
-              mediaChunks: [{
+          // Use strict snake_case for the 2026 Live API protocol
+          const message = {
+            realtime_input: {
+              media_chunks: [{
                 data: base64Data,
-                mimeType: "audio/pcm;rate=16000"
+                mime_type: "audio/pcm;rate=16000"
               }]
             }
-          }));
+          };
+          wsRef.current.send(JSON.stringify(message));
         }
       };
 
@@ -134,8 +148,7 @@ const LiveCallDashboard = () => {
     try {
       const response = await fetch('/api/live');
       if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || `Live token request failed (${response.status})`);
+        throw new Error(`Token request failed: ${response.status}`);
       }
       const { token } = await response.json();
 
@@ -144,29 +157,32 @@ const LiveCallDashboard = () => {
         return;
       }
 
+      // Using the official Bidi endpoint
       const url = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${token}`;
       const ws = new WebSocket(url);
       wsRef.current = ws;
 
       ws.onopen = () => {
+        // Setup message strictly following the multimodal-live-api examples
         const setupMessage = {
           setup: {
-            model: "models/gemini-2.5-flash-native-audio-preview-12-2025",
-            generationConfig: {
-              responseModalities: ["AUDIO"],
-              speechConfig: {
-                voiceConfig: {
-                  prebuiltVoiceConfig: {
-                    voiceName: "Kore"
+            model: "models/gemini-2.0-flash-exp",
+            generation_config: {
+              response_modalities: ["AUDIO", "TEXT"],
+              speech_config: {
+                voice_config: {
+                  prebuilt_voice_config: {
+                    voice_name: "Kore" // Options: Kore, Fenrir, Aoide, etc.
                   }
                 }
               },
             },
-            systemInstruction: {
-              parts: [{ text: "Bertindaklah sebagai Dosen Pembimbing Akademik EduSpaceAI yang bijak, responsif, dan edukatif bernama Prof. Kore. Jawablah langsung menggunakan bahasa suara yang natural." }]
+            system_instruction: {
+              parts: [{ text: "Anda adalah Prof. Kore, Dosen Pembimbing Akademik yang bijak di EduSpaceAI. Berikan bimbingan skripsi atau akademik dengan suara yang hangat, edukatif, dan langsung ke poin. Gunakan Bahasa Indonesia yang natural." }]
             }
           }
         };
+
         ws.send(JSON.stringify(setupMessage));
         setIsConnected(true);
         setIsConnecting(false);
@@ -175,64 +191,70 @@ const LiveCallDashboard = () => {
 
       ws.onmessage = async (event) => {
         try {
-          if (event.data instanceof Blob) {
-            const arrayBuffer = await event.data.arrayBuffer();
-            // Byte alignment fix: ensure even length for Int16Array
-            const pcmData = new Int16Array(arrayBuffer, 0, arrayBuffer.byteLength >> 1);
+          let data = event.data;
+          if (data instanceof Blob) {
+            data = await data.text();
+          }
 
-            // For Blob handling, ensure we use the stored sample rate (default 16000)
-            if (!outputSampleRateRef.current) {
-              outputSampleRateRef.current = 16000;
-            }
+          const message = JSON.parse(data);
 
-            audioQueue.current.push(pcmData);
-            playAudioFromQueue();
-          } else {
-            const message = JSON.parse(event.data);
-            const serverContent = message.server_content || message.serverContent;
+          // The Gemini Live API sends audio inside 'server_content' or 'serverContent'
+          const serverContent = message.server_content || message.serverContent;
 
-            if (serverContent?.model_turn?.parts || serverContent?.modelTurn?.parts) {
-              const parts = serverContent?.model_turn?.parts || serverContent?.modelTurn?.parts;
-              const audioPart = parts.find((part) => {
-                const inlineData = part.inline_data || part.inlineData;
-                const mimeType = inlineData?.mime_type || inlineData?.mimeType;
-                return inlineData?.data && mimeType?.toLowerCase().startsWith('audio/');
-              });
+          if (serverContent?.model_turn || serverContent?.modelTurn) {
+            const turn = serverContent.model_turn || serverContent.modelTurn;
+            const parts = turn.parts || [];
 
-              if (audioPart) {
-                const inlineData = audioPart.inline_data || audioPart.inlineData;
-                const mimeType = inlineData.mime_type || inlineData.mimeType;
-                const rateMatch = mimeType.match(/rate=(\d+)/);
+            for (const part of parts) {
+              // Handle Text Parts for transcription
+              if (part.text) {
+                setTranscript(prev => (prev + " " + part.text).slice(-200)); // Keep last 200 chars
+              }
+
+              // Handle Audio Parts
+              const inlineData = part.inline_data || part.inlineData;
+              if (inlineData?.data && inlineData?.mime_type?.includes('audio')) {
+                // Update sample rate if provided in mimeType
+                const rateMatch = inlineData.mime_type.match(/rate=(\d+)/);
                 if (rateMatch) {
                   outputSampleRateRef.current = parseInt(rateMatch[1], 10);
                 }
 
+                // Decode Base64 to Int16Array
                 const binaryString = atob(inlineData.data);
                 const len = binaryString.length;
                 let bytes = new Uint8Array(len);
                 for (let i = 0; i < len; i++) {
                   bytes[i] = binaryString.charCodeAt(i);
                 }
-                // Validate even byte length for Int16Array
+
+                // IMPORTANT: Audio MUST be byte-aligned (even length) for Int16Array
                 if (bytes.length % 2 !== 0) {
-                  console.warn("Odd byte length, padding with zero");
                   const padded = new Uint8Array(bytes.length + 1);
                   padded.set(bytes);
                   bytes = padded;
                 }
+
                 const pcmData = new Int16Array(bytes.buffer);
                 audioQueue.current.push(pcmData);
                 playAudioFromQueue();
               }
             }
-
-            if (message?.error) {
-              console.error("Gemini Live API error:", message.error);
-              setStatusMessage(`Live error: ${message.error.message || 'unknown error'}`);
-            }
           }
+
+          // Handle interruption/cancellation (server sending setup_complete or other control)
+          if (message.setup_complete || message.setupComplete) {
+            console.log("Gemini Live Setup Complete");
+          }
+
+          if (message.error) {
+            console.error("Gemini API Error:", message.error);
+            setStatusMessage(`Error: ${message.error.message || "Unknown"}`);
+          }
+
         } catch (e) {
-          console.error("Error handling message:", e);
+          // If it's not JSON, we strictly IGNORE it to avoid playing static noise
+          // console.warn("Received non-JSON frame or failed to parse:", e);
         }
       };
 
@@ -257,18 +279,20 @@ const LiveCallDashboard = () => {
   }, [isMuted]);
 
   useEffect(() => {
+    let active = true;
     initAudio().then(success => {
-      if (success) {
+      if (success && active) {
         connectWebSocket();
       }
     });
 
     return () => {
+      active = false;
       if (wsRef.current) wsRef.current.close();
       if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
       if (audioContextRef.current) audioContextRef.current.close();
     };
-  }, []); // Run once on mount
+  }, []);
 
   const handleEndCall = useCallback(() => {
     if (wsRef.current) wsRef.current.close();
@@ -279,7 +303,7 @@ const LiveCallDashboard = () => {
     <div className="fixed inset-0 bg-black text-white flex flex-col items-center justify-between overflow-hidden">
       {/* Header */}
       <div className="w-full p-6 flex justify-between items-center z-10">
-        <div className="w-10" /> {/* Spacer */}
+        <div className="w-10" />
         <div className="flex items-center gap-2 px-4 py-1.5 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full">
           <Sparkles className="w-4 h-4 text-blue-400 animate-pulse" />
           <span className="text-sm font-medium tracking-wider text-blue-100">LIVE</span>
@@ -294,12 +318,10 @@ const LiveCallDashboard = () => {
 
       {/* Main Visualization Area */}
       <div className="relative flex-1 w-full flex flex-col items-center justify-center">
-        {/* Ambient Glowing Aura */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[300px] h-[300px] bg-blue-600/20 rounded-full blur-[120px] animate-pulse-slow" />
         </div>
 
-        {/* Status Text */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -309,7 +331,7 @@ const LiveCallDashboard = () => {
              <div className="w-24 h-24 rounded-full border-2 border-blue-500/30 flex items-center justify-center bg-blue-500/5">
                 <div className="w-20 h-20 rounded-full border border-blue-400/50 flex items-center justify-center animate-pulse">
                    <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center">
-                      <span className="text-2xl"></span>
+                      <span className="text-2xl">🎓</span>
                    </div>
                 </div>
              </div>
@@ -322,10 +344,22 @@ const LiveCallDashboard = () => {
             <p className="text-sm text-blue-400/80 font-medium">Dosen Pembimbing AI</p>
           </div>
           <p className={`text-gray-400 text-sm ${isConnecting ? 'animate-pulse' : ''}`}>{statusMessage}</p>
+
+          {transcript && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="max-w-xs mx-auto mt-4 p-3 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10"
+            >
+              <p className="text-sm text-gray-300 italic leading-relaxed line-clamp-3">
+                "{transcript.trim()}"
+              </p>
+            </motion.div>
+          )}
         </motion.div>
       </div>
 
-      {/* Bottom Wave - The "Ambient Blue Glowing Wave" */}
+      {/* Wave Visualization */}
       <div className="absolute bottom-0 left-0 right-0 h-64 pointer-events-none overflow-hidden">
         <div className="absolute bottom-0 w-full h-full opacity-50">
           <svg viewBox="0 0 1440 320" className="absolute bottom-0 w-full h-auto translate-y-20 scale-110">
@@ -338,11 +372,9 @@ const LiveCallDashboard = () => {
             <path
               fill="url(#wave-grad)"
               className={isMobile ? "" : "animate-wave"}
-              style={{ transform: 'translateZ(0)' }}
               d="M0,160L48,176C96,192,192,224,288,224C384,224,480,192,576,165.3C672,139,768,117,864,128C960,139,1056,181,1152,197.3C1248,213,1344,203,1392,197.3L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
             ></path>
           </svg>
-          <div className="absolute bottom-0 w-full h-32 bg-gradient-to-t from-blue-900/40 to-transparent blur-3xl animate-pulse-slow" />
         </div>
       </div>
 
