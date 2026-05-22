@@ -21,6 +21,7 @@ const LiveCallDashboard = () => {
   const [isConnecting, setIsConnecting] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [statusMessage, setStatusMessage] = useState("Menghubungkan ke Prof. Kore...");
+  const [transcript, setTranscript] = useState("");
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -110,11 +111,12 @@ const LiveCallDashboard = () => {
           }
           const base64Data = btoa(binary);
 
+          // Use snake_case for the 2026 Live API protocol
           wsRef.current.send(JSON.stringify({
-            realtimeInput: {
-              mediaChunks: [{
+            realtime_input: {
+              media_chunks: [{
                 data: base64Data,
-                mimeType: "audio/pcm;rate=16000"
+                mime_type: "audio/pcm;rate=16000"
               }]
             }
           }));
@@ -149,24 +151,26 @@ const LiveCallDashboard = () => {
       wsRef.current = ws;
 
       ws.onopen = () => {
+        // Use snake_case and gemini-2.0-flash-exp (most stable for Live API currently)
         const setupMessage = {
           setup: {
-            model: "models/gemini-2.5-flash-native-audio-preview-12-2025",
-            generationConfig: {
-              responseModalities: ["AUDIO"],
-              speechConfig: {
-                voiceConfig: {
-                  prebuiltVoiceConfig: {
-                    voiceName: "Kore"
+            model: "models/gemini-2.0-flash-exp",
+            generation_config: {
+              response_modalities: ["AUDIO", "TEXT"],
+              speech_config: {
+                voice_config: {
+                  prebuilt_voice_config: {
+                    voice_name: "Kore"
                   }
                 }
               },
             },
-            systemInstruction: {
+            system_instruction: {
               parts: [{ text: "Bertindaklah sebagai Dosen Pembimbing Akademik EduSpaceAI yang bijak, responsif, dan edukatif bernama Prof. Kore. Jawablah langsung menggunakan bahasa suara yang natural." }]
             }
           }
         };
+
         ws.send(JSON.stringify(setupMessage));
         setIsConnected(true);
         setIsConnecting(false);
@@ -175,61 +179,83 @@ const LiveCallDashboard = () => {
 
       ws.onmessage = async (event) => {
         try {
+          let message;
           if (event.data instanceof Blob) {
-            const arrayBuffer = await event.data.arrayBuffer();
-            // Byte alignment fix: ensure even length for Int16Array
-            const pcmData = new Int16Array(arrayBuffer, 0, arrayBuffer.byteLength >> 1);
-
-            // For Blob handling, ensure we use the stored sample rate (default 16000)
-            if (!outputSampleRateRef.current) {
-              outputSampleRateRef.current = 16000;
-            }
-
-            audioQueue.current.push(pcmData);
-            playAudioFromQueue();
-          } else {
-            const message = JSON.parse(event.data);
-            const serverContent = message.server_content || message.serverContent;
-
-            if (serverContent?.model_turn?.parts || serverContent?.modelTurn?.parts) {
-              const parts = serverContent?.model_turn?.parts || serverContent?.modelTurn?.parts;
-              const audioPart = parts.find((part) => {
-                const inlineData = part.inline_data || part.inlineData;
-                const mimeType = inlineData?.mime_type || inlineData?.mimeType;
-                return inlineData?.data && mimeType?.toLowerCase().startsWith('audio/');
-              });
-
-              if (audioPart) {
-                const inlineData = audioPart.inline_data || audioPart.inlineData;
-                const mimeType = inlineData.mime_type || inlineData.mimeType;
-                const rateMatch = mimeType.match(/rate=(\d+)/);
-                if (rateMatch) {
-                  outputSampleRateRef.current = parseInt(rateMatch[1], 10);
-                }
-
-                const binaryString = atob(inlineData.data);
-                const len = binaryString.length;
-                let bytes = new Uint8Array(len);
-                for (let i = 0; i < len; i++) {
-                  bytes[i] = binaryString.charCodeAt(i);
-                }
+            // Some environments send JSON in Blob format. Try parsing as text first.
+            const text = await event.data.text();
+            try {
+              message = JSON.parse(text);
+            } catch (e) {
+              // If not JSON, it might be raw binary audio (unlikely for Gemini Live which uses JSON/Base64 mostly)
+              // but we handle it just in case.
+              const arrayBuffer = await event.data.arrayBuffer();
+              if (arrayBuffer.byteLength > 0) {
+                let bytes = new Uint8Array(arrayBuffer);
                 // Validate even byte length for Int16Array
                 if (bytes.length % 2 !== 0) {
-                  console.warn("Odd byte length, padding with zero");
                   const padded = new Uint8Array(bytes.length + 1);
                   padded.set(bytes);
                   bytes = padded;
                 }
                 const pcmData = new Int16Array(bytes.buffer);
+                // Gemini Live binary frames are typically 24kHz
+                outputSampleRateRef.current = 24000;
                 audioQueue.current.push(pcmData);
                 playAudioFromQueue();
               }
+              return;
+            }
+          } else {
+            message = JSON.parse(event.data);
+          }
+
+          const serverContent = message.server_content || message.serverContent;
+
+          if (serverContent?.model_turn?.parts || serverContent?.modelTurn?.parts) {
+            const parts = serverContent?.model_turn?.parts || serverContent?.modelTurn?.parts;
+
+            // Handle Text Parts
+            const textPart = parts.find(p => p.text);
+            if (textPart) {
+              setTranscript(prev => prev + " " + textPart.text);
             }
 
-            if (message?.error) {
-              console.error("Gemini Live API error:", message.error);
-              setStatusMessage(`Live error: ${message.error.message || 'unknown error'}`);
+            // Handle Audio Parts
+            const audioPart = parts.find((part) => {
+              const inlineData = part.inline_data || part.inlineData;
+              const mimeType = inlineData?.mime_type || inlineData?.mimeType;
+              return inlineData?.data && mimeType?.toLowerCase().startsWith('audio/');
+            });
+
+            if (audioPart) {
+              const inlineData = audioPart.inline_data || audioPart.inlineData;
+              const mimeType = inlineData.mime_type || inlineData.mimeType;
+              const rateMatch = mimeType.match(/rate=(\d+)/);
+              if (rateMatch) {
+                outputSampleRateRef.current = parseInt(rateMatch[1], 10);
+              }
+
+              const binaryString = atob(inlineData.data);
+              const len = binaryString.length;
+              let bytes = new Uint8Array(len);
+              for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+              }
+              // Validate even byte length for Int16Array
+              if (bytes.length % 2 !== 0) {
+                const padded = new Uint8Array(bytes.length + 1);
+                padded.set(bytes);
+                bytes = padded;
+              }
+              const pcmData = new Int16Array(bytes.buffer);
+              audioQueue.current.push(pcmData);
+              playAudioFromQueue();
             }
+          }
+
+          if (message?.error) {
+            console.error("Gemini Live API error:", message.error);
+            setStatusMessage(`Live error: ${message.error.message || 'unknown error'}`);
           }
         } catch (e) {
           console.error("Error handling message:", e);
@@ -322,6 +348,18 @@ const LiveCallDashboard = () => {
             <p className="text-sm text-blue-400/80 font-medium">Dosen Pembimbing AI</p>
           </div>
           <p className={`text-gray-400 text-sm ${isConnecting ? 'animate-pulse' : ''}`}>{statusMessage}</p>
+
+          {transcript && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="max-w-xs mx-auto mt-4 p-3 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10"
+            >
+              <p className="text-sm text-gray-300 italic leading-relaxed line-clamp-3">
+                "{transcript.trim()}"
+              </p>
+            </motion.div>
+          )}
         </motion.div>
       </div>
 
