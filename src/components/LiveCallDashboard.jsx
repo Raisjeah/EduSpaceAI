@@ -22,6 +22,7 @@ const LiveCallDashboard = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [statusMessage, setStatusMessage] = useState("Menghubungkan ke Prof. Kore...");
   const [isMobile, setIsMobile] = useState(false);
+  const [transcript, setTranscript] = useState("");
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -105,17 +106,18 @@ const LiveCallDashboard = () => {
           const pcmData = new Int16Array(event.data);
           const uint8Array = new Uint8Array(pcmData.buffer);
           let binary = '';
-          for (let i = 0; i < uint8Array.length; i++) {
+          const len = uint8Array.byteLength;
+          for (let i = 0; i < len; i++) {
             binary += String.fromCharCode(uint8Array[i]);
           }
           const base64Data = btoa(binary);
 
           wsRef.current.send(JSON.stringify({
-            realtimeInput: {
-              mediaChunks: [{
+            realtime_input: {
+              audio: {
                 data: base64Data,
-                mimeType: "audio/pcm;rate=16000"
-              }]
+                mime_type: "audio/pcm;rate=16000"
+              }
             }
           }));
         }
@@ -152,17 +154,19 @@ const LiveCallDashboard = () => {
         const setupMessage = {
           setup: {
             model: "models/gemini-3.1-flash-live-preview",
-            generationConfig: {
-              responseModalities: ["AUDIO"],
-              speechConfig: {
-                voiceConfig: {
-                  prebuiltVoiceConfig: {
-                    voiceName: "Kore"
+            generation_config: {
+              response_modalities: ["AUDIO"],
+              thinking_level: "low",
+              temperature: 1,
+              speech_config: {
+                voice_config: {
+                  prebuilt_voice_config: {
+                    voice_name: "Kore"
                   }
                 }
               },
             },
-            systemInstruction: {
+            system_instruction: {
               parts: [{ text: "Bertindaklah sebagai Dosen Pembimbing Akademik EduSpaceAI yang bijak, responsif, dan edukatif bernama Prof. Kore. Jawablah langsung menggunakan bahasa suara yang natural." }]
             }
           }
@@ -177,52 +181,67 @@ const LiveCallDashboard = () => {
         try {
           if (event.data instanceof Blob) {
             const arrayBuffer = await event.data.arrayBuffer();
-            // Byte alignment fix: ensure even length for Int16Array
             const pcmData = new Int16Array(arrayBuffer, 0, arrayBuffer.byteLength >> 1);
-
-            // For Blob handling, ensure we use the stored sample rate (default 16000)
-            if (!outputSampleRateRef.current) {
-              outputSampleRateRef.current = 16000;
-            }
-
+            if (!outputSampleRateRef.current) outputSampleRateRef.current = 16000;
             audioQueue.current.push(pcmData);
             playAudioFromQueue();
           } else {
             const message = JSON.parse(event.data);
             const serverContent = message.server_content || message.serverContent;
 
-            if (serverContent?.model_turn?.parts || serverContent?.modelTurn?.parts) {
-              const parts = serverContent?.model_turn?.parts || serverContent?.modelTurn?.parts;
-              const audioPart = parts.find((part) => {
-                const inlineData = part.inline_data || part.inlineData;
-                const mimeType = inlineData?.mime_type || inlineData?.mimeType;
-                return inlineData?.data && mimeType?.toLowerCase().startsWith('audio/');
-              });
+            if (serverContent) {
+              // Handle Interruption
+              if (serverContent.interrupted) {
+                audioQueue.current = [];
+                nextStartTimeRef.current = 0;
+                // Optional: stop currently playing source if needed
+                // For simplicity here, we clear the queue so the next turn starts fresh
+              }
 
-              if (audioPart) {
-                const inlineData = audioPart.inline_data || audioPart.inlineData;
-                const mimeType = inlineData.mime_type || inlineData.mimeType;
-                const rateMatch = mimeType.match(/rate=(\d+)/);
-                if (rateMatch) {
-                  outputSampleRateRef.current = parseInt(rateMatch[1], 10);
-                }
+              // Handle Model Turn Parts (Audio & Transcripts)
+              const modelTurn = serverContent.model_turn || serverContent.modelTurn;
+              if (modelTurn?.parts) {
+                for (const part of modelTurn.parts) {
+                  const inlineData = part.inline_data || part.inlineData;
+                  if (inlineData?.data) {
+                    const mimeType = inlineData.mime_type || inlineData.mimeType;
+                    const rateMatch = mimeType?.match(/rate=(\d+)/);
+                    if (rateMatch) {
+                      outputSampleRateRef.current = parseInt(rateMatch[1], 10);
+                    }
 
-                const binaryString = atob(inlineData.data);
-                const len = binaryString.length;
-                let bytes = new Uint8Array(len);
-                for (let i = 0; i < len; i++) {
-                  bytes[i] = binaryString.charCodeAt(i);
+                    const binaryString = atob(inlineData.data);
+                    const len = binaryString.length;
+                    let bytes = new Uint8Array(len);
+                    for (let i = 0; i < len; i++) {
+                      bytes[i] = binaryString.charCodeAt(i);
+                    }
+                    if (bytes.length % 2 !== 0) {
+                      const padded = new Uint8Array(bytes.length + 1);
+                      padded.set(bytes);
+                      bytes = padded;
+                    }
+                    const pcmData = new Int16Array(bytes.buffer);
+                    audioQueue.current.push(pcmData);
+                    playAudioFromQueue();
+                  }
+
+                  if (part.text) {
+                    setTranscript(prev => prev + part.text);
+                  }
                 }
-                // Validate even byte length for Int16Array
-                if (bytes.length % 2 !== 0) {
-                  console.warn("Odd byte length, padding with zero");
-                  const padded = new Uint8Array(bytes.length + 1);
-                  padded.set(bytes);
-                  bytes = padded;
-                }
-                const pcmData = new Int16Array(bytes.buffer);
-                audioQueue.current.push(pcmData);
-                playAudioFromQueue();
+              }
+
+              // Handle Transcriptions (if sent separately)
+              const inputTranscription = serverContent.input_transcription || serverContent.inputTranscription;
+              if (inputTranscription?.text) {
+                console.log("User:", inputTranscription.text);
+                // Maybe prefix with "User: " if desired, but for now we just show AI text usually
+              }
+
+              const outputTranscription = serverContent.output_transcription || serverContent.outputTranscription;
+              if (outputTranscription?.text) {
+                setTranscript(outputTranscription.text);
               }
             }
 
@@ -303,7 +322,7 @@ const LiveCallDashboard = () => {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="z-10 text-center space-y-4"
+          className="z-10 text-center space-y-4 max-w-[80%]"
         >
           <div className="relative flex justify-center">
              <div className="w-24 h-24 rounded-full border-2 border-blue-500/30 flex items-center justify-center bg-blue-500/5">
@@ -321,7 +340,16 @@ const LiveCallDashboard = () => {
             <h2 className="text-xl font-semibold tracking-tight">Prof. Kore</h2>
             <p className="text-sm text-blue-400/80 font-medium">Dosen Pembimbing AI</p>
           </div>
-          <p className={`text-gray-400 text-sm ${isConnecting ? 'animate-pulse' : ''}`}>{statusMessage}</p>
+
+          {transcript ? (
+            <div className="mt-4 p-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl max-h-32 overflow-y-auto scrollbar-hide">
+              <p className="text-sm text-blue-100/90 leading-relaxed italic">
+                "{transcript}"
+              </p>
+            </div>
+          ) : (
+            <p className={`text-gray-400 text-sm ${isConnecting ? 'animate-pulse' : ''}`}>{statusMessage}</p>
+          )}
         </motion.div>
       </div>
 
