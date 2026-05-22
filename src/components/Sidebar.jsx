@@ -9,15 +9,13 @@ import { getProjects } from '@/app/actions/projectActions';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import useAuth from '@/hooks/useAuth';
-import ProjectModal from './ProjectModal';
 
 export default function Sidebar({ 
   userId
 }) {
-  const { isSidebarOpen, setIsSidebarOpen } = useLayout();
+  const { isSidebarOpen, setIsSidebarOpen, isProjectModalOpen, setIsProjectModalOpen } = useLayout();
   const [chatGroups, setChatGroups] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -192,31 +190,20 @@ export default function Sidebar({
     <>
       <aside className={`
         fixed top-0 left-0 h-full z-50
-        bg-gradient-to-b from-white/80 to-white/60 dark:from-black/80 dark:to-black/60
-        backdrop-blur-xl md:backdrop-blur-2xl border-r border-white/20 dark:border-white/10
+        bg-white dark:bg-[#0F0F0F]
+        border-r border-neutral-200/50 dark:border-neutral-800/50
         transform transition-transform duration-300 ease-in-out flex-shrink-0
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         w-[85vw] max-w-[280px] sm:w-[280px] transition-colors duration-200
       `}>
         <div className="flex flex-col h-full p-4">
-          {/* Header / Brand */}
-          <div className="flex items-center justify-between mb-6 px-2">
-            <Link href="/" className="flex items-center gap-2" onClick={closeSidebar}>
-              <div className="w-10 h-10 flex items-center justify-center">
-                <img
-                  src="/logo.png"
-                  alt="EduSpaceAI Logo"
-                  className="w-full h-full object-contain invert dark:invert-0"
-                />
-              </div>
-              <span className="font-bold text-[14px] text-slate-900 dark:text-white tracking-tight transition-colors">EduSpaceAI</span>
-            </Link>
-            <button onClick={() => setIsSidebarOpen(false)} className="text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors">
-              <Menu size={18} />
-            </button>
+          <div className="flex justify-end mb-2">
+             <button onClick={() => setIsSidebarOpen(false)} className="text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors md:hidden">
+                <Menu size={18} />
+              </button>
           </div>
 
-          {/* Button New Chat / New Project */}
+          {/* Button New Chat */}
           <div className="flex flex-col gap-0.5 mb-6">
             <Link
               href="/"
@@ -226,13 +213,6 @@ export default function Sidebar({
               <Plus size={18} className="text-slate-500 dark:text-gray-400" />
               <span>Percakapan baru</span>
             </Link>
-            <button
-              onClick={() => { setIsProjectModalOpen(true); closeSidebar(); }}
-              className="flex items-center gap-3 w-full px-3 py-2 text-[13px] font-medium text-slate-700 dark:text-gray-300 hover:bg-white/5 dark:hover:bg-white/5 transition-all"
-            >
-              <Briefcase size={18} className="text-slate-500 dark:text-gray-400" />
-              <span>Agent</span>
-            </button>
 
             {/* Search Input In Sidebar */}
             <div className="relative mt-2">
@@ -249,60 +229,6 @@ export default function Sidebar({
 
           {/* Navigation */}
           <nav className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            <Link
-              href="/tools"
-              onClick={closeSidebar}
-              className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all text-[12px] mb-2 ${
-                pathname === '/tools'
-                ? 'bg-white/20 dark:bg-white/10 backdrop-blur-md border border-white/20 text-slate-900 dark:text-white shadow-sm'
-                : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <Wrench size={16} /> <span className="font-medium">Tools & File Editor</span>
-            </Link>
-
-            <Link
-              href="/chat/live"
-              onClick={closeSidebar}
-              className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all text-[12px] mb-2 ${
-                pathname === '/chat/live'
-                ? 'bg-white/20 dark:bg-white/10 backdrop-blur-md border border-white/20 text-slate-900 dark:text-white shadow-sm'
-                : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <Mic size={16} /> <span className="font-medium">Voice Call (Live)</span>
-            </Link>
-
-            {/* Projects Section */}
-            {projects.length > 0 && (
-              <div className="mt-4 mb-2">
-                <div className="px-3 mb-2 text-[10px] font-bold text-slate-400 dark:text-gray-500 tracking-[0.1em] uppercase">WorkSpace Agents</div>
-                <div className="space-y-1 max-h-[150px] overflow-y-auto custom-scrollbar pr-1">
-                  {projects.map(project => {
-                    const isPathActive = pathname === `/project/${project._id}`;
-                    const isQueryActive = searchParams.get('projectId') === project._id;
-                    const isActive = isPathActive || isQueryActive;
-                    const theme = getAgentTheme(project.agentId);
-                    return (
-                      <Link
-                        key={project._id}
-                        href={`/project/${project._id}`}
-                        onClick={closeSidebar}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[11px] transition-all border-l-2 ${
-                          isActive
-                          ? `${theme.active} backdrop-blur-md shadow-sm`
-                          : `text-slate-500 dark:text-gray-400 ${theme.hover} hover:text-slate-900 dark:hover:text-gray-200 border-transparent`
-                        }`}
-                      >
-                        {getAgentIcon(project.agentId)}
-                        <span className="truncate">{project.name}</span>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-
             <div className="mt-4 mb-3 px-3 text-[10px] font-bold text-slate-400 dark:text-gray-500 tracking-[0.1em] uppercase">
               {isProjectContext ? 'Riwayat Agent' : 'Riwayat Belajar'}
             </div>
@@ -392,11 +318,6 @@ export default function Sidebar({
         </div>
       </aside>
 
-      <ProjectModal
-        isOpen={isProjectModalOpen}
-        onClose={() => setIsProjectModalOpen(false)}
-        userId={userId}
-      />
     </>
   );
 }

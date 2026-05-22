@@ -9,9 +9,10 @@ import Header from '@/components/Header';
 import LoadingScreen from '@/components/LoadingScreen';
 import useAuth from '@/hooks/useAuth';
 import Toast from '@/components/Toast';
+import ProjectModal from './ProjectModal';
 
 export default function MainLayout({ children }) {
-  const { isSidebarOpen, setIsSidebarOpen } = useLayout();
+  const { isSidebarOpen, setIsSidebarOpen, isProjectModalOpen, setIsProjectModalOpen } = useLayout();
   const [hasMounted, setHasMounted] = useState(false);
 
   const pathname = usePathname();
@@ -94,6 +95,12 @@ export default function MainLayout({ children }) {
 
       <main className={`flex-1 flex flex-col h-[100dvh] min-w-0 relative overflow-hidden transition-all duration-300 ${isSidebarOpen ? 'md:ml-[280px]' : 'ml-0'}`}>
         <Header />
+
+        <ProjectModal
+          isOpen={isProjectModalOpen}
+          onClose={() => setIsProjectModalOpen(false)}
+          userId={userId}
+        />
 
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
           <AnimatePresence mode="wait">
