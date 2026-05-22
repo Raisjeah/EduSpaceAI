@@ -30,21 +30,17 @@ export default function Header() {
   }, []);
 
   return (
-    <header className={`flex justify-between items-center p-1.5 sticky top-0 z-50 transition-all duration-300 ${
-      isScrolled
-        ? 'bg-white/70 dark:bg-[#0F0F0F]/70 backdrop-blur-md shadow-md border-b border-slate-200/50 dark:border-white/5'
-        : 'bg-transparent border-transparent'
-    } flex-none`}>
+    <header className="flex justify-between items-center p-4 sticky top-0 z-50 bg-transparent pointer-events-none flex-none">
       {/* Center Title - only visible when scrolled */}
       <div className="absolute left-1/2 -translate-x-1/2 w-max pointer-events-none z-10">
-          <h1 className={`text-[11px] font-light text-slate-500 dark:text-gray-400 tracking-wide transition-all duration-500 ${isScrolled ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+          <h1 className={`px-4 py-1.5 rounded-full bg-white/70 dark:bg-[#0F0F0F]/70 backdrop-blur-md border border-slate-200/50 dark:border-white/5 shadow-sm text-[11px] font-bold text-slate-500 dark:text-gray-400 tracking-wide transition-all duration-500 ${isScrolled ? 'opacity-100 translate-y-2' : 'opacity-0 -translate-y-4'}`}>
             {activeChatTitle}
           </h1>
       </div>
 
       <div className="flex items-center gap-3 min-w-0">
         {!userId ? (
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 pointer-events-auto">
              <div className="w-10 h-10 flex items-center justify-center">
                 <img
                   src="/logo.png"
@@ -57,9 +53,9 @@ export default function Header() {
         ) : (
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-neutral-900/5 dark:bg-white/5 hover:bg-neutral-900/10 dark:hover:bg-white/10 text-slate-600 dark:text-gray-400 transition-all shrink-0"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/80 dark:bg-neutral-900/70 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl backdrop-blur-md text-slate-600 dark:text-gray-400 transition-all shrink-0 pointer-events-auto hover:scale-105"
           >
-            <Menu size={18} />
+            <Menu size={20} />
           </button>
         )}
       </div>
@@ -69,7 +65,7 @@ export default function Header() {
           {!userId && (
             <Link
               href="/auth/login"
-              className="group inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-indigo-500/10 hover:bg-indigo-500/15 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-sm font-medium transition-colors"
+              className="group inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-indigo-500/10 hover:bg-indigo-500/15 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-sm font-medium transition-colors pointer-events-auto"
             >
               Masuk
               <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
@@ -79,7 +75,7 @@ export default function Header() {
           {userId && (
             <Link
               href="/pricing"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-500 text-xs font-bold hover:bg-amber-500/20 transition-all"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 dark:bg-neutral-900/70 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl backdrop-blur-md text-amber-600 dark:text-amber-500 text-xs font-bold hover:scale-105 transition-all pointer-events-auto"
             >
               <Sparkles size={14} />
               {user?.current_plan === 'FREE' ? 'Upgrade Pro' : user?.current_plan}
@@ -87,12 +83,12 @@ export default function Header() {
           )}
 
           {userId && (
-            <Link href="/profile" title="Edit Profil" className="hover:text-slate-900 dark:hover:text-white transition-colors">
-              <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-[#1A1A1A] flex items-center justify-center border border-slate-200 dark:border-[#333] hover:border-indigo-500/50 transition-all overflow-hidden">
+            <Link href="/profile" title="Edit Profil" className="pointer-events-auto hover:scale-105 transition-all">
+              <div className="w-10 h-10 rounded-full bg-white/80 dark:bg-neutral-900/70 flex items-center justify-center border border-neutral-200/60 dark:border-neutral-800/60 shadow-xl backdrop-blur-md hover:border-indigo-500/50 transition-all overflow-hidden">
                 {user?.image ? (
                   <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
                 ) : (
-                  <User size={16} />
+                  <User size={18} />
                 )}
               </div>
             </Link>

@@ -406,19 +406,23 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             <div className="hidden md:block">
               <FloatingOrbs />
             </div>
-            <div className="w-16 h-16 bg-indigo-600/20 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30 backdrop-blur-xl">
-              <span className="text-2xl text-indigo-500">
-                {project ? '📂' : '🎓'}
-              </span>
+            <div className="flex flex-col items-center justify-center mb-4">
+              <div className="w-20 h-20 bg-white dark:bg-[#151515] rounded-2xl flex items-center justify-center mb-4 shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-slate-100 dark:border-white/5 overflow-hidden">
+                <img
+                  src="/logo.png"
+                  alt="EduSpaceAI Logo"
+                  className="w-12 h-12 object-contain invert dark:invert-0"
+                />
+              </div>
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-1 text-center px-4">
+                {project ? project.name : 'EduSpaceAI'}
+              </h1>
+              <p className="text-slate-600 dark:text-gray-400 text-center max-w-sm text-sm md:text-base px-4 font-medium">
+                {project
+                  ? `Sedang menggunakan agen ${getAgentName(project.agentId)} untuk membantumu di project ini.`
+                  : greeting}
+              </p>
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-2 text-center px-4">
-              {project ? project.name : 'EduSpaceAI'}
-            </h1>
-            <p className="text-slate-600 dark:text-gray-400 mb-6 text-center max-w-sm text-sm md:text-base px-4 font-medium">
-              {project
-                ? `Sedang menggunakan agen ${getAgentName(project.agentId)} untuk membantumu di project ini.`
-                : greeting}
-            </p>
           </div>
         ) : (
           <div
@@ -519,6 +523,7 @@ function SuggestionChip({ label, icon, onClick, isLink, theme }) {
 }
 
 function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile, isNewChat, modelSelector }) {
+  const { setIsProjectModalOpen } = useLayout();
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [showNudge, setShowNudge] = useState(false);
   const fileInputRef = useRef(null);
@@ -702,30 +707,42 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           maxRows={8}
           disabled={disabled}
           placeholder="Tanya apa saja ke Dosen AI-mu..."
-          className="flex-1 bg-transparent border-none outline-none py-2.5 px-3 text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
+          className="flex-1 w-full min-w-0 bg-transparent border-none outline-none py-2.5 px-3 text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
         />
-        <div className="flex items-center gap-1">
-          {modelSelector}
-          <Link
-            href="/chat/live"
-            className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-105 transition-all shadow-md"
-            title="Voice Call (Live)"
-          >
-            <div className="flex items-center gap-0.5">
-              <div className="w-0.5 h-2.5 bg-current rounded-full" />
-              <div className="w-0.5 h-4 bg-current rounded-full" />
-              <div className="w-0.5 h-2.5 bg-current rounded-full" />
-            </div>
-          </Link>
-          <button
-            onClick={(e) => { e.preventDefault(); handleSend(); }}
-            disabled={disabled || (!input.trim() && !selectedFile)}
-            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
-              (input.trim() || selectedFile) && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40 hover:scale-105' : 'bg-white/5 text-slate-400 dark:text-gray-600'
-            }`}
-          >
-            <ArrowUp size={16} />
-          </button>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-1.5 px-2 mb-0.5">
+            <Link href="/tools" className="text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-indigo-500 transition-colors tracking-widest uppercase">TOOLS</Link>
+            <div className="w-[1px] h-2.5 bg-slate-200 dark:bg-white/10" />
+            <button
+              onClick={() => setIsProjectModalOpen(true)}
+              className="text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-indigo-500 transition-colors tracking-widest uppercase"
+            >
+              AGENT
+            </button>
+          </div>
+          <div className="flex items-center gap-1">
+            {modelSelector}
+            <Link
+              href="/chat/live"
+              className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/5 dark:bg-white/5 text-slate-900 dark:text-white hover:scale-105 transition-all shadow-sm border border-slate-200 dark:border-white/10"
+              title="Voice Call (Live)"
+            >
+              <div className="flex items-center gap-0.5">
+                <div className="w-0.5 h-2.5 bg-current rounded-full" />
+                <div className="w-0.5 h-4 bg-current rounded-full" />
+                <div className="w-0.5 h-2.5 bg-current rounded-full" />
+              </div>
+            </Link>
+            <button
+              onClick={(e) => { e.preventDefault(); handleSend(); }}
+              disabled={disabled || (!input.trim() && !selectedFile)}
+              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                (input.trim() || selectedFile) && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40 hover:scale-105' : 'bg-white/5 text-slate-400 dark:text-gray-600'
+              }`}
+            >
+              <ArrowUp size={16} />
+            </button>
+          </div>
         </div>
       </div>
     </div>

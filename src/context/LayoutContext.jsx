@@ -6,6 +6,7 @@ const LayoutContext = createContext();
 
 export function LayoutProvider({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
 
   // Close sidebar on mobile when navigating (handled in Sidebar component usually,
   // but we can expose the setter here)
@@ -13,7 +14,9 @@ export function LayoutProvider({ children }) {
   return (
     <LayoutContext.Provider value={{
       isSidebarOpen,
-      setIsSidebarOpen
+      setIsSidebarOpen,
+      isProjectModalOpen,
+      setIsProjectModalOpen
     }}>
       {children}
     </LayoutContext.Provider>
