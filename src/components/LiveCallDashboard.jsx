@@ -153,7 +153,7 @@ const LiveCallDashboard = () => {
       ws.onopen = () => {
         const setupMessage = {
           setup: {
-            model: "gemini-3.1-flash-live-preview",
+            model: "models/gemini-3.1-flash-live-preview",
             generation_config: {
               response_modalities: ["AUDIO"],
               thinking_level: "low",
