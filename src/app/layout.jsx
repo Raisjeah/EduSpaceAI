@@ -4,6 +4,7 @@ import MainLayout from '@/components/MainLayout'
 import { AuthProvider } from '@/context/AuthContext'
 import { ChatProvider } from '@/context/ChatContext'
 import { LayoutProvider } from '@/context/LayoutContext'
+import { LiveCallProvider } from '@/context/LiveCallContext'
 import ThemeProvider from '@/components/ThemeProvider'
 import Script from 'next/script'
 
@@ -32,7 +33,9 @@ export default function RootLayout({ children }) {
           <AuthProvider>
             <ChatProvider>
               <LayoutProvider>
-                <MainLayout>{children}</MainLayout>
+                <LiveCallProvider>
+                  <MainLayout>{children}</MainLayout>
+                </LiveCallProvider>
               </LayoutProvider>
             </ChatProvider>
           </AuthProvider>
