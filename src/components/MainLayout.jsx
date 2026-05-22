@@ -85,16 +85,16 @@ export default function MainLayout({ children }) {
         />
       </Suspense>
 
-      <main className={`flex-1 flex flex-col h-[100dvh] min-w-0 relative overflow-hidden transition-all duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-[280px] md:translate-x-0 md:ml-[280px]' : 'translate-x-0 ml-0'}`}>
-        <Header />
-
+      <main className="flex-1 flex flex-col h-[100dvh] min-w-0 relative overflow-hidden">
         <ProjectModal
           isOpen={isProjectModalOpen}
           onClose={() => setIsProjectModalOpen(false)}
           userId={userId}
         />
 
-        <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
+        <div className={`flex-1 flex flex-col min-h-0 overflow-hidden relative transition-all duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-[280px] md:translate-x-0 md:ml-[280px]' : 'translate-x-0 ml-0'}`}>
+          <Header />
+
           <AnimatePresence mode="wait">
             <motion.div
               key={layoutKey}
