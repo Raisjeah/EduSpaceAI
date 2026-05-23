@@ -187,7 +187,7 @@ const LiveCallDashboard = () => {
       const session = await ai.live.connect({
         model: 'gemini-3.1-flash-live-preview',
         config: {
-          responseModalities: ['audio'],
+          responseModalities: ['AUDIO'],
           speechConfig: {
             voiceConfig: {
               prebuiltVoiceConfig: {
