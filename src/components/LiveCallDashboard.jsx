@@ -10,11 +10,13 @@ import {
   X,
   Keyboard,
   Sparkles,
-  Send
+  Send,
+  User
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { GoogleGenAI } from '@google/genai';
+import SiriWave from 'siriwave';
 
 const LiveCallDashboard = () => {
   const router = useRouter();
@@ -49,6 +51,13 @@ const LiveCallDashboard = () => {
   const outputSampleRateRef = useRef(24000); // Gemini Live standard is 24kHz
   const nextStartTimeRef = useRef(0);
 
+  // SiriWave Refs
+  const siriWaveContainerRef = useRef(null);
+  const siriWaveRef = useRef(null);
+  const userAnalyserRef = useRef(null);
+  const modelAnalyserRef = useRef(null);
+  const modelGainRef = useRef(null);
+
   // Audio Playback logic - Scheduled for gapless playback
   const clearAudioQueue = useCallback(() => {
     audioQueue.current = [];
@@ -75,7 +84,13 @@ const LiveCallDashboard = () => {
 
         const source = audioContextRef.current.createBufferSource();
         source.buffer = audioBuffer;
-        source.connect(audioContextRef.current.destination);
+
+        // Connect to model analyser for wave animation
+        if (modelGainRef.current) {
+          source.connect(modelGainRef.current);
+        } else {
+          source.connect(audioContextRef.current.destination);
+        }
 
         const currentTime = audioContextRef.current.currentTime;
         if (nextStartTimeRef.current < currentTime) {
@@ -116,6 +131,18 @@ const LiveCallDashboard = () => {
       if (audioContextRef.current.state === 'suspended') {
         await audioContextRef.current.resume();
       }
+
+      // Initialize Analysers
+      userAnalyserRef.current = audioContextRef.current.createAnalyser();
+      userAnalyserRef.current.fftSize = 256;
+
+      modelAnalyserRef.current = audioContextRef.current.createAnalyser();
+      modelAnalyserRef.current.fftSize = 256;
+
+      modelGainRef.current = audioContextRef.current.createGain();
+      modelGainRef.current.connect(modelAnalyserRef.current);
+      modelAnalyserRef.current.connect(audioContextRef.current.destination);
+
       streamRef.current = await navigator.mediaDevices.getUserMedia({
         audio: {
           sampleRate: 16000,
@@ -123,13 +150,7 @@ const LiveCallDashboard = () => {
           echoCancellation: true,
           noiseSuppression: true,
         },
-        video: isVideoOn
-          ? {
-              width: { ideal: 640 },
-              height: { ideal: 480 },
-              frameRate: { ideal: 10 }
-            }
-          : false
+        video: false // Initially false, we toggle it later
       });
 
       if (videoRef.current) {
@@ -139,6 +160,8 @@ const LiveCallDashboard = () => {
       await audioContextRef.current.audioWorklet.addModule('/audio-processor.js');
 
       sourceRef.current = audioContextRef.current.createMediaStreamSource(streamRef.current);
+      sourceRef.current.connect(userAnalyserRef.current);
+
       processorRef.current = new AudioWorkletNode(audioContextRef.current, 'audio-processor');
 
       processorRef.current.port.onmessage = (event) => {
@@ -297,6 +320,93 @@ const LiveCallDashboard = () => {
     };
   }, []); // Run once on mount
 
+  // Camera Toggle Effect
+  useEffect(() => {
+    const toggleCamera = async () => {
+      if (!streamRef.current) return;
+
+      if (isVideoOn) {
+        try {
+          const videoStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+              frameRate: { ideal: 10 }
+            }
+          });
+          const videoTrack = videoStream.getVideoTracks()[0];
+          streamRef.current.addTrack(videoTrack);
+          if (videoRef.current) videoRef.current.srcObject = streamRef.current;
+        } catch (err) {
+          console.error("Error opening camera:", err);
+          setIsVideoOn(false);
+        }
+      } else {
+        streamRef.current.getVideoTracks().forEach(track => {
+          track.stop();
+          streamRef.current.removeTrack(track);
+        });
+      }
+    };
+
+    if (isConnected) {
+      toggleCamera();
+    }
+  }, [isVideoOn, isConnected]);
+
+  // SiriWave Animation Effect
+  useEffect(() => {
+    if (isConnected && siriWaveContainerRef.current && !siriWaveRef.current) {
+      siriWaveRef.current = new SiriWave({
+        container: siriWaveContainerRef.current,
+        width: window.innerWidth,
+        height: isMobile ? 300 : 500,
+        style: "ios9",
+        amplitude: 0,
+        speed: 0.1,
+        color: "#818cf8", // Lighter Indigo for Neon effect
+        autostart: true,
+        pixelDepth: isMobile ? 2 : 1,
+      });
+
+      const updateAmplitude = () => {
+        if (!siriWaveRef.current) return;
+
+        let maxAmplitude = 0;
+
+        if (userAnalyserRef.current && !isMuted) {
+          const dataArray = new Uint8Array(userAnalyserRef.current.frequencyBinCount);
+          userAnalyserRef.current.getByteFrequencyData(dataArray);
+          const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+          maxAmplitude = Math.max(maxAmplitude, average / 128);
+        }
+
+        if (modelAnalyserRef.current) {
+          const dataArray = new Uint8Array(modelAnalyserRef.current.frequencyBinCount);
+          modelAnalyserRef.current.getByteFrequencyData(dataArray);
+          const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+          maxAmplitude = Math.max(maxAmplitude, (average / 128) * 1.5);
+        }
+
+        // Smooth transition and set amplitude
+        const targetAmplitude = maxAmplitude > 0.05 ? maxAmplitude * 2.5 : 0;
+        siriWaveRef.current.setAmplitude(targetAmplitude);
+        siriWaveRef.current.setSpeed(targetAmplitude > 0 ? 0.2 : 0.1);
+
+        requestAnimationFrame(updateAmplitude);
+      };
+
+      updateAmplitude();
+    }
+
+    return () => {
+      if (siriWaveRef.current) {
+        siriWaveRef.current.dispose();
+        siriWaveRef.current = null;
+      }
+    };
+  }, [isConnected, isMuted, isMobile]);
+
   useEffect(() => {
     if (isVideoOn && isConnected) {
       videoIntervalRef.current = setInterval(captureFrame, 200); // 5 FPS
@@ -323,114 +433,119 @@ const LiveCallDashboard = () => {
   }, [inputMessage]);
 
   return (
-    <div className="fixed inset-0 bg-black text-white flex flex-col items-center justify-between overflow-hidden">
-      {/* Header */}
-      <div className="w-full p-6 flex justify-between items-center z-10">
-        <div className="w-10" /> {/* Spacer */}
-        <div className="flex items-center gap-2 px-4 py-1.5 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full">
-          <Sparkles className="w-4 h-4 text-blue-400 animate-pulse" />
-          <span className="text-sm font-medium tracking-wider text-blue-100">LIVE</span>
+    <div className="fixed inset-0 bg-[#050505] text-white flex flex-col items-center overflow-hidden">
+      {/* Header - Moved Profile here as per user request */}
+      <div className="w-full p-6 flex justify-between items-start z-30">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center overflow-hidden shadow-lg shadow-indigo-500/10">
+              <img src="/logo.png" alt="Prof. Kore" className="w-6 h-6 object-contain invert dark:invert-0" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold tracking-tight text-white flex items-center gap-2">
+                Prof. Kore
+                <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+              </h2>
+              <p className="text-[10px] text-indigo-400/80 font-bold uppercase tracking-widest">Dosen Pembimbing AI</p>
+            </div>
+          </div>
+          <p className={`mt-2 text-gray-500 text-xs ${isConnecting ? 'animate-pulse' : ''}`}>{statusMessage}</p>
         </div>
-        <button
-          onClick={() => router.push('/')}
-          className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all"
-        >
-          <Keyboard className="w-5 h-5 text-gray-400" />
-        </button>
+
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
+            <span className="text-[10px] font-bold tracking-wider text-indigo-100">LIVE SESSION</span>
+          </div>
+          <button
+            onClick={() => router.push('/')}
+            className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all group"
+            title="Switch to Keyboard"
+          >
+            <Keyboard className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+          </button>
+        </div>
       </div>
 
       {/* Main Visualization Area */}
-      <div className="relative flex-1 w-full flex flex-col items-center justify-center px-4">
+      <div className="relative flex-1 w-full flex flex-col items-center justify-center px-4 pb-32">
         {/* Hidden video and canvas for frame capture */}
         <video ref={videoRef} className="hidden" autoPlay playsInline muted />
         <canvas ref={canvasRef} className="hidden" />
 
         {/* Ambient Glowing Aura */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[300px] h-[300px] bg-blue-600/20 rounded-full blur-[120px] animate-pulse-slow" />
+          <div className="w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] animate-pulse-slow" />
+          <div className="absolute w-[300px] h-[300px] bg-blue-600/5 rounded-full blur-[100px] animate-pulse" />
         </div>
 
-        {/* Video Preview / Avatar */}
-        <div className="relative z-10 w-full max-w-lg aspect-video rounded-[32px] overflow-hidden bg-white/5 border border-white/10 backdrop-blur-xl shadow-2xl flex items-center justify-center">
-          {isVideoOn ? (
-            <video
-              ref={(el) => {
-                if (el) el.srcObject = streamRef.current;
-              }}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-24 h-24 rounded-full border-2 border-blue-500/30 flex items-center justify-center bg-blue-500/5">
-                <div className="w-20 h-20 rounded-full border border-blue-400/50 flex items-center justify-center animate-pulse">
-                  <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  </div>
-                </div>
-              </div>
-              <div className="text-center">
-                <h2 className="text-xl font-semibold tracking-tight">Prof. Kore</h2>
-                <p className="text-sm text-blue-400/80 font-medium">Dosen Pembimbing AI</p>
-              </div>
-            </div>
-          )}
+        {/* Central Wave Container */}
+        <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+           <div ref={siriWaveContainerRef} className="w-full opacity-80 mix-blend-screen" />
+        </div>
 
-          {/* Transcription Overlay (Subtitles) */}
-          <div className="absolute bottom-6 left-0 right-0 px-6 z-20 pointer-events-none">
-            <div className="flex flex-col items-center gap-2">
-              <AnimatePresence mode="popLayout">
-                {transcriptions.slice(-2).map((t, i) => (
-                  <motion.div
-                    key={`${i}-${t.text}`}
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className={`px-4 py-2 rounded-2xl backdrop-blur-md border text-sm max-w-[80%] text-center ${
-                      t.role === 'user'
-                        ? 'bg-blue-500/20 border-blue-500/30 text-blue-100'
-                        : 'bg-black/40 border-white/10 text-white'
-                    }`}
-                  >
-                    {t.text}
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
+        {/* Video Preview / Transcription Focus */}
+        <div className="relative z-20 w-full max-w-4xl flex flex-col items-center gap-8">
+
+          {/* Active Speaker / Video Box */}
+          <AnimatePresence>
+            {isVideoOn && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="w-full max-w-lg aspect-video rounded-[32px] overflow-hidden bg-black/40 border border-white/10 backdrop-blur-2xl shadow-2xl ring-1 ring-white/5"
+              >
+                <video
+                  ref={(el) => {
+                    if (el && isVideoOn) el.srcObject = streamRef.current;
+                  }}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Large Transcriptions (Captions) */}
+          <div className="w-full flex flex-col items-center gap-4 min-h-[120px]">
+            <AnimatePresence mode="popLayout">
+              {transcriptions.slice(-2).map((t, i) => (
+                <motion.div
+                  key={`${i}-${t.text}`}
+                  initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+                  transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+                  className={`px-8 py-4 rounded-[28px] backdrop-blur-xl border text-lg md:text-2xl font-medium max-w-[90%] text-center shadow-2xl ${
+                    t.role === 'user'
+                      ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-100'
+                      : 'bg-white/5 border-white/10 text-white'
+                  }`}
+                >
+                  {t.text}
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            {transcriptions.length === 0 && !isConnecting && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-gray-500 text-lg font-medium animate-pulse"
+              >
+                Silahkan bicara dengan Prof. Kore...
+              </motion.div>
+            )}
           </div>
-
-          {isConnected && (
-            <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1 bg-black/40 backdrop-blur-md rounded-full border border-white/10">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-[10px] font-bold text-green-400 uppercase tracking-widest">LIVE</span>
-            </div>
-          )}
         </div>
-
-        {/* Status Text under video box */}
-        <p className={`mt-6 text-gray-400 text-sm z-10 ${isConnecting ? 'animate-pulse' : ''}`}>{statusMessage}</p>
       </div>
 
-      {/* Bottom Wave - The "Ambient Blue Glowing Wave" */}
-      <div className="absolute bottom-0 left-0 right-0 h-64 pointer-events-none overflow-hidden">
-        <div className="absolute bottom-0 w-full h-full opacity-50">
-          <svg viewBox="0 0 1440 320" className="absolute bottom-0 w-full h-auto translate-y-20 scale-110">
-            <defs>
-              <linearGradient id="wave-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#2563eb" stopOpacity="0.4" />
-                <stop offset="100%" stopColor="#1e3a8a" stopOpacity="0.8" />
-              </linearGradient>
-            </defs>
-            <path
-              fill="url(#wave-grad)"
-              className={isMobile ? "" : "animate-wave"}
-              style={{ transform: 'translateZ(0)' }}
-              d="M0,160L48,176C96,192,192,224,288,224C384,224,480,192,576,165.3C672,139,768,117,864,128C960,139,1056,181,1152,197.3C1248,213,1344,203,1392,197.3L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-            ></path>
-          </svg>
-          <div className="absolute bottom-0 w-full h-32 bg-gradient-to-t from-blue-900/40 to-transparent blur-3xl animate-pulse-slow" />
-        </div>
+      {/* SiriWave Glowing Overlay at Bottom */}
+      <div className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none z-0">
+        <div className="absolute bottom-0 w-full h-full bg-gradient-to-t from-indigo-900/20 to-transparent" />
       </div>
 
       {/* Controller Dock */}
@@ -497,12 +612,8 @@ const LiveCallDashboard = () => {
       </div>
 
       <style jsx global>{`
-        @keyframes wave {
-          0%, 100% { transform: translateY(0) scaleY(1); }
-          50% { transform: translateY(-20px) scaleY(1.05); }
-        }
-        .animate-wave {
-          animation: wave 8s ease-in-out infinite;
+        canvas {
+          filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.5));
         }
       `}</style>
     </div>
