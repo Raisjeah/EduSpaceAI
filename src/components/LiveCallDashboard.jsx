@@ -123,11 +123,13 @@ const LiveCallDashboard = () => {
           echoCancellation: true,
           noiseSuppression: true,
         },
-        video: {
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          frameRate: { ideal: 10 }
-        }
+        video: isVideoOn
+          ? {
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+              frameRate: { ideal: 10 }
+            }
+          : false
       });
 
       if (videoRef.current) {
@@ -165,7 +167,7 @@ const LiveCallDashboard = () => {
       setStatusMessage("Gagal mengakses mikrofon/kamera.");
       return false;
     }
-  }, []);
+  }, [isVideoOn]);
 
   const connectLiveAPI = useCallback(async () => {
     try {
