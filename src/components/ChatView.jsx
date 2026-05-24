@@ -12,6 +12,7 @@ import AiMessage from './AiMessage';
 import ThinkingIndicator from './ThinkingIndicator';
 import ModelSelector from './ModelSelector';
 import FloatingOrbs from './FloatingOrbs';
+import ChatSkeleton from './ChatSkeleton';
 import useAuth from '@/hooks/useAuth';
 import UpgradeModal from './UpgradeModal';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -353,17 +354,22 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       />
       {/* Project Header (If in project) */}
       {project && (
-        <div className={`px-4 md:px-6 py-3 border-b ${agentTheme.border} bg-white/10 dark:bg-black/20 backdrop-blur-xl flex items-center justify-between z-10 flex-none transition-all`}>
+        <div
+          role="banner"
+          aria-label={`Workspace Project: ${project.name}`}
+          className={`px-4 md:px-6 py-3 border-b ${agentTheme.border} bg-white/10 dark:bg-black/20 backdrop-blur-xl flex items-center justify-between z-10 flex-none transition-all`}
+        >
           <div className="flex items-center gap-2 md:gap-4">
             <Link
               href="/"
               className={`p-2 rounded-lg hover:bg-white/50 dark:hover:bg-black/20 ${agentTheme.text} transition-all`}
               title="Keluar dari Workspace"
+              aria-label="Keluar dari Workspace"
             >
               <ArrowLeft size={18} />
             </Link>
             <div className="flex items-center gap-3">
-              <div className={`w-8 h-8 rounded-lg ${agentTheme.bg} border ${agentTheme.border} flex items-center justify-center`}>
+              <div className={`w-8 h-8 rounded-lg ${agentTheme.bg} border ${agentTheme.border} flex items-center justify-center`} aria-hidden="true">
                 {getAgentIcon(project.agentId)}
               </div>
               <div>
@@ -372,35 +378,13 @@ export default function ChatView({ userId, activeChatId, projectId }) {
               </div>
             </div>
           </div>
-          <div className={`hidden sm:block text-[10px] ${agentTheme.text} ${agentTheme.bg} px-2 py-1 rounded border ${agentTheme.border} font-bold uppercase tracking-wider`}>Workspace Agent</div>
+          <div className={`hidden sm:block text-[10px] ${agentTheme.text} ${agentTheme.bg} px-2 py-1 rounded border ${agentTheme.border} font-bold uppercase tracking-wider`} aria-hidden="true">Workspace Agent</div>
         </div>
       )}
 
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
+      <main className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
         {isLoadingChat ? (
-          <div className="flex-1 max-w-4xl mx-auto w-full pt-8 px-4 space-y-8 animate-pulse">
-            <div className="flex justify-start">
-              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-[#1E1E1E]" />
-              <div className="ml-4 space-y-2">
-                <div className="h-4 w-48 bg-slate-100 dark:bg-[#1E1E1E] rounded" />
-                <div className="h-4 w-64 bg-slate-100 dark:bg-[#1E1E1E] rounded" />
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <div className="mr-4 space-y-2">
-                <div className="h-4 w-32 bg-indigo-50 dark:bg-indigo-900/10 rounded ml-auto" />
-                <div className="h-10 w-64 bg-indigo-50 dark:bg-indigo-900/10 rounded" />
-              </div>
-              <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-900/10" />
-            </div>
-            <div className="flex justify-start pt-4">
-              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-[#1E1E1E]" />
-              <div className="ml-4 space-y-2">
-                <div className="h-4 w-56 bg-slate-100 dark:bg-[#1E1E1E] rounded" />
-                <div className="h-20 w-80 bg-slate-100 dark:bg-[#1E1E1E] rounded" />
-              </div>
-            </div>
-          </div>
+          <ChatSkeleton />
         ) : messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 relative overflow-hidden">
             <div className="hidden md:block">
@@ -462,7 +446,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             </div>
           </div>
         )}
-      </div>
+      </main>
       <div
         className={`fixed bottom-0 right-0 p-4 md:p-6 transition-all duration-300 z-30 ${
           isSidebarOpen ? 'left-0 md:left-[280px]' : 'left-0'
@@ -476,6 +460,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
                   onClick={() => stopTypewriter(currentId)}
+                  aria-label="Berhenti menghasilkan jawaban"
                   className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[11px] font-bold text-slate-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 hover:border-red-200 transition-all shadow-sm mb-2 pointer-events-auto"
                 >
                   <Square size={12} fill="currentColor" /> Berhenti Menghasilkan
@@ -648,6 +633,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.5, y: 10 }}
                 className="absolute bottom-full left-0 mb-4 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap shadow-xl"
+                role="tooltip"
               >
                 Unggah File/Gambar di sini!
                 <div className="absolute top-full left-4 w-2 h-2 bg-indigo-600 rotate-45 -translate-y-1"></div>
@@ -659,6 +645,8 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               setIsActionSheetOpen(!isActionSheetOpen);
               setShowNudge(false);
             }}
+            aria-label="Opsi unggahan file dan media"
+            aria-expanded={isActionSheetOpen}
             className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
               isActionSheetOpen
               ? 'bg-indigo-600 text-white rotate-45'
@@ -726,8 +714,9 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               href="/chat/live"
               className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/5 dark:bg-white/5 text-slate-900 dark:text-white hover:scale-105 transition-all shadow-sm border border-slate-200 dark:border-white/10"
               title="Voice Call (Live)"
+              aria-label="Mulai panggilan suara live"
             >
-              <div className="flex items-center gap-0.5">
+              <div className="flex items-center gap-0.5" aria-hidden="true">
                 <div className="w-0.5 h-2.5 bg-current rounded-full" />
                 <div className="w-0.5 h-4 bg-current rounded-full" />
                 <div className="w-0.5 h-2.5 bg-current rounded-full" />
@@ -736,6 +725,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
             <button
               onClick={(e) => { e.preventDefault(); handleSend(); }}
               disabled={disabled || (!input.trim() && !selectedFile)}
+              aria-label="Kirim pesan"
               className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
                 (input.trim() || selectedFile) && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40 hover:scale-105' : 'bg-white/5 text-slate-400 dark:text-gray-600'
               }`}

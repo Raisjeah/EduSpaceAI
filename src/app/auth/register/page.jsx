@@ -8,23 +8,56 @@ import { register, loginWithGoogle } from '@/app/actions/authActions';
 export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [validation, setValidation] = useState({
+    email: { valid: true, message: '' },
+    password: { valid: true, message: '' },
+    name: { valid: true, message: '' }
+  });
   const router = useRouter();
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!email) return { valid: false, message: 'Email wajib diisi' };
+    if (!emailRegex.test(email)) return { valid: false, message: 'Format email tidak valid' };
+    return { valid: true, message: '' };
+  };
+
+  const validatePassword = (password) => {
+    if (!password) return { valid: false, message: 'Password wajib diisi' };
+    if (password.length < 8) return { valid: false, message: 'Password minimal 8 karakter' };
+    return { valid: true, message: '' };
+  };
+
+  const validateName = (name) => {
+    if (!name) return { valid: false, message: 'Nama wajib diisi' };
+    if (name.length < 2) return { valid: false, message: 'Nama terlalu pendek' };
+    return { valid: true, message: '' };
+  };
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
     const formData = new FormData(e.target);
     const email = formData.get('email');
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const password = formData.get('password');
+    const name = formData.get('name');
 
-    if (!emailRegex.test(email)) {
-      setError('Format email tidak valid');
-      setLoading(false);
+    const emailVal = validateEmail(email);
+    const passwordVal = validatePassword(password);
+    const nameVal = validateName(name);
+
+    setValidation({
+      email: emailVal,
+      password: passwordVal,
+      name: nameVal
+    });
+
+    if (!emailVal.valid || !passwordVal.valid || !nameVal.valid) {
       return;
     }
 
+    setLoading(true);
     const result = await register(formData);
 
     if (result.success) {
@@ -78,9 +111,11 @@ export default function RegisterPage() {
               name="name"
               type="text"
               required
-              className="w-full bg-slate-50 dark:bg-[#0F0F0F] border border-slate-200 dark:border-gray-800 rounded-lg px-4 py-2 text-base text-slate-900 dark:text-white focus:outline-none focus:border-indigo-600 transition-colors"
+              onBlur={(e) => setValidation(prev => ({ ...prev, name: validateName(e.target.value) }))}
+              className={`w-full bg-slate-50 dark:bg-[#0F0F0F] border ${validation.name.valid ? 'border-slate-200 dark:border-gray-800' : 'border-red-500'} rounded-lg px-4 py-2 text-base text-slate-900 dark:text-white focus:outline-none focus:border-indigo-600 transition-colors`}
               placeholder="Masukkan nama Anda"
             />
+            {!validation.name.valid && <p className="text-red-500 text-xs mt-1">{validation.name.message}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-500 dark:text-gray-400 mb-1">Email</label>
@@ -88,9 +123,11 @@ export default function RegisterPage() {
               name="email"
               type="email"
               required
-              className="w-full bg-slate-50 dark:bg-[#0F0F0F] border border-slate-200 dark:border-gray-800 rounded-lg px-4 py-2 text-base text-slate-900 dark:text-white focus:outline-none focus:border-indigo-600 transition-colors"
+              onBlur={(e) => setValidation(prev => ({ ...prev, email: validateEmail(e.target.value) }))}
+              className={`w-full bg-slate-50 dark:bg-[#0F0F0F] border ${validation.email.valid ? 'border-slate-200 dark:border-gray-800' : 'border-red-500'} rounded-lg px-4 py-2 text-base text-slate-900 dark:text-white focus:outline-none focus:border-indigo-600 transition-colors`}
               placeholder="nama@email.com"
             />
+            {!validation.email.valid && <p className="text-red-500 text-xs mt-1">{validation.email.message}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-500 dark:text-gray-400 mb-1">Password</label>
@@ -98,9 +135,11 @@ export default function RegisterPage() {
               name="password"
               type="password"
               required
-              className="w-full bg-slate-50 dark:bg-[#0F0F0F] border border-slate-200 dark:border-gray-800 rounded-lg px-4 py-2 text-base text-slate-900 dark:text-white focus:outline-none focus:border-indigo-600 transition-colors"
+              onBlur={(e) => setValidation(prev => ({ ...prev, password: validatePassword(e.target.value) }))}
+              className={`w-full bg-slate-50 dark:bg-[#0F0F0F] border ${validation.password.valid ? 'border-slate-200 dark:border-gray-800' : 'border-red-500'} rounded-lg px-4 py-2 text-base text-slate-900 dark:text-white focus:outline-none focus:border-indigo-600 transition-colors`}
               placeholder="••••••••"
             />
+            {!validation.password.valid && <p className="text-red-500 text-xs mt-1">{validation.password.message}</p>}
           </div>
           <button
             type="submit"

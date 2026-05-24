@@ -193,27 +193,32 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
 
         {/* Action Bar - Only show when not typing */}
         {!isTyping && (
-        <div className="flex items-center gap-2 mt-4 ml-0.5 animate-in fade-in duration-500">
+        <div className="flex items-center gap-2 mt-4 ml-0.5 animate-in fade-in duration-500" aria-label="Aksi pesan">
           <button
             onClick={() => { setLiked(!liked); if (!liked) setDisliked(false); }}
-            className={`p-1.5 rounded-lg transition-all ${liked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'}`}
+            className={`p-2.5 md:p-1.5 rounded-lg transition-all ${liked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'}`}
             title="Suka"
+            aria-label="Suka pesan ini"
+            aria-pressed={liked}
           >
-            <ThumbsUp size={16} />
+            <ThumbsUp size={18} className="md:w-4 md:h-4" />
           </button>
           <button
             onClick={() => { setDisliked(!disliked); if (!disliked) setLiked(false); }}
-            className={`p-1.5 rounded-lg transition-all ${disliked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'}`}
+            className={`p-2.5 md:p-1.5 rounded-lg transition-all ${disliked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'}`}
             title="Tidak Suka"
+            aria-label="Tidak suka pesan ini"
+            aria-pressed={disliked}
           >
-            <ThumbsDown size={16} />
+            <ThumbsDown size={18} className="md:w-4 md:h-4" />
           </button>
           {!imageData && (
             <div className="flex items-center gap-2">
               <button
                 onClick={handleCopy}
-                className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent transition-all flex items-center gap-1.5"
+                className="p-2.5 md:p-1.5 rounded-lg text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent transition-all flex items-center gap-1.5"
                 title="Salin Pesan"
+                aria-label="Salin teks pesan"
               >
                 {copied ? (
                   <>
@@ -228,12 +233,13 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
               <button
                 onClick={handleReadAloud}
                 disabled={isLoadingAudio}
-                className={`p-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                className={`p-2.5 md:p-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                   isPlaying
                     ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30'
                     : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'
                 }`}
                 title={isPlaying ? "Berhenti" : "Dengarkan"}
+                aria-label={isPlaying ? "Berhenti mendengarkan" : "Dengarkan pesan ini"}
               >
                 {isLoadingAudio ? (
                   <Loader2 size={16} className="animate-spin" />

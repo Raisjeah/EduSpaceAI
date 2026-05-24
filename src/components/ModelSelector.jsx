@@ -76,17 +76,24 @@ export default function ModelSelector({ currentPlan, selectedModel, onSelect }) 
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
+        aria-label={`Pilih model AI - Model saat ini: ${activeModel.name}`}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
         className="flex items-center gap-2 px-2 py-1.5 bg-neutral-900/5 dark:bg-white/5 hover:bg-neutral-900/10 dark:hover:bg-white/10 border border-transparent rounded-lg transition-all text-[11px] font-bold text-slate-600 dark:text-gray-400"
       >
-        <span className="flex items-center gap-1.5 shrink-0">
+        <span className="flex items-center gap-1.5 shrink-0" aria-hidden="true">
           {activeModel.icon}
           <span className="hidden sm:inline">{activeModel.name}</span>
         </span>
-        <ChevronDown size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
 
       {isOpen && (
-        <div className="absolute bottom-full right-0 mb-4 w-[280px] sm:w-[320px] max-w-[85vw] bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div
+          role="listbox"
+          aria-label="Daftar model AI yang tersedia"
+          className="absolute bottom-full right-0 mb-4 w-[280px] sm:w-[320px] max-w-[85vw] bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200"
+        >
           <div className="p-2 space-y-1">
             {MODELS_DATA.map((model) => {
               const isLocked = TIER_RANK[model.tier] > userRank;
@@ -95,6 +102,8 @@ export default function ModelSelector({ currentPlan, selectedModel, onSelect }) 
               return (
                 <button
                   key={model.id}
+                  role="option"
+                  aria-selected={isSelected}
                   disabled={isLocked}
                   onClick={() => {
                     onSelect(model.id);

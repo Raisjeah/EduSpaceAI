@@ -43,11 +43,20 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
       <div className="bg-white dark:bg-[#1A1A1A] w-full max-w-md rounded-3xl border border-slate-200 dark:border-[#333] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 transition-colors">
         <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-[#333]">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Buat Agent Baru</h2>
-          <button onClick={onClose} className="text-slate-400 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+          <h2 id="modal-title" className="text-xl font-bold text-slate-900 dark:text-white">Buat Agent Baru</h2>
+          <button
+            onClick={onClose}
+            aria-label="Tutup modal"
+            className="text-slate-400 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+          >
             <X size={20} />
           </button>
         </div>
@@ -65,27 +74,29 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
             />
           </div>
 
-          <div>
-            <label className="block text-[11px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-3">Pilih Agent</label>
+          <div role="group" aria-labelledby="agent-selection-label">
+            <label id="agent-selection-label" className="block text-[11px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-3">Pilih Agent</label>
             <div className="grid grid-cols-2 gap-3">
               {agents.map((agent) => (
-                <div
+                <button
                   key={agent.id}
+                  type="button"
                   onClick={() => setAgentId(agent.id)}
-                  className={`cursor-pointer p-4 rounded-2xl border transition-all flex flex-col gap-2 ${
+                  aria-pressed={agentId === agent.id}
+                  className={`p-4 rounded-2xl border transition-all flex flex-col gap-2 text-left ${
                     agentId === agent.id
                     ? 'bg-indigo-600/10 border-indigo-500'
                     : 'bg-slate-50 dark:bg-[#242424] border-slate-200 dark:border-[#333] hover:border-slate-400 dark:hover:border-gray-500'
                   }`}
                 >
-                  <div className={`${agentId === agent.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-gray-400'}`}>
+                  <div className={`${agentId === agent.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-gray-400'}`} aria-hidden="true">
                     {agent.icon}
                   </div>
                   <div>
                     <div className="text-[12px] font-bold text-slate-800 dark:text-gray-200">{agent.name}</div>
                     <div className="text-[9px] text-slate-500 dark:text-gray-500">{agent.desc}</div>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </div>

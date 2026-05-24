@@ -84,6 +84,7 @@ export default function Footer() {
               href="mailto:eduspaceai@gmail.com"
               className="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 dark:text-gray-400 border border-slate-200 dark:border-[#1F1F1F] hover:border-slate-300 dark:hover:border-[#2A2A2A] hover:text-slate-900 dark:hover:text-white transition-colors"
               title="Email"
+              aria-label="Kirim email ke EduSpaceAI"
             >
               <Mail size={15} strokeWidth={1.5} />
             </a>
@@ -93,6 +94,7 @@ export default function Footer() {
               rel="noopener noreferrer"
               className="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 dark:text-gray-400 border border-slate-200 dark:border-[#1F1F1F] hover:border-slate-300 dark:hover:border-[#2A2A2A] hover:text-slate-900 dark:hover:text-white transition-colors"
               title="LinkedIn"
+              aria-label="Kunjungi LinkedIn EduSpaceAI"
             >
               <Linkedin size={15} strokeWidth={1.5} />
             </a>

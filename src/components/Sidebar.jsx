@@ -16,6 +16,7 @@ export default function Sidebar({
   const { isSidebarOpen, setIsSidebarOpen, isProjectModalOpen, setIsProjectModalOpen } = useLayout();
   const [chatGroups, setChatGroups] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -63,13 +64,16 @@ export default function Sidebar({
       }
 
       try {
+        setIsLoadingHistory(true);
         const history = await getChatHistory(activeProjectId);
         if (isMounted) {
           setChatGroups(history);
           lastFetchRef.current = { userId, projectId: activeProjectId, pathname };
+          setIsLoadingHistory(false);
         }
       } catch (error) {
         console.error("Gagal memuat history chat:", error);
+        if (isMounted) setIsLoadingHistory(false);
       }
     };
 
@@ -188,7 +192,9 @@ export default function Sidebar({
 
   return (
     <>
-      <aside className={`
+      <aside
+        aria-label="Sidebar Percakapan"
+        className={`
         fixed top-0 left-0 h-full z-50
         bg-white dark:bg-[#0F0F0F]
         border-r border-neutral-200/50 dark:border-neutral-800/50
@@ -205,6 +211,7 @@ export default function Sidebar({
             <Link
               href="/"
               onClick={closeSidebar}
+              aria-label="Mulai percakapan baru"
               className="flex items-center gap-3 w-full px-3 py-2 text-[13px] font-medium text-slate-700 dark:text-gray-300 hover:bg-white/5 dark:hover:bg-white/5 transition-all"
             >
               <Plus size={18} className="text-slate-500 dark:text-gray-400" />
@@ -213,32 +220,43 @@ export default function Sidebar({
 
             {/* Search Input In Sidebar */}
             <div className="relative mt-2">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari history..."
+                aria-label="Cari riwayat percakapan"
                 className="w-full liquid-glass rounded-xl py-2 pl-8 pr-3 sm:pr-4 text-[11px] sm:text-[12px] text-slate-900 dark:text-white outline-none focus:border-indigo-500/50 transition-all"
               />
             </div>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            <div className="mt-4 mb-3 px-3 text-[10px] font-bold text-slate-400 dark:text-gray-500 tracking-[0.1em] uppercase">
+          <nav className="flex-1 flex flex-col min-h-0 overflow-hidden" aria-label="Riwayat Percakapan">
+            <div className="mt-4 mb-3 px-3 text-[10px] font-bold text-slate-400 dark:text-gray-500 tracking-[0.1em] uppercase" aria-hidden="true">
               {isProjectContext ? 'Riwayat Agent' : 'Riwayat Belajar'}
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2">
-              {groupedChatHistory.length === 0 ? (
+              {isLoadingHistory ? (
+                <div className="space-y-4 px-3">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="space-y-2 animate-pulse">
+                      <div className="h-2 w-12 bg-slate-100 dark:bg-white/5 rounded" />
+                      <div className="h-8 w-full bg-slate-100 dark:bg-white/5 rounded-lg" />
+                      <div className="h-8 w-full bg-slate-100 dark:bg-white/5 rounded-lg opacity-60" />
+                    </div>
+                  ))}
+                </div>
+              ) : groupedChatHistory.length === 0 ? (
                 <div className="px-3 py-4 text-[11px] text-slate-500 dark:text-gray-600 italic text-center bg-slate-50 dark:bg-[#151515] rounded-xl border border-dashed border-slate-200 dark:border-[#222]">
                   {searchQuery ? 'Tidak ada hasil pencarian' : 'Belum ada percakapan'}
                 </div>
               ) : (
                 groupedChatHistory.map((group) => (
                   <div key={group.label} className="space-y-1">
-                    <div className="px-3 py-1 text-[9px] font-bold text-slate-400 dark:text-gray-600 uppercase tracking-wider">{group.label}</div>
+                    <div className="px-3 py-1 text-[9px] font-bold text-slate-400 dark:text-gray-600 uppercase tracking-wider" aria-hidden="true">{group.label}</div>
                     {group.items.map((chat) => {
                       const isActive = pathname.includes(`/chat/${chat._id}`);
                       const currentProjectId = (pathname.startsWith('/project/') ? pathname.split('/')[2] : null) || searchParams.get('projectId');
@@ -249,18 +267,20 @@ export default function Sidebar({
                           key={chat._id}
                           href={href}
                           onClick={closeSidebar}
+                          aria-current={isActive ? "page" : undefined}
                           className={`group relative flex items-center gap-3 px-3 py-2 text-[13px] cursor-pointer transition-all ${
                             isActive
                             ? 'text-slate-900 dark:text-white font-semibold'
                             : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200'
                           }`}
                         >
-                          <MessageSquare size={14} className={isActive ? 'text-indigo-500' : 'text-gray-400 group-hover:text-indigo-400/50'} />
+                          <MessageSquare size={14} className={isActive ? 'text-indigo-500' : 'text-gray-400 group-hover:text-indigo-400/50'} aria-hidden="true" />
                           <span className="truncate flex-1">{chat.text}</span>
                           <button
                             onClick={(e) => handleDeleteChat(e, chat._id)}
                             className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-500/10 hover:text-red-500 rounded-md transition-all shrink-0"
                             title="Hapus chat"
+                            aria-label={`Hapus percakapan: ${chat.text}`}
                           >
                             <Trash2 size={12} />
                           </button>
@@ -274,12 +294,12 @@ export default function Sidebar({
           </nav>
 
           {/* User Profile or Login Button */}
-          <div className="mt-auto pt-4 border-t border-white/10">
+          <footer className="mt-auto pt-4 border-t border-white/10">
             {userId ? (
               <div className="space-y-4 px-2 py-3 bg-white/5 dark:bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10">
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg overflow-hidden border border-white/20">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg overflow-hidden border border-white/20" aria-hidden="true">
                       {user?.image ? (
                         <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
                       ) : (
@@ -294,6 +314,7 @@ export default function Sidebar({
                 </div>
                 <button
                   onClick={handleLogout}
+                  aria-label="Keluar dari akun"
                   className="flex items-center gap-3 w-full p-3 text-[12px] font-medium text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-500/5 dark:hover:bg-red-500/10 rounded-xl transition-all"
                 >
                   <LogOut size={16} />
@@ -311,7 +332,7 @@ export default function Sidebar({
                 </Link>
               </div>
             )}
-          </div>
+          </footer>
         </div>
       </aside>
 

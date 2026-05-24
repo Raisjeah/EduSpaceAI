@@ -10,6 +10,7 @@ import LoadingScreen from '@/components/LoadingScreen';
 import useAuth from '@/hooks/useAuth';
 import Toast from '@/components/Toast';
 import ProjectModal from './ProjectModal';
+import ErrorBoundary from './ErrorBoundary';
 
 export default function MainLayout({ children }) {
   const { isSidebarOpen, setIsSidebarOpen, isProjectModalOpen, setIsProjectModalOpen } = useLayout();
@@ -79,36 +80,38 @@ export default function MainLayout({ children }) {
         />
       )}
 
-      <Suspense fallback={null}>
-        <Sidebar
-          userId={userId}
-        />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={null}>
+          <Sidebar
+            userId={userId}
+          />
+        </Suspense>
 
-      <main className="flex-1 flex flex-col h-[100dvh] min-w-0 relative overflow-hidden">
-        <ProjectModal
-          isOpen={isProjectModalOpen}
-          onClose={() => setIsProjectModalOpen(false)}
-          userId={userId}
-        />
+        <main className="flex-1 flex flex-col h-[100dvh] min-w-0 relative overflow-hidden">
+          <ProjectModal
+            isOpen={isProjectModalOpen}
+            onClose={() => setIsProjectModalOpen(false)}
+            userId={userId}
+          />
 
-        <div className={`flex-1 flex flex-col min-h-0 overflow-hidden relative transition-all duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-[280px] md:translate-x-0 md:ml-[280px]' : 'translate-x-0 ml-0'}`}>
-          <Header />
+          <div className={`flex-1 flex flex-col min-h-0 overflow-hidden relative transition-all duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-[280px] md:translate-x-0 md:ml-[280px]' : 'translate-x-0 ml-0'}`}>
+            <Header />
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={layoutKey}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2, ease: "easeInOut" }}
-              className="flex-1 flex flex-col min-h-0"
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </main>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={layoutKey}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2, ease: "easeInOut" }}
+                className="flex-1 flex flex-col min-h-0"
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </main>
+      </ErrorBoundary>
     </div>
   );
 }
