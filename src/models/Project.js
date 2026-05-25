@@ -19,10 +19,13 @@ const ProjectSchema = new mongoose.Schema({
     default: 'default',
     enum: ALLOWED_AGENTS,
   },
+  isArchived: { type: Boolean, default: false },
+  archivedAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
 });
 
 ProjectSchema.index({ userId: 1, createdAt: -1 });
+ProjectSchema.index({ isArchived: 1, archivedAt: 1 });
 
 export default mongoose.models.Project || mongoose.model('Project', ProjectSchema);
 export { ALLOWED_AGENTS };

@@ -5,7 +5,7 @@ import Document from '@/models/Document';
 import { revalidatePath } from 'next/cache';
 import { getSessionUser } from '@/lib/session';
 
-export async function saveDocument(fileName, fileType, content) {
+export async function saveDocument(fileName, fileType, content, projectId = null) {
   try {
     const user = await getSessionUser();
     if (!user) {
@@ -22,6 +22,7 @@ export async function saveDocument(fileName, fileType, content) {
 
     const newDoc = new Document({ 
       userId, 
+      projectId,
       fileName, 
       fileType, 
       content // Ini harus teks bersih hasil extractFileContent tadi
@@ -31,6 +32,7 @@ export async function saveDocument(fileName, fileType, content) {
     
     // Refresh cache agar muncul di daftar file terbaru
     revalidatePath('/dashboard'); 
+    revalidatePath('/workspace');
     
     return { success: true, id: newDoc._id.toString() };
   } catch (error) {
@@ -84,6 +86,28 @@ export async function getDocumentsByUser() {
   }
 }
 
+export async function getProjectDocumentCounts() {
+  try {
+    const user = await getSessionUser();
+    if (!user) return {};
+
+    await dbConnect();
+    const counts = await Document.aggregate([
+      { $match: { userId: user._id.toString(), projectId: { $ne: null } } },
+      { $group: { _id: "$projectId", count: { $sum: 1 } } }
+    ]);
+
+    const countMap = {};
+    counts.forEach(c => {
+      if (c._id) countMap[c._id] = c.count;
+    });
+    return countMap;
+  } catch (error) {
+    console.error("Failed to fetch doc counts:", error);
+    return {};
+  }
+}
+
 // FITUR TAMBAHAN: Untuk menghapus file
 export async function deleteDocument(docId) {
   try {
@@ -100,8 +124,65 @@ export async function deleteDocument(docId) {
     }
 
     revalidatePath('/dashboard');
+    revalidatePath('/workspace');
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
+  }
+}
+
+export async function updateDocument(docId, fileName, fileType, content, projectId = undefined) {
+  try {
+    const user = await getSessionUser();
+    if (!user) return { success: false, error: "Sesi berakhir." };
+
+    await dbConnect();
+    const updateData = {
+      fileName,
+      fileType,
+      content,
+      lastModified: new Date()
+    };
+
+    if (projectId !== undefined) {
+      updateData.projectId = projectId;
+    }
+
+    const updated = await Document.findOneAndUpdate(
+      { _id: docId, userId: user._id.toString() },
+      updateData,
+      { new: true }
+    );
+
+    if (!updated) return { success: false, error: "Gagal memperbarui dokumen." };
+
+    revalidatePath('/dashboard');
+    revalidatePath('/workspace');
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getDocumentsByProject(projectId) {
+  try {
+    const user = await getSessionUser();
+    if (!user) return [];
+
+    await dbConnect();
+    const docs = await Document.find({
+      userId: user._id.toString(),
+      projectId: projectId
+    }).sort({ lastModified: -1 }).lean();
+
+    return docs.map(doc => ({
+      ...doc,
+      _id: doc._id.toString(),
+      createdAt: doc.createdAt?.toString(),
+      lastModified: doc.lastModified?.toString()
+    }));
+  } catch (error) {
+    console.error("Failed to fetch project documents:", error);
+    return [];
   }
 }

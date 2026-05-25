@@ -4,6 +4,8 @@ import midtransClient from 'midtrans-client';
 import dbConnect from '@/lib/mongodb';
 import Plan from '@/models/Plan';
 import Subscription from '@/models/Subscription';
+import UsageCounter from '@/models/UsageCounter';
+import Document from '@/models/Document';
 import { getSessionUser } from '@/lib/session';
 import crypto from 'crypto';
 
@@ -103,5 +105,48 @@ export async function getSubscriptionStatus() {
     };
   } catch (error) {
     return { currentPlan: 'FREE' };
+  }
+}
+
+export async function getUserUsageStats() {
+  try {
+    const user = await getSessionUser();
+    if (!user) return null;
+
+    await dbConnect();
+    const plan = await Plan.findOne({ name: user.current_plan || 'FREE' }).lean();
+
+    // Get daily messages
+    const today = new Date().toISOString().split('T')[0];
+    const usage = await UsageCounter.findOne({
+      userId: user._id.toString(),
+      day: today
+    }).lean();
+
+    // Get total files
+    const fileCount = await Document.countDocuments({ userId: user._id.toString() });
+
+    // Calculate days remaining
+    let daysRemaining = 0;
+    if (user.plan_expired_at) {
+      const expiry = new Date(user.plan_expired_at);
+      const now = new Date();
+      daysRemaining = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
+    }
+
+    return {
+      planName: user.current_plan || 'FREE',
+      messageLimit: plan?.message_limit || 20,
+      messagesUsed: usage?.count || 0,
+      fileQuota: plan?.file_upload ? 'Unlimited' : 'Limited (Free)', // Simplified for now
+      fileCount: fileCount,
+      daysRemaining: daysRemaining > 0 ? daysRemaining : 0,
+      planExpiry: user.plan_expired_at,
+      imageUpload: plan?.image_upload || false,
+      fileUpload: plan?.file_upload || false
+    };
+  } catch (error) {
+    console.error("Failed to get user usage stats:", error);
+    return null;
   }
 }

@@ -429,7 +429,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             ref={chatContainerRef}
             className="flex-1 overflow-y-auto custom-scrollbar"
           >
-            <div className="max-w-4xl mx-auto w-full pt-4 md:pt-12 pb-[160px] md:pb-[180px] px-4 sm:px-6 space-y-8 flex-1">
+            <div className="max-w-4xl mx-auto w-full pt-4 md:pt-12 pb-[160px] md:pb-[180px] px-4 sm:px-6 space-y-4 flex-1">
               {messages.map((msg, idx) => (
                 <AiMessage
                   key={msg._id || idx}

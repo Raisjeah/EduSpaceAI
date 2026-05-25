@@ -1,11 +1,12 @@
 'use client';
 
-import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3, Mic, Trash2 } from 'lucide-react';
+import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3, Mic, Trash2, LayoutDashboard, FolderKanban } from 'lucide-react';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useLayout } from '@/context/LayoutContext';
 import { getChatHistory, deleteChatHistory } from '@/app/actions/chatActions';
 import { logout } from '@/app/actions/authActions';
 import { getProjects } from '@/app/actions/projectActions';
+import { getProjectDocumentCounts } from '@/app/actions/documentActions';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import useAuth from '@/hooks/useAuth';
@@ -46,6 +47,22 @@ export default function Sidebar({
   const projectIdFromPath = isProjectRoute ? pathname.split('/')[2] : null;
   const projectIdFromQuery = searchParams.get('projectId');
   const activeProjectId = projectIdFromPath || projectIdFromQuery;
+
+  const [docCounts, setDocCounts] = useState({});
+
+  // Fetch document counts per project
+  useEffect(() => {
+    async function fetchDocCounts() {
+      if (!userId) return;
+      try {
+        const counts = await getProjectDocumentCounts();
+        setDocCounts(counts);
+      } catch (err) {
+        console.error("Gagal ambil doc count:", err);
+      }
+    }
+    fetchDocCounts();
+  }, [userId, projects]);
 
   // History chat di-refresh berdasarkan konteks project aktif
   useEffect(() => {
@@ -200,12 +217,47 @@ export default function Sidebar({
           {/* Spacer for floating header button area */}
           <div className="h-14 md:hidden" />
 
+          {/* Agent Descriptions */}
+          <div className="mb-4 space-y-2 px-1">
+            <div className="p-2 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100/50 dark:border-indigo-900/30">
+               <p className="text-[10px] text-indigo-600 dark:text-indigo-400 leading-tight">
+                <span className="font-bold">Deep Search:</span> Riset mendalam dengan akses web real-time.
+               </p>
+               <p className="text-[10px] text-green-600 dark:text-green-400 leading-tight mt-1">
+                <span className="font-bold">Profesor Riset:</span> Ahli dalam menyusun metodologi dan analisis data.
+               </p>
+               <p className="text-[10px] text-amber-600 dark:text-amber-400 leading-tight mt-1">
+                <span className="font-bold">Editor Akademik:</span> Spesialis tata bahasa dan struktur karya ilmiah.
+               </p>
+            </div>
+          </div>
+
+          {/* Main Navigation */}
+          <div className="flex flex-col gap-0.5 mb-4">
+            <Link
+              href="/dashboard"
+              onClick={closeSidebar}
+              className={`flex items-center gap-3 w-full px-3 py-2 text-[13px] font-medium transition-all rounded-xl ${pathname === '/dashboard' ? 'bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/5'}`}
+            >
+              <LayoutDashboard size={18} />
+              <span>Dashboard</span>
+            </Link>
+            <Link
+              href="/workspace"
+              onClick={closeSidebar}
+              className={`flex items-center gap-3 w-full px-3 py-2 text-[13px] font-medium transition-all rounded-xl ${pathname === '/workspace' ? 'bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/5'}`}
+            >
+              <FolderKanban size={18} />
+              <span>Workspace</span>
+            </Link>
+          </div>
+
           {/* Button New Chat */}
           <div className="flex flex-col gap-0.5 mb-6">
             <Link
               href="/"
               onClick={closeSidebar}
-              className="flex items-center gap-3 w-full px-3 py-2 text-[13px] font-medium text-slate-700 dark:text-gray-300 hover:bg-white/5 dark:hover:bg-white/5 transition-all"
+              className="flex items-center gap-3 w-full px-3 py-2 text-[13px] font-medium text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all rounded-xl border border-dashed border-slate-200 dark:border-white/10"
             >
               <Plus size={18} className="text-slate-500 dark:text-gray-400" />
               <span>Percakapan baru</span>
@@ -226,6 +278,30 @@ export default function Sidebar({
 
           {/* Navigation */}
           <nav className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            {/* Projects with Doc Counts (If in Mode Agent/Project) */}
+            {isProjectContext && projects.length > 0 && (
+              <div className="mb-6 space-y-1">
+                <div className="px-3 py-1 text-[9px] font-bold text-slate-400 dark:text-gray-600 uppercase tracking-wider">Proyek Aktif</div>
+                {projects.slice(0, 3).map(proj => (
+                   <Link
+                     key={proj._id}
+                     href={`/chat/${proj._id}?projectId=${proj._id}`}
+                     onClick={closeSidebar}
+                     className={`flex items-center justify-between px-3 py-2 text-[12px] rounded-xl transition-all ${activeProjectId === proj._id ? 'bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5'}`}
+                   >
+                     <div className="flex items-center gap-2 truncate">
+                        {getAgentIcon(proj.agentId)}
+                        <span className="truncate">{proj.name}</span>
+                     </div>
+                     <span className="text-[9px] bg-slate-100 dark:bg-white/5 px-1.5 py-0.5 rounded-full font-bold">{docCounts[proj._id] || 0}</span>
+                   </Link>
+                ))}
+                {projects.length > 3 && (
+                   <Link href="/workspace" className="block px-3 py-1 text-[10px] text-indigo-500 font-bold hover:underline">Lihat semua proyek...</Link>
+                )}
+              </div>
+            )}
+
             <div className="mt-4 mb-3 px-3 text-[10px] font-bold text-slate-400 dark:text-gray-500 tracking-[0.1em] uppercase">
               {isProjectContext ? 'Riwayat Agent' : 'Riwayat Belajar'}
             </div>
