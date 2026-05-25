@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu, User, Sparkles, ArrowRight, X } from 'lucide-react';
+import { Menu, User, Sparkles, ArrowRight, X, Settings } from 'lucide-react';
 import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';
 import { useChat } from '@/context/ChatContext';
@@ -34,7 +34,7 @@ export default function Header() {
   const isDashboardPage = pathname.startsWith('/project') || pathname.startsWith('/tools');
 
   return (
-    <header className="flex justify-between items-center p-4 sticky top-0 z-50 bg-transparent pointer-events-none flex-none">
+    <header className="flex justify-between items-center p-4 sticky top-0 z-50 bg-transparent pointer-events-none flex-none shadow-none backdrop-blur-none">
       {/* Center Title - only visible when scrolled and not on dashboard */}
       {!isDashboardPage && (
         <div className="absolute left-1/2 -translate-x-1/2 w-max pointer-events-none z-10">
@@ -88,13 +88,9 @@ export default function Header() {
                 {user?.current_plan === 'FREE' ? 'Upgrade Pro' : user?.current_plan}
               </Link>
 
-              <Link href="/profile" title="Edit Profil" className="pointer-events-auto hover:scale-105 transition-all">
-                <div className="w-11 h-11 rounded-full bg-neutral-900/80 flex items-center justify-center border border-neutral-800/50 shadow-xl backdrop-blur-md hover:border-indigo-500/50 transition-all overflow-hidden">
-                  {user?.image ? (
-                    <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <User size={18} className="text-white" />
-                  )}
+              <Link href="/dashboard" title="Dashboard & Pengaturan" className="pointer-events-auto hover:scale-105 transition-all">
+                <div className="w-11 h-11 rounded-full bg-neutral-900/80 flex items-center justify-center border border-neutral-800/50 shadow-xl backdrop-blur-md hover:border-indigo-500/50 transition-all">
+                  <Settings size={20} className="text-white" />
                 </div>
               </Link>
             </>

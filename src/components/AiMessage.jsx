@@ -145,7 +145,7 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
   return (
     <div className="w-full flex justify-start">
       <div className="w-full max-w-none flex flex-col">
-        <div className="py-6 w-full leading-relaxed transition-all">
+        <div className="py-3 w-full leading-relaxed transition-all">
           {imageData ? (
             <div className="relative group rounded-2xl overflow-hidden liquid-glass shadow-2xl max-w-2xl">
               <img
@@ -168,7 +168,7 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
               </div>
             </div>
           ) : (
-            <div className="markdown-content prose dark:prose-invert prose-base text-base max-w-none leading-relaxed">
+            <div className="markdown-content prose dark:prose-invert prose-sm text-sm max-w-none leading-relaxed">
               <ReactMarkdown
                 remarkPlugins={[remarkMath]}
                 rehypePlugins={[rehypeKatex]}

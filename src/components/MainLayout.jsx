@@ -85,6 +85,19 @@ export default function MainLayout({ children }) {
         />
       </Suspense>
 
+      {/* Backdrop for mobile when sidebar is open */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
+          />
+        )}
+      </AnimatePresence>
+
       <main className="flex-1 flex flex-col h-[100dvh] min-w-0 relative overflow-hidden">
         <ProjectModal
           isOpen={isProjectModalOpen}

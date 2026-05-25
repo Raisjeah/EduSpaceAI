@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useRef, useEffect, useTransition } from 'react';
+import React, { useState, useRef, useEffect, useTransition, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, FolderOpen, BrainCircuit, Send, MessageSquare, Sparkles, ChevronRight, FileText, Eraser, Square, Bold, Italic, List, Heading2, Strikethrough, Download, FileJson, File as FileIcon } from 'lucide-react';
-import { saveDocument } from '@/app/actions/documentActions';
+import { X, FolderOpen, BrainCircuit, Send, MessageSquare, Sparkles, ChevronRight, FileText, Eraser, Square, Bold, Italic, List, Heading2, Strikethrough, Download, FileJson, File as FileIcon, Save, Check, Loader2 } from 'lucide-react';
+import { saveDocument, updateDocument, getDocumentById } from '@/app/actions/documentActions';
 import { saveChat, sendMessage } from '@/app/actions/chatActions';
 import { extractFileContent } from '@/app/actions/fileActions'; // server action
 import { useRouter } from 'next/navigation';
@@ -72,7 +72,27 @@ const MenuBar = ({ editor }) => {
   );
 };
 
-export default function DocumentEditor({ type, userId }) {
+class EditorErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError(error) { return { hasError: true }; }
+  componentDidCatch(error, errorInfo) { console.error("Editor Error:", error, errorInfo); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 text-center bg-red-50 dark:bg-red-900/10 rounded-2xl border border-red-200 dark:border-red-800/30">
+          <h2 className="text-red-800 dark:text-red-400 font-bold mb-2">Terjadi Kesalahan di Editor</h2>
+          <button onClick={() => window.location.reload()} className="text-sm bg-red-600 text-white px-4 py-2 rounded-lg">Muat Ulang Halaman</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function DocumentEditor({ type, userId, docId, projectId: initialProjectId }) {
   const {
     chatData,
     setChatMessages,
@@ -82,6 +102,8 @@ export default function DocumentEditor({ type, userId }) {
   } = useChat();
 
   const [content, setContent] = useState('');
+  const [currentDocId, setCurrentDocId] = useState(docId);
+  const [projectId, setProjectId] = useState(initialProjectId);
   const editor = useEditor({
     extensions: [StarterKit],
     content: '',
@@ -98,6 +120,7 @@ export default function DocumentEditor({ type, userId }) {
   const [fileName, setFileName] = useState('Belum ada file diunggah');
   const [fileType, setFileType] = useState('text/plain');
   const [isLoading, setIsLoading] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('saved'); // 'saved', 'saving', 'unsaved'
 
   // Chat Integration State
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -105,26 +128,83 @@ export default function DocumentEditor({ type, userId }) {
   const [isPending, startTransition] = useTransition();
   const [activeChatId, setActiveChatId] = useState(null);
 
-  const currentId = activeChatId || 'editor_chat';
+  const currentId = useMemo(() => `editor_${type}_${userId}`, [type, userId]);
   const currentChat = chatData[currentId] || { messages: [], isThinking: false, isTyping: false };
   const messages = currentChat.messages;
   const isThinking = currentChat.isThinking;
   const isTyping = currentChat.isTyping;
 
   // Selection state
-  const [selection, setSelection] = useState({ text: '', show: false });
+  const [selection, setSelection] = useState({ text: '', show: false, x: 0, y: 0 });
 
   const chatEndRef = useRef(null);
   const textareaRef = useRef(null);
   const router = useRouter();
+  const autoSaveTimeoutRef = useRef(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isPending]);
 
+  // Load document if docId is provided
+  useEffect(() => {
+    if (currentDocId) {
+      getDocumentById(currentDocId).then(doc => {
+        if (doc) {
+          setFileName(doc.fileName);
+          setFileType(doc.fileType);
+          setContent(doc.content);
+          if (editor) editor.commands.setContent(doc.content);
+        }
+      });
+    }
+  }, [currentDocId, editor]);
+
+  const handleSave = useCallback(async (manual = false) => {
+    const currentContent = editor ? editor.getHTML() : content;
+    if (!currentContent || currentContent.length < 10) return;
+
+    setSaveStatus('saving');
+    try {
+      let result;
+      if (currentDocId) {
+        result = await updateDocument(currentDocId, fileName, fileType, currentContent, projectId);
+      } else {
+        result = await saveDocument(fileName, fileType, currentContent, projectId);
+        if (result.success) {
+          setCurrentDocId(result.id);
+        }
+      }
+
+      if (result.success) {
+        setSaveStatus('saved');
+      } else {
+        setSaveStatus('unsaved');
+      }
+    } catch (err) {
+      console.error("Save error:", err);
+      setSaveStatus('unsaved');
+    }
+  }, [editor, content, currentDocId, fileName, fileType, projectId]);
+
+  // Auto-save logic
+  useEffect(() => {
+    if (content && content.length >= 10) {
+      setSaveStatus('unsaved');
+      if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
+
+      autoSaveTimeoutRef.current = setTimeout(() => {
+        handleSave();
+      }, 2000);
+    }
+    return () => {
+      if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
+    };
+  }, [content, handleSave]);
+
   const [extractProgress, setExtractProgress] = useState(0);
 
-  const handleFileUpload = async (e) => {
+  const handleFileUpload = useCallback(async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setFileName(file.name);
@@ -218,13 +298,12 @@ export default function DocumentEditor({ type, userId }) {
     }
   };
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = useCallback(async () => {
     const currentContent = editor ? editor.getHTML() : content;
     if (!currentContent || isPending) return;
 
     setIsChatOpen(true);
-    const chatId = activeChatId || `chat_${Date.now()}`;
-    if (!activeChatId) setActiveChatId(chatId);
+    const chatId = currentId;
 
     const initialPrompt = `Tolong analisis dan berikan saran perbaikan untuk isi dokumen ini (${fileName}):\n\n${currentContent}`;
 
@@ -249,24 +328,37 @@ export default function DocumentEditor({ type, userId }) {
         setChatStatus(chatId, { isThinking: false });
       }
     });
-  };
+  }, [editor, content, isPending, currentId, fileName, runTypewriter, setChatMessages, setChatStatus]);
 
-  const handleTextSelection = () => {
+  const handleTextSelection = useCallback(() => {
     if (!editor) return;
     const { from, to } = editor.state.selection;
     const text = editor.state.doc.textBetween(from, to, ' ');
 
     if (text.trim()) {
-      setSelection({
-        text,
-        show: true
-      });
+      // Use getSelection API for better positioning
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+
+        // Find parent container offset
+        const container = document.querySelector('.tiptap-container');
+        const containerRect = container?.getBoundingClientRect() || { left: 0, top: 0 };
+
+        setSelection({
+          text,
+          show: true,
+          x: rect.left - containerRect.left + (rect.width / 2),
+          y: rect.top - containerRect.top - 40 // Adjust for toolbar height
+        });
+      }
     } else {
       setSelection(prev => ({ ...prev, show: false }));
     }
-  };
+  }, [editor]);
 
-  const handleFloatingAction = (actionType) => {
+  const handleFloatingAction = useCallback((actionType) => {
     const prompt = actionType === 'paraphrase'
       ? `Tolong parafrase teks berikut agar lebih ilmiah:\n\n"${selection.text}"`
       : `Tolong ringkas teks berikut:\n\n"${selection.text}"`;
@@ -281,13 +373,12 @@ export default function DocumentEditor({ type, userId }) {
     }, 100);
   };
 
-  const handleSendChat = async (overrideInput) => {
+  const handleSendChat = useCallback(async (overrideInput) => {
     const textToSend = overrideInput || chatInput;
     if (!textToSend.trim() || isPending) return;
 
     setChatInput('');
-    const chatId = activeChatId || `chat_${Date.now()}`;
-    if (!activeChatId) setActiveChatId(chatId);
+    const chatId = currentId;
 
     const userMessage = {
       role: 'user',
@@ -311,9 +402,10 @@ export default function DocumentEditor({ type, userId }) {
         setChatStatus(chatId, { isThinking: false });
       }
     });
-  };
+  }, [chatInput, isPending, currentId, editor, content, runTypewriter, setChatMessages, setChatStatus]);
 
   return (
+    <EditorErrorBoundary>
     <div className="h-full flex bg-white dark:bg-[#0F0F0F] overflow-hidden transition-colors duration-200">
       {/* Main Editor Area */}
       <div className={`flex-1 flex flex-col p-3 md:p-6 transition-all duration-300 ${isChatOpen ? 'md:mr-0' : ''}`}>
@@ -345,6 +437,34 @@ export default function DocumentEditor({ type, userId }) {
             <span className="text-[11px] text-slate-500 dark:text-gray-500 px-1 truncate font-medium">{fileName}</span>
           </div>
           <div className="flex items-center gap-2">
+            {/* Save Status Indicator */}
+            <div className="flex items-center gap-1.5 mr-2 px-3 py-1.5 bg-slate-50 dark:bg-black/20 rounded-lg border border-slate-200 dark:border-white/5 transition-all">
+               {saveStatus === 'saving' ? (
+                 <>
+                   <Loader2 size={12} className="animate-spin text-indigo-500" />
+                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Menyimpan...</span>
+                 </>
+               ) : saveStatus === 'saved' ? (
+                 <>
+                   <Check size={12} className="text-green-500" />
+                   <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest">Tersimpan</span>
+                 </>
+               ) : (
+                 <>
+                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                   <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Belum Simpan</span>
+                 </>
+               )}
+            </div>
+
+            <button
+              onClick={() => handleSave(true)}
+              className={`p-2 rounded-lg border transition-all ${saveStatus === 'unsaved' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-100 dark:bg-[#1A1A1A] border-slate-200 dark:border-[#333] text-slate-400'}`}
+              title="Simpan Manual"
+            >
+              <Save size={18} />
+            </button>
+
             <div className="relative group">
               <button
                 className="flex items-center justify-center gap-2 bg-slate-200 dark:bg-[#242424] hover:bg-slate-300 dark:hover:bg-[#2A2A2A] text-slate-700 dark:text-gray-300 px-3 py-2 rounded-lg transition-colors text-[11px] font-bold"
@@ -376,7 +496,7 @@ export default function DocumentEditor({ type, userId }) {
           </div>
         </div>
 
-        <div className="flex-1 relative flex flex-col min-h-0 bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-[1.5rem] shadow-inner transition-colors">
+        <div className="flex-1 relative flex flex-col min-h-[100dvh] h-full bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-[1.5rem] shadow-inner transition-colors">
           {isLoading && (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 dark:bg-[#0F0F0F]/80 backdrop-blur-sm rounded-[1.5rem] border border-indigo-500/20">
               <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-2xl shadow-xl border border-slate-200 dark:border-[#333] flex flex-col items-center w-[280px]">
@@ -398,7 +518,7 @@ export default function DocumentEditor({ type, userId }) {
           )}
           <MenuBar editor={editor} />
           <div
-            className="flex-1 overflow-y-auto custom-scrollbar"
+            className="flex-1 overflow-y-auto custom-scrollbar tiptap-container relative"
             onMouseUp={handleTextSelection}
             onKeyUp={handleTextSelection}
           >
@@ -417,7 +537,11 @@ export default function DocumentEditor({ type, userId }) {
           {selection.show && (
             <div
               className="absolute z-50 bg-white dark:bg-[#222] border border-slate-200 dark:border-[#333] rounded-xl shadow-2xl p-1 flex gap-1 animate-in fade-in zoom-in duration-200"
-              style={{ left: `50%`, top: `20px`, transform: `translateX(-50%)` }}
+              style={{
+                left: `${selection.x}px`,
+                top: `${selection.y}px`,
+                transform: `translateX(-50%) translateY(-100%)`
+              }}
             >
               <button
                 onClick={() => handleFloatingAction('paraphrase')}
@@ -539,5 +663,6 @@ export default function DocumentEditor({ type, userId }) {
         </div>
       </div>
     </div>
+    </EditorErrorBoundary>
   );
 }
