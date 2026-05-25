@@ -256,7 +256,7 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
         setExtractProgress(0);
       }, 500);
     }
-  };
+  }, [editor]);
 
   const handleDownloadPDF = () => {
     if (!editor) return;
@@ -358,21 +358,6 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
     }
   }, [editor]);
 
-  const handleFloatingAction = useCallback((actionType) => {
-    const prompt = actionType === 'paraphrase'
-      ? `Tolong parafrase teks berikut agar lebih ilmiah:\n\n"${selection.text}"`
-      : `Tolong ringkas teks berikut:\n\n"${selection.text}"`;
-
-    setChatInput(prompt);
-    setIsChatOpen(true);
-    setSelection(prev => ({ ...prev, show: false }));
-
-    // Auto-send the action
-    setTimeout(() => {
-      handleSendChat(prompt);
-    }, 100);
-  };
-
   const handleSendChat = useCallback(async (overrideInput) => {
     const textToSend = overrideInput || chatInput;
     if (!textToSend.trim() || isPending) return;
@@ -403,6 +388,21 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
       }
     });
   }, [chatInput, isPending, currentId, editor, content, runTypewriter, setChatMessages, setChatStatus]);
+
+  const handleFloatingAction = useCallback((actionType) => {
+    const prompt = actionType === 'paraphrase'
+      ? `Tolong parafrase teks berikut agar lebih ilmiah:\n\n"${selection.text}"`
+      : `Tolong ringkas teks berikut:\n\n"${selection.text}"`;
+
+    setChatInput(prompt);
+    setIsChatOpen(true);
+    setSelection(prev => ({ ...prev, show: false }));
+
+    // Auto-send the action
+    setTimeout(() => {
+      handleSendChat(prompt);
+    }, 100);
+  }, [selection.text, handleSendChat]);
 
   return (
     <EditorErrorBoundary>
