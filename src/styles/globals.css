@@ -4,9 +4,8 @@
 
 @layer base {
   body {
-    @apply bg-gradient-to-br from-slate-50 via-white to-indigo-50/30
-           dark:from-[#0a0a0a] dark:via-[#0f0f0f] dark:to-indigo-950/20
-           text-slate-900 dark:text-gray-200
+    @apply bg-brand-surface dark:bg-[#0D0D11]
+           text-brand-text dark:text-gray-200
            transition-colors duration-500;
   }
 }
@@ -14,14 +13,19 @@
 .liquid-glass {
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.1) 0%,
-    rgba(255, 255, 255, 0.05) 100%
+    rgba(255, 255, 252, 0.1) 0%,
+    rgba(255, 255, 252, 0.05) 100%
   );
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid #E4EAEB;
   box-shadow:
-    0 8px 32px 0 rgba(31, 38, 135, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 4px 12px 0 rgba(0, 102, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transform: translateZ(0); /* Force GPU acceleration */
+}
+
+.dark .liquid-glass {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {

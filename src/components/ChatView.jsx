@@ -276,7 +276,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       case 'deep-search': return <Search size={16} className="text-blue-400" />;
       case 'researcher': return <BookOpen size={16} className="text-green-400" />;
       case 'editor': return <Edit3 size={16} className="text-amber-400" />;
-      default: return <Rocket size={16} className="text-indigo-400" />;
+      default: return <Rocket size={16} className="text-brand-primary" />;
     }
   };
 
@@ -310,10 +310,10 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         text: 'text-amber-600 dark:text-amber-400'
       };
       default: return {
-        bg: 'bg-indigo-50 dark:bg-indigo-900/10',
-        border: 'border-indigo-200 dark:border-indigo-800/30',
-        accent: 'bg-indigo-500',
-        text: 'text-indigo-600 dark:text-indigo-400'
+        bg: 'bg-blue-50 dark:bg-blue-900/10',
+        border: 'border-blue-200 dark:border-blue-800/30',
+        accent: 'bg-brand-primary',
+        text: 'text-brand-primary dark:text-blue-400'
       };
     }
   };
@@ -345,7 +345,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-[#0F0F0F] overflow-hidden transition-colors duration-200">
+    <div className="flex flex-col h-full bg-brand-surface dark:bg-brand-text overflow-hidden transition-colors duration-200">
       <UpgradeModal
         isOpen={upgradeModal.isOpen}
         onClose={() => setUpgradeModal({ ...upgradeModal, isOpen: false })}
@@ -388,10 +388,10 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             </div>
             <div className="flex justify-end">
               <div className="mr-4 space-y-2">
-                <div className="h-4 w-32 bg-indigo-50 dark:bg-indigo-900/10 rounded ml-auto" />
-                <div className="h-10 w-64 bg-indigo-50 dark:bg-indigo-900/10 rounded" />
+                <div className="h-4 w-32 bg-brand-primary/5 dark:bg-brand-primary/10 rounded ml-auto" />
+                <div className="h-10 w-64 bg-brand-primary/5 dark:bg-brand-primary/10 rounded" />
               </div>
-              <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-900/10" />
+              <div className="w-10 h-10 rounded-full bg-brand-primary/5 dark:bg-brand-primary/10" />
             </div>
             <div className="flex justify-start pt-4">
               <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-[#1E1E1E]" />
@@ -407,14 +407,14 @@ export default function ChatView({ userId, activeChatId, projectId }) {
               <FloatingOrbs />
             </div>
             <div className="flex flex-col items-center justify-center mb-4">
-              <div className="w-20 h-20 bg-white dark:bg-[#151515] rounded-2xl flex items-center justify-center mb-4 shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-slate-100 dark:border-white/5 overflow-hidden">
+              <div className="w-20 h-20 bg-brand-surface dark:bg-[#151515] rounded-[24px] flex items-center justify-center mb-6 shadow-elevation-2 border border-brand-border dark:border-white/5 overflow-hidden transition-all hover:scale-105">
                 <img
                   src="/logo.png"
                   alt="EduSpaceAI Logo"
                   className="w-12 h-12 object-contain invert dark:invert-0"
                 />
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-1 text-center px-4">
+              <h1 className="text-2xl md:text-3xl font-bold text-brand-text dark:text-white mb-2 text-center px-4">
                 {project ? project.name : 'EduSpaceAI'}
               </h1>
               <p className="text-slate-600 dark:text-gray-400 text-center max-w-sm text-sm md:text-base px-4 font-medium">
@@ -451,9 +451,9 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                 <div className="px-1 flex flex-col gap-2">
                   <ThinkingIndicator status={dynamicStatus} />
                   {isUploading && (
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800/30 rounded-lg w-fit animate-pulse">
-                      <FileText size={12} className="text-indigo-500" />
-                      <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">Mengunggah file...</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-brand-primary/5 dark:bg-brand-primary/10 border border-brand-primary/20 dark:border-brand-primary/30 rounded-xl w-fit animate-pulse">
+                      <FileText size={12} className="text-brand-primary" />
+                      <span className="text-[11px] text-brand-primary dark:text-blue-400 font-medium">Mengunggah file...</span>
                     </div>
                   )}
                 </div>
@@ -509,13 +509,13 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
 function SuggestionChip({ label, icon, onClick, isLink, theme }) {
   const Component = isLink ? 'div' : 'button';
-  const hoverBorder = theme ? theme.border.replace('border-', 'hover:border-') : 'hover:border-indigo-500/50';
-  const hoverText = theme ? theme.text.replace('text-', 'hover:text-') : 'hover:text-indigo-500';
+  const hoverBorder = theme ? theme.border.replace('border-', 'hover:border-') : 'hover:border-brand-primary/50';
+  const hoverText = theme ? theme.text.replace('text-', 'hover:text-') : 'hover:text-brand-primary';
 
   return (
     <Component
       onClick={onClick} 
-      className={`flex items-center gap-2 px-4 py-2 bg-white/5 dark:bg-white/10 backdrop-blur-md border border-white/10 rounded-xl text-[11px] text-slate-600 dark:text-gray-300 ${hoverText} ${hoverBorder} transition-all cursor-pointer w-full md:w-auto md:inline-flex shadow-sm hover:shadow-md hover:bg-white/20`}
+      className={`flex items-center gap-2 px-4 py-2 bg-brand-surface dark:bg-white/5 backdrop-blur-md border border-brand-border dark:border-white/10 rounded-xl text-[11px] text-brand-text dark:text-gray-300 ${hoverText} ${hoverBorder} transition-all cursor-pointer w-full md:w-auto md:inline-flex shadow-elevation-1 hover:shadow-elevation-2 hover:bg-brand-background dark:hover:bg-white/10`}
     >
       {icon} <span className="truncate font-medium">{label}</span>
     </Component>
@@ -617,11 +617,11 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
             className="flex items-center gap-3 mb-3 ml-1 p-2 bg-white/10 dark:bg-black/20 backdrop-blur-md rounded-2xl w-fit border border-white/20 shadow-xl group"
           >
             {selectedFile.preview ? (
-              <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 dark:border-[#333]">
+              <div className="w-10 h-10 rounded-xl overflow-hidden border border-brand-border dark:border-[#333]">
                 <img src={selectedFile.preview} alt="preview" className="w-full h-full object-cover" />
               </div>
             ) : (
-              <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500 border border-indigo-500/20">
+              <div className="w-10 h-10 rounded-xl bg-brand-primary/10 flex items-center justify-center text-brand-primary border border-brand-primary/20">
                 <FileText size={20} />
               </div>
             )}
@@ -639,7 +639,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
         )}
       </AnimatePresence>
 
-      <div className="relative bg-white dark:bg-[#151515] border border-slate-200 dark:border-white/10 rounded-[24px] p-1.5 flex items-end gap-1 focus-within:border-indigo-500/30 transition-all shadow-2xl pointer-events-auto">
+      <div className="relative bg-brand-surface dark:bg-[#151515] border border-brand-border dark:border-white/10 rounded-[24px] p-1.5 flex items-end gap-1 focus-within:border-brand-primary/30 transition-all shadow-elevation-2 pointer-events-auto">
         <div className="relative">
           <AnimatePresence>
             {showNudge && !isActionSheetOpen && (
@@ -647,10 +647,10 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
                 initial={{ opacity: 0, scale: 0.5, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.5, y: 10 }}
-                className="absolute bottom-full left-0 mb-4 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap shadow-xl"
+                className="absolute bottom-full left-0 mb-4 bg-brand-primary text-white text-[10px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap shadow-elevation-3"
               >
                 Unggah File/Gambar di sini!
-                <div className="absolute top-full left-4 w-2 h-2 bg-indigo-600 rotate-45 -translate-y-1"></div>
+                <div className="absolute top-full left-4 w-2 h-2 bg-brand-primary rotate-45 -translate-y-1"></div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -659,11 +659,11 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               setIsActionSheetOpen(!isActionSheetOpen);
               setShowNudge(false);
             }}
-            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
+            className={`w-10 h-10 flex items-center justify-center rounded-[18px] transition-all shrink-0 ${
               isActionSheetOpen
-              ? 'bg-indigo-600 text-white rotate-45'
-              : 'text-slate-400 dark:text-gray-500 hover:text-indigo-400'
-            } ${showNudge && !isActionSheetOpen ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-[#0F0F0F] animate-pulse' : ''}`}
+              ? 'bg-brand-primary text-white rotate-45 shadow-elevation-2'
+              : 'text-slate-400 dark:text-gray-500 hover:text-brand-primary'
+            } ${showNudge && !isActionSheetOpen ? 'ring-2 ring-brand-primary ring-offset-2 dark:ring-offset-[#0F0F0F] animate-pulse' : ''}`}
           >
             <Plus size={20} />
           </button>
@@ -707,15 +707,15 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           maxRows={8}
           disabled={disabled}
           placeholder="Tanya apa saja ke Dosen AI-mu..."
-          className="flex-1 w-full min-w-0 bg-transparent border-none outline-none py-2.5 px-3 text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
+          className="flex-1 w-full min-w-0 bg-transparent border-none outline-none py-2.5 px-3 text-base text-brand-text dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
         />
         <div className="flex flex-col items-end gap-2">
           <div className="flex items-center gap-1.5 px-2 mb-0.5">
-            <Link href="/tools" className="text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-indigo-500 transition-colors tracking-widest uppercase">TOOLS</Link>
-            <div className="w-[1px] h-2.5 bg-slate-200 dark:bg-white/10" />
+            <Link href="/tools" className="text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-brand-primary transition-colors tracking-widest uppercase">TOOLS</Link>
+            <div className="w-[1px] h-2.5 bg-brand-border dark:bg-white/10" />
             <button
               onClick={() => setIsProjectModalOpen(true)}
-              className="text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-indigo-500 transition-colors tracking-widest uppercase"
+              className="text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-brand-primary transition-colors tracking-widest uppercase"
             >
               AGENT
             </button>
@@ -724,7 +724,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
             {modelSelector}
             <Link
               href="/chat/live"
-              className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/5 dark:bg-white/5 text-slate-900 dark:text-white hover:scale-105 transition-all shadow-sm border border-slate-200 dark:border-white/10"
+              className="w-9 h-9 rounded-[14px] flex items-center justify-center bg-brand-background dark:bg-white/5 text-brand-text dark:text-white hover:scale-105 transition-all shadow-elevation-1 border border-brand-border dark:border-white/10"
               title="Voice Call (Live)"
             >
               <div className="flex items-center gap-0.5">
@@ -736,8 +736,8 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
             <button
               onClick={(e) => { e.preventDefault(); handleSend(); }}
               disabled={disabled || (!input.trim() && !selectedFile)}
-              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
-                (input.trim() || selectedFile) && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40 hover:scale-105' : 'bg-white/5 text-slate-400 dark:text-gray-600'
+              className={`w-9 h-9 rounded-[14px] flex items-center justify-center transition-all ${
+                (input.trim() || selectedFile) && !disabled ? 'bg-brand-primary text-white shadow-elevation-2 hover:scale-105' : 'bg-brand-background dark:bg-white/5 text-slate-400 dark:text-gray-600'
               }`}
             >
               <ArrowUp size={16} />

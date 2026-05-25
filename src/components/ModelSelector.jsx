@@ -27,7 +27,7 @@ const MODELS_DATA = [
     description: 'Model paling cerdas untuk riset kompleks',
     label: 'Best for Research',
     tier: 'PRO',
-    icon: <Sparkles size={14} className="text-indigo-400" />,
+    icon: <Sparkles size={14} className="text-brand-primary" />,
     provider: 'Google'
   },
   {
@@ -76,7 +76,7 @@ export default function ModelSelector({ currentPlan, selectedModel, onSelect }) 
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-2 py-1.5 bg-neutral-900/5 dark:bg-white/5 hover:bg-neutral-900/10 dark:hover:bg-white/10 border border-transparent rounded-lg transition-all text-[11px] font-bold text-slate-600 dark:text-gray-400"
+        className="flex items-center gap-2 px-2 py-1.5 bg-brand-background dark:bg-white/5 hover:bg-brand-border dark:hover:bg-white/10 border border-brand-border dark:border-transparent rounded-lg transition-all text-[11px] font-bold text-brand-text dark:text-gray-400"
       >
         <span className="flex items-center gap-1.5 shrink-0">
           {activeModel.icon}
@@ -102,22 +102,22 @@ export default function ModelSelector({ currentPlan, selectedModel, onSelect }) 
                   }}
                   className={`w-full flex flex-col p-2.5 rounded-lg transition-all text-left group ${
                     isSelected
-                      ? 'bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30'
-                      : 'hover:bg-slate-50 dark:hover:bg-[#252525] border border-transparent'
+                      ? 'bg-brand-primary/5 dark:bg-brand-primary/10 border border-brand-primary/30'
+                      : 'hover:bg-brand-background dark:hover:bg-[#252525] border border-transparent'
                   } ${isLocked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
                   <div className="flex items-center justify-between mb-0.5">
                     <div className="flex items-center gap-2">
-                      <div className={`p-1 rounded ${isSelected ? 'bg-indigo-100 dark:bg-indigo-500/20' : 'bg-slate-100 dark:bg-[#333]'}`}>
+                      <div className={`p-1 rounded ${isSelected ? 'bg-brand-primary/10' : 'bg-slate-100 dark:bg-[#333]'}`}>
                         {model.icon}
                       </div>
-                      <span className={`text-[13px] font-semibold ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-900 dark:text-gray-200'}`}>
+                      <span className={`text-[13px] font-bold ${isSelected ? 'text-brand-primary' : 'text-brand-text dark:text-gray-200'}`}>
                         {model.name}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       {model.label && (
-                        <span className="text-[9px] px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full font-bold uppercase tracking-wider">
+                        <span className="text-[9px] px-1.5 py-0.5 bg-brand-primary/10 text-brand-primary rounded-full font-bold uppercase tracking-wider">
                           {model.label}
                         </span>
                       )}

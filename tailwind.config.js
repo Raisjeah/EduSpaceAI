@@ -16,11 +16,25 @@ module.exports = {
         'mobile': '8px',
       },
       colors: {
+        brand: {
+          primary: '#0066FF',
+          surface: '#FFFFFC',
+          background: '#F0F3FA',
+          text: '#0D0D11',
+          border: '#E4EAEB',
+          success: '#2E7D32',
+          'success-bg': '#E2F7E3',
+        },
         glass: {
           light: 'rgba(255, 255, 255, 0.1)',
           dark: 'rgba(0, 0, 0, 0.2)',
           border: 'rgba(255, 255, 255, 0.15)',
         },
+      },
+      boxShadow: {
+        'elevation-1': '0 2px 8px rgba(0, 0, 0, 0.05)',
+        'elevation-2': '0 4px 12px rgba(0, 102, 255, 0.15)',
+        'elevation-3': '0 8px 24px rgba(0, 102, 255, 0.25)',
       },
       animation: {
         'shimmer': 'shimmer 2s linear infinite',

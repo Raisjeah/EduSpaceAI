@@ -5,7 +5,7 @@ import { Sparkles } from 'lucide-react';
 
 export default function ThinkingIndicator({ status = "Dosen AI sedang berpikir..." }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-neutral-900/5 dark:bg-white/5 border border-neutral-900/5 dark:border-white/5 w-fit">
+    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-brand-background dark:bg-white/5 border border-brand-border dark:border-white/5 w-fit shadow-elevation-1">
       <div className="flex items-center justify-center">
         <motion.div
           animate={{
@@ -17,7 +17,7 @@ export default function ThinkingIndicator({ status = "Dosen AI sedang berpikir..
             repeat: Infinity,
             ease: "easeInOut"
           }}
-          className="text-indigo-500"
+          className="text-brand-primary"
         >
           <Sparkles size={16} />
         </motion.div>

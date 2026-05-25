@@ -433,29 +433,32 @@ const LiveCallDashboard = () => {
   }, [inputMessage]);
 
   return (
-    <div className="fixed inset-0 bg-[#050505] text-white flex flex-col items-center overflow-hidden">
+    <div className="fixed inset-0 bg-brand-text text-white flex flex-col items-center overflow-hidden">
       {/* Header - Moved Profile here as per user request */}
       <div className="w-full p-6 flex justify-between items-start z-30">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center overflow-hidden shadow-lg shadow-indigo-500/10">
+            <div className="w-10 h-10 rounded-[14px] bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shadow-elevation-2">
               <img src="/logo.png" alt="Prof. Kore" className="w-6 h-6 object-contain invert dark:invert-0" />
             </div>
             <div>
               <h2 className="text-base font-bold tracking-tight text-white flex items-center gap-2">
                 Prof. Kore
-                <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-brand-success-bg text-brand-success text-[10px] font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-success animate-pulse" />
+                  CONNECTED
+                </div>
               </h2>
-              <p className="text-[10px] text-indigo-400/80 font-bold uppercase tracking-widest">Dosen Pembimbing AI</p>
+              <p className="text-[10px] text-blue-400/80 font-bold uppercase tracking-widest">Dosen Pembimbing AI</p>
             </div>
           </div>
           <p className={`mt-2 text-gray-500 text-xs ${isConnecting ? 'animate-pulse' : ''}`}>{statusMessage}</p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
-            <span className="text-[10px] font-bold tracking-wider text-indigo-100">LIVE SESSION</span>
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full shadow-elevation-1">
+            <Sparkles className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
+            <span className="text-[10px] font-bold tracking-wider text-blue-100 uppercase">LIVE SESSION</span>
           </div>
           <button
             onClick={() => router.push('/')}
@@ -475,8 +478,8 @@ const LiveCallDashboard = () => {
 
         {/* Ambient Glowing Aura */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] animate-pulse-slow" />
-          <div className="absolute w-[300px] h-[300px] bg-blue-600/5 rounded-full blur-[100px] animate-pulse" />
+          <div className="w-[500px] h-[500px] bg-brand-primary/10 rounded-full blur-[120px] animate-pulse-slow" />
+          <div className="absolute w-[300px] h-[300px] bg-blue-400/5 rounded-full blur-[100px] animate-pulse" />
         </div>
 
         {/* Central Wave Container */}
@@ -519,9 +522,9 @@ const LiveCallDashboard = () => {
                   animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                   exit={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
                   transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-                  className={`px-8 py-4 rounded-[28px] backdrop-blur-xl border text-lg md:text-2xl font-medium max-w-[90%] text-center shadow-2xl ${
+                  className={`px-8 py-4 rounded-[28px] backdrop-blur-xl border text-lg md:text-2xl font-medium max-w-[90%] text-center shadow-elevation-3 ${
                     t.role === 'user'
-                      ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-100'
+                      ? 'bg-brand-primary/10 border-brand-primary/30 text-blue-100'
                       : 'bg-white/5 border-white/10 text-white'
                   }`}
                 >
@@ -545,7 +548,7 @@ const LiveCallDashboard = () => {
 
       {/* SiriWave Glowing Overlay at Bottom */}
       <div className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none z-0">
-        <div className="absolute bottom-0 w-full h-full bg-gradient-to-t from-indigo-900/20 to-transparent" />
+        <div className="absolute bottom-0 w-full h-full bg-gradient-to-t from-blue-900/20 to-transparent" />
       </div>
 
       {/* Controller Dock */}
@@ -580,31 +583,31 @@ const LiveCallDashboard = () => {
           )}
         </AnimatePresence>
 
-        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-4 rounded-[32px] flex items-center justify-between shadow-2xl">
+        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-4 rounded-[32px] flex items-center justify-between shadow-elevation-3">
           <button
             onClick={() => setIsVideoOn(!isVideoOn)}
-            className={`p-4 rounded-2xl transition-all ${isVideoOn ? 'bg-blue-500/20 text-blue-400' : 'bg-white/5 text-gray-400'}`}
+            className={`p-4 rounded-2xl transition-all ${isVideoOn ? 'bg-brand-primary/20 text-blue-400' : 'bg-white/5 text-gray-400'}`}
           >
             {isVideoOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
           </button>
 
           <button
             onClick={() => setIsTextInputOpen(!isTextInputOpen)}
-            className={`p-4 rounded-2xl transition-all ${isTextInputOpen ? 'bg-blue-500/20 text-blue-400' : 'bg-white/5 text-gray-400'}`}
+            className={`p-4 rounded-2xl transition-all ${isTextInputOpen ? 'bg-brand-primary/20 text-blue-400' : 'bg-white/5 text-gray-400'}`}
           >
             <Keyboard className="w-6 h-6" />
           </button>
 
           <button
             onClick={() => setIsMuted(!isMuted)}
-            className={`p-4 rounded-2xl transition-all ${!isMuted ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-red-500/20 text-red-400 border border-red-500/20'}`}
+            className={`p-4 rounded-2xl transition-all ${!isMuted ? 'bg-brand-primary text-white shadow-elevation-2' : 'bg-red-500/20 text-red-400 border border-red-500/20'}`}
           >
             {!isMuted ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
           </button>
 
           <button
             onClick={handleEndCall}
-            className="p-4 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/40 transition-all transform active:scale-95"
+            className="p-4 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-elevation-3 transition-all transform active:scale-95"
           >
             <X className="w-6 h-6 stroke-[3px]" />
           </button>

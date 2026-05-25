@@ -38,7 +38,7 @@ export default function FloatingOrbs() {
           repeat: Infinity,
           ease: "easeInOut",
         }}
-        className={`absolute top-[10%] left-[15%] w-64 h-64 bg-indigo-500/20 rounded-full ${blurValue} will-change-[transform,opacity]`}
+        className={`absolute top-[10%] left-[15%] w-64 h-64 bg-brand-primary/20 rounded-full ${blurValue} will-change-[transform,opacity]`}
       />
       <motion.div
         animate={animateStatus ? {
@@ -52,7 +52,7 @@ export default function FloatingOrbs() {
           ease: "easeInOut",
           delay: 1,
         }}
-        className={`absolute bottom-[20%] right-[10%] w-96 h-96 bg-purple-500/15 rounded-full ${blurValueLarge} will-change-[transform,opacity]`}
+        className={`absolute bottom-[20%] right-[10%] w-96 h-96 bg-blue-400/15 rounded-full ${blurValueLarge} will-change-[transform,opacity]`}
       />
       {!isMobile && (
         <>
@@ -82,7 +82,7 @@ export default function FloatingOrbs() {
               ease: "easeInOut",
               delay: 3,
             }}
-            className={`absolute bottom-[10%] left-[20%] w-80 h-80 bg-indigo-400/10 rounded-full ${blurValue} will-change-[transform,opacity]`}
+            className={`absolute bottom-[10%] left-[20%] w-80 h-80 bg-brand-primary/10 rounded-full ${blurValue} will-change-[transform,opacity]`}
           />
         </>
       )}

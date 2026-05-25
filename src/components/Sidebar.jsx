@@ -190,8 +190,8 @@ export default function Sidebar({
     <>
       <aside className={`
         fixed top-0 left-0 h-full z-50
-        bg-white dark:bg-[#0F0F0F]
-        border-r border-neutral-200/50 dark:border-neutral-800/50
+        bg-brand-surface dark:bg-brand-text
+        border-r border-brand-border dark:border-neutral-800/50
         transform transition-transform duration-300 ease-in-out flex-shrink-0
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         w-[85vw] max-w-[280px] sm:w-[280px] transition-colors duration-200
@@ -205,9 +205,9 @@ export default function Sidebar({
             <Link
               href="/"
               onClick={closeSidebar}
-              className="flex items-center gap-3 w-full px-3 py-2 text-[13px] font-medium text-slate-700 dark:text-gray-300 hover:bg-white/5 dark:hover:bg-white/5 transition-all"
+              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-[13px] font-bold text-brand-text dark:text-gray-300 hover:bg-brand-primary/5 dark:hover:bg-white/5 transition-all shadow-elevation-1"
             >
-              <Plus size={18} className="text-slate-500 dark:text-gray-400" />
+              <Plus size={18} className="text-brand-primary" />
               <span>Percakapan baru</span>
             </Link>
 
@@ -219,7 +219,7 @@ export default function Sidebar({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari history..."
-                className="w-full liquid-glass rounded-xl py-2 pl-8 pr-3 sm:pr-4 text-[11px] sm:text-[12px] text-slate-900 dark:text-white outline-none focus:border-indigo-500/50 transition-all"
+                className="w-full bg-brand-background dark:bg-white/5 border border-brand-border dark:border-white/10 rounded-xl py-2 pl-8 pr-3 sm:pr-4 text-[11px] sm:text-[12px] text-brand-text dark:text-white outline-none focus:border-brand-primary/50 transition-all"
               />
             </div>
           </div>
@@ -249,13 +249,13 @@ export default function Sidebar({
                           key={chat._id}
                           href={href}
                           onClick={closeSidebar}
-                          className={`group relative flex items-center gap-3 px-3 py-2 text-[13px] cursor-pointer transition-all ${
+                          className={`group relative flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] cursor-pointer transition-all ${
                             isActive
-                            ? 'text-slate-900 dark:text-white font-semibold'
-                            : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200'
+                            ? 'text-brand-primary dark:text-white font-bold bg-brand-primary/5'
+                            : 'text-slate-500 dark:text-gray-400 hover:text-brand-primary dark:hover:text-gray-200 hover:bg-brand-background'
                           }`}
                         >
-                          <MessageSquare size={14} className={isActive ? 'text-indigo-500' : 'text-gray-400 group-hover:text-indigo-400/50'} />
+                          <MessageSquare size={14} className={isActive ? 'text-brand-primary' : 'text-gray-400 group-hover:text-brand-primary/50'} />
                           <span className="truncate flex-1">{chat.text}</span>
                           <button
                             onClick={(e) => handleDeleteChat(e, chat._id)}
@@ -274,12 +274,12 @@ export default function Sidebar({
           </nav>
 
           {/* User Profile or Login Button */}
-          <div className="mt-auto pt-4 border-t border-white/10">
+          <div className="mt-auto pt-4 border-t border-brand-border dark:border-white/10">
             {userId ? (
-              <div className="space-y-4 px-2 py-3 bg-white/5 dark:bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10">
+              <div className="space-y-4 px-2 py-3 bg-brand-background dark:bg-black/20 rounded-2xl border border-brand-border dark:border-white/10">
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg overflow-hidden border border-white/20">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-primary to-blue-400 flex items-center justify-center shadow-elevation-1 overflow-hidden border border-white/20">
                       {user?.image ? (
                         <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
                       ) : (
@@ -287,8 +287,8 @@ export default function Sidebar({
                       )}
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-[12px] font-bold text-slate-800 dark:text-gray-200 truncate max-w-[120px]">{user?.name || 'Anon'}</span>
-                        <span className="text-[9px] font-medium text-indigo-500 dark:text-indigo-400">{user?.current_plan || 'FREE'}</span>
+                        <span className="text-[12px] font-bold text-brand-text dark:text-gray-200 truncate max-w-[120px]">{user?.name || 'Anon'}</span>
+                        <span className="text-[9px] font-bold text-brand-primary dark:text-brand-primary uppercase tracking-wider">{user?.current_plan || 'FREE'}</span>
                     </div>
                   </div>
                 </div>

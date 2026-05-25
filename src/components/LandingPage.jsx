@@ -173,7 +173,7 @@ export default function LandingPage() {
             transition={{ duration: 0.5, ease: 'easeOut' }}
             className="text-center liquid-glass p-8 md:p-12 rounded-[32px] mb-12"
           >
-            <div className="text-[11px] font-medium text-indigo-500 dark:text-indigo-400 tracking-[0.2em] uppercase mb-6">
+            <div className="text-[11px] font-bold text-brand-primary dark:text-blue-400 tracking-[0.2em] uppercase mb-6">
               /asisten riset akademik
             </div>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-[-0.02em] leading-[1.05] text-slate-900 dark:text-white mb-6">
@@ -198,9 +198,9 @@ export default function LandingPage() {
                   key={mode.id}
                   type="button"
                   onClick={() => setActiveMode(mode.id)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-300 ${
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-300 ${
                     activeMode === mode.id
-                      ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
+                      ? 'bg-brand-primary text-white shadow-elevation-2'
                       : 'text-slate-500 dark:text-gray-400 border border-white/10 bg-white/5 hover:bg-white/10'
                   }`}
                 >
@@ -220,7 +220,7 @@ export default function LandingPage() {
               <button
                 type="submit"
                 aria-label="Kirim pertanyaan"
-                className="w-9 h-9 flex-shrink-0 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 hover:scale-105 text-white flex items-center justify-center transition-all shadow-lg shadow-indigo-600/20"
+                className="w-9 h-9 flex-shrink-0 rounded-full bg-brand-primary hover:scale-105 text-white flex items-center justify-center transition-all shadow-elevation-2"
               >
                 <ArrowUp size={16} />
               </button>
@@ -239,7 +239,7 @@ export default function LandingPage() {
                 key={p}
                 type="button"
                 onClick={() => goToLoginWithPrompt(p)}
-                className="text-xs text-slate-600 dark:text-gray-300 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-indigo-500/30 transition-all"
+                className="text-xs text-slate-600 dark:text-gray-300 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-brand-primary/30 transition-all shadow-elevation-1"
               >
                 {p}
               </button>
@@ -255,7 +255,7 @@ export default function LandingPage() {
           >
             <Link
               href="/auth/login"
-              className="group inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-tr from-indigo-600 to-indigo-500 hover:shadow-indigo-500/40 text-white rounded-full text-sm font-bold transition-all w-full sm:w-auto shadow-xl"
+              className="group inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-brand-primary hover:shadow-elevation-2 text-white rounded-full text-sm font-bold transition-all w-full sm:w-auto shadow-elevation-2"
             >
               Mulai gratis
               <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
@@ -295,9 +295,9 @@ export default function LandingPage() {
                 key={item.title}
                 {...fadeUp}
                 transition={{ ...fadeUp.transition, delay: i * 0.05 }}
-                className="liquid-glass p-8 md:p-10 rounded-[24px]"
+                className="liquid-glass p-8 md:p-10 rounded-[24px] shadow-elevation-1"
               >
-                <div className="text-xs font-bold text-indigo-500 dark:text-indigo-400 tabular-nums mb-6">
+                <div className="text-xs font-bold text-brand-primary dark:text-blue-400 tabular-nums mb-6">
                   {String(i + 1).padStart(2, '0')}
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3 leading-snug">
@@ -333,20 +333,20 @@ export default function LandingPage() {
                   key={agent.name}
                   {...fadeUp}
                   transition={{ ...fadeUp.transition, delay: i * 0.05 }}
-                  className="liquid-glass group p-8 rounded-[24px] hover:border-indigo-500/30 transition-all duration-300 hover:translate-y-[-4px]"
+                  className="liquid-glass group p-8 rounded-[24px] hover:border-brand-primary/30 transition-all duration-300 hover:translate-y-[-4px] shadow-elevation-1"
                 >
                   <div className="flex items-start justify-between mb-8">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                    <div className="w-10 h-10 rounded-xl bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center text-brand-primary dark:text-blue-400">
                       <Icon size={20} strokeWidth={2} />
                     </div>
                     <span className="text-[10px] font-bold text-slate-400 dark:text-gray-500 tracking-[0.15em] uppercase tabular-nums">
                       0{i + 1}
                     </span>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
+                  <h3 className="text-lg font-bold text-brand-text dark:text-white mb-1">
                     {agent.name}
                   </h3>
-                  <p className="text-xs font-medium text-indigo-500 dark:text-indigo-400/80 mb-4 uppercase tracking-wider">
+                  <p className="text-xs font-bold text-brand-primary dark:text-blue-400/80 mb-4 uppercase tracking-wider">
                     {agent.role}
                   </p>
                   <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed">
@@ -377,7 +377,7 @@ export default function LandingPage() {
                 transition={{ ...fadeUp.transition, delay: i * 0.05 }}
                 className="relative"
               >
-                <div className="text-[11px] font-medium text-indigo-500/80 dark:text-indigo-400/80 tracking-[0.2em] uppercase tabular-nums mb-6 pb-6 border-b border-slate-100 dark:border-[#1F1F1F]">
+                <div className="text-[11px] font-bold text-brand-primary/80 dark:text-blue-400/80 tracking-[0.2em] uppercase tabular-nums mb-6 pb-6 border-b border-brand-border dark:border-[#1F1F1F]">
                   {step.number}
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-3 leading-snug">
@@ -415,10 +415,10 @@ export default function LandingPage() {
                     onClick={() => setOpenFaq(isOpen ? -1 : i)}
                     className="w-full px-6 py-6 flex items-center justify-between gap-6 text-left group"
                   >
-                    <span className="text-base md:text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-500 transition-colors">
+                    <span className="text-base md:text-lg font-bold text-brand-text dark:text-white group-hover:text-brand-primary transition-colors">
                       {faq.q}
                     </span>
-                    <span className={`flex-shrink-0 transition-all duration-300 ${isOpen ? 'text-indigo-500 rotate-180' : 'text-slate-400 dark:text-gray-500'}`}>
+                    <span className={`flex-shrink-0 transition-all duration-300 ${isOpen ? 'text-brand-primary rotate-180' : 'text-slate-400 dark:text-gray-500'}`}>
                       {isOpen ? <Minus size={18} strokeWidth={2} /> : <Plus size={18} strokeWidth={2} />}
                     </span>
                   </button>
@@ -448,11 +448,11 @@ export default function LandingPage() {
         <div className="hidden md:block">
           <FloatingOrbs />
         </div>
-        <motion.div {...fadeUp} className="max-w-4xl mx-auto text-center liquid-glass p-12 md:p-20 rounded-[40px]">
-          <div className="text-[11px] font-bold text-indigo-500 dark:text-indigo-400 tracking-[0.2em] uppercase mb-6">
+        <motion.div {...fadeUp} className="max-w-4xl mx-auto text-center liquid-glass p-12 md:p-20 rounded-[40px] shadow-elevation-3">
+          <div className="text-[11px] font-bold text-brand-primary dark:text-blue-400 tracking-[0.2em] uppercase mb-6">
             /mulai sekarang
           </div>
-          <h2 className="text-3xl md:text-5xl font-bold tracking-[-0.02em] text-slate-900 dark:text-white leading-tight mb-8">
+          <h2 className="text-3xl md:text-5xl font-bold tracking-[-0.02em] text-brand-text dark:text-white leading-tight mb-8">
             Selesaikan riset berikutnya dengan lebih tenang.
           </h2>
           <p className="text-base md:text-lg text-slate-500 dark:text-gray-400 max-w-xl mx-auto mb-12 leading-relaxed">
@@ -461,7 +461,7 @@ export default function LandingPage() {
           <div className="flex items-center justify-center">
             <Link
               href="/auth/login"
-              className="group inline-flex items-center gap-3 px-10 py-4 bg-gradient-to-tr from-indigo-600 to-indigo-500 hover:shadow-indigo-500/40 text-white rounded-full text-base font-bold transition-all shadow-xl"
+              className="group inline-flex items-center gap-3 px-10 py-4 bg-brand-primary hover:shadow-elevation-2 text-white rounded-full text-base font-bold transition-all shadow-elevation-3"
             >
               Mulai gratis sekarang
               <ArrowUpRight size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />

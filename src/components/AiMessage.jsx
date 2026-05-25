@@ -115,7 +115,7 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
     return (
       <div className="w-full flex justify-end">
         <div className="w-fit max-w-[85%] flex flex-row-reverse gap-4">
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/10 backdrop-blur-xl border border-white/20 text-slate-800 dark:text-white rounded-tr-none leading-relaxed transition-all shadow-lg">
+          <div className="p-4 rounded-2xl bg-brand-primary/10 border border-brand-primary/20 text-brand-text dark:text-white rounded-tr-none leading-relaxed transition-all shadow-elevation-1">
             <div className="markdown-content prose dark:prose-invert prose-sm max-w-none leading-relaxed prose-p:my-1 prose-headings:mb-2 prose-headings:mt-4">
               <ReactMarkdown
                 remarkPlugins={[remarkMath]}
@@ -196,14 +196,14 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
         <div className="flex items-center gap-2 mt-4 ml-0.5 animate-in fade-in duration-500">
           <button
             onClick={() => { setLiked(!liked); if (!liked) setDisliked(false); }}
-            className={`p-1.5 rounded-lg transition-all ${liked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'}`}
+            className={`p-1.5 rounded-lg transition-all ${liked ? 'text-brand-primary bg-brand-primary/10 border border-brand-primary/30' : 'text-slate-500 hover:text-brand-primary hover:bg-brand-background border border-transparent'}`}
             title="Suka"
           >
             <ThumbsUp size={16} />
           </button>
           <button
             onClick={() => { setDisliked(!disliked); if (!disliked) setLiked(false); }}
-            className={`p-1.5 rounded-lg transition-all ${disliked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'}`}
+            className={`p-1.5 rounded-lg transition-all ${disliked ? 'text-brand-primary bg-brand-primary/10 border border-brand-primary/30' : 'text-slate-500 hover:text-brand-primary hover:bg-brand-background border border-transparent'}`}
             title="Tidak Suka"
           >
             <ThumbsDown size={16} />
@@ -212,7 +212,7 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
             <div className="flex items-center gap-2">
               <button
                 onClick={handleCopy}
-                className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent transition-all flex items-center gap-1.5"
+                className="p-1.5 rounded-lg text-slate-500 hover:text-brand-primary hover:bg-brand-background border border-transparent transition-all flex items-center gap-1.5"
                 title="Salin Pesan"
               >
                 {copied ? (
@@ -230,8 +230,8 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
                 disabled={isLoadingAudio}
                 className={`p-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                   isPlaying
-                    ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30'
-                    : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'
+                    ? 'text-brand-primary bg-brand-primary/10 border border-brand-primary/30'
+                    : 'text-slate-500 hover:text-brand-primary hover:bg-brand-background border border-transparent'
                 }`}
                 title={isPlaying ? "Berhenti" : "Dengarkan"}
               >
