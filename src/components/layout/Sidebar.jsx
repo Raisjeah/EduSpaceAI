@@ -1,4 +1,5 @@
 'use client';
+import { AGENT_IDS, GEMINI_MODELS, CLAUDE_MODELS } from '@/lib/constants';
 
 import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3, Mic, Trash2 } from 'lucide-react';
 import { useEffect, useState, useMemo, useRef } from 'react';
@@ -156,24 +157,24 @@ export default function Sidebar({
 
   const getAgentIcon = (agentId) => {
     switch (agentId) {
-      case 'deep-search': return <Search size={14} className="text-blue-400" />;
-      case 'researcher': return <BookOpen size={14} className="text-green-400" />;
-      case 'editor': return <Edit3 size={14} className="text-amber-400" />;
+      case AGENT_IDS.DEEP_SEARCH: return <Search size={14} className="text-blue-400" />;
+      case AGENT_IDS.RESEARCHER: return <BookOpen size={14} className="text-green-400" />;
+      case AGENT_IDS.EDITOR: return <Edit3 size={14} className="text-amber-400" />;
       default: return <Rocket size={14} className="text-indigo-400" />;
     }
   };
 
   const getAgentTheme = (agentId) => {
     switch (agentId) {
-      case 'deep-search': return {
+      case AGENT_IDS.DEEP_SEARCH: return {
         active: 'bg-blue-600/10 text-blue-600 dark:text-blue-400 border-blue-500',
         hover: 'hover:bg-blue-50 dark:hover:bg-blue-900/10'
       };
-      case 'researcher': return {
+      case AGENT_IDS.RESEARCHER: return {
         active: 'bg-green-600/10 text-green-600 dark:text-green-400 border-green-500',
         hover: 'hover:bg-green-50 dark:hover:bg-green-900/10'
       };
-      case 'editor': return {
+      case AGENT_IDS.EDITOR: return {
         active: 'bg-amber-600/10 text-amber-600 dark:text-amber-400 border-amber-500',
         hover: 'hover:bg-amber-50 dark:hover:bg-amber-900/10'
       };

@@ -1,6 +1,6 @@
 'use client';
 
-import ChatView from '@/components/ChatView';
+import ChatView from '@/components/chat/ChatView';
 import useAuth from '@/hooks/useAuth';
 import { useParams } from 'next/navigation';
 

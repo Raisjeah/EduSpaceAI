@@ -142,10 +142,10 @@ export function ChatProvider({ children }) {
   );
 }
 
-export function useChat() {
+export function useChatContext() {
   const context = useContext(ChatContext);
   if (!context) {
-    throw new Error('useChat must be used within a ChatProvider');
+    throw new Error('useChatContext must be used within a ChatProvider');
   }
   return context;
 }

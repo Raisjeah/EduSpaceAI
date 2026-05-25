@@ -4,12 +4,12 @@ import { Suspense, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLayout } from '@/context/LayoutContext';
-import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header';
-import LoadingScreen from '@/components/LoadingScreen';
+import Sidebar from '@/components/layout/Sidebar';
+import Header from '@/components/layout/Header';
+import LoadingScreen from '@/components/ui/LoadingScreen';
 import useAuth from '@/hooks/useAuth';
-import Toast from '@/components/Toast';
-import ProjectModal from './ProjectModal';
+import Toast from '@/components/ui/Toast';
+import ProjectModal from '@/components/modals/ProjectModal';
 
 export default function MainLayout({ children }) {
   const { isSidebarOpen, setIsSidebarOpen, isProjectModalOpen, setIsProjectModalOpen } = useLayout();

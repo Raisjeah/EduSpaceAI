@@ -1,12 +1,13 @@
 'use server';
-import dbConnect from '@/lib/mongodb';
+import { AGENT_IDS } from '@/lib/constants';
+import dbConnect from '@/lib/db/mongodb';
 import Chat from '@/models/Chat';
 import Project from '@/models/Project';
 import UserMemory from '@/models/UserMemory';
-import { getGeminiResponse } from '@/lib/gemini';
+import { getGeminiResponse } from '@/lib/providers';
 import { extractFileContent } from './fileActions';
-import { checkUsageLimit, getModelByPlan, TIERS, checkFeatureAccess, isModelAllowed } from '@/lib/subscription';
-import { getSessionUser } from '@/lib/session';
+import { checkUsageLimit, getModelByPlan, TIERS, checkFeatureAccess, isModelAllowed } from '@/lib/core/subscription';
+import { getSessionUser } from '@/lib/core/session';
 
 // Sanitization function for user content to prevent prompt injection
 function sanitizeUserContent(text) {
@@ -29,7 +30,7 @@ export async function saveChat(role, text, chatId, projectId = null) {
       role, 
       text, 
       userId, 
-      chatId: chatId || 'default',
+      chatId: chatId || AGENT_IDS.DEFAULT,
       projectId
     });
     await newChat.save();
@@ -72,7 +73,7 @@ export async function sendMessage(formData) {
     }
 
     let fileParts = [];
-    let agentId = project?.agentId || 'default';
+    let agentId = project?.agentId || AGENT_IDS.DEFAULT;
 
     // B. & C. Feature Access & Memory check in parallel
     const [hasMemoryAccess, hasImageAccess, hasFileAccess] = await Promise.all([

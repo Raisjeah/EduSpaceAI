@@ -1,4 +1,5 @@
 'use client';
+import { AGENT_IDS, GEMINI_MODELS, CLAUDE_MODELS } from '@/lib/constants';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -15,8 +16,8 @@ import {
   Plus,
   Minus,
 } from 'lucide-react';
-import Footer from '@/components/Footer';
-import FloatingOrbs from './FloatingOrbs';
+import Footer from '@/components/layout/Footer';
+import FloatingOrbs from '@/components/ui/FloatingOrbs';
 
 const fadeUp = {
   initial: { opacity: 0, y: 16 },
@@ -27,8 +28,8 @@ const fadeUp = {
 
 const agentModes = [
   { id: 'profesor', label: 'Profesor', placeholder: 'Bantu rumuskan masalah skripsi tentang pemasaran digital...' },
-  { id: 'deep-search', label: 'Deep Search', placeholder: 'Cari jurnal Scopus terbaru tentang machine learning di pendidikan...' },
-  { id: 'editor', label: 'Editor', placeholder: 'Perbaiki parafrase paragraf metodologi penelitian...' },
+  { id: AGENT_IDS.DEEP_SEARCH, label: 'Deep Search', placeholder: 'Cari jurnal Scopus terbaru tentang machine learning di pendidikan...' },
+  { id: AGENT_IDS.EDITOR, label: 'Editor', placeholder: 'Perbaiki parafrase paragraf metodologi penelitian...' },
   { id: 'visual', label: 'Visual', placeholder: 'Buat diagram alur kerangka penelitian kuantitatif...' },
 ];
 

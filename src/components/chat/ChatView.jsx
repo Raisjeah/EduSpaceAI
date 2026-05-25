@@ -1,19 +1,20 @@
 'use client';
+import { AGENT_IDS, GEMINI_MODELS, CLAUDE_MODELS } from '@/lib/constants';
 
 import { useState, useEffect, useRef, useTransition } from 'react';
-import { useChat } from '@/context/ChatContext';
+import { useChat } from '@/hooks/useChat';
 import { useLayout } from '@/context/LayoutContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import TextareaAutosize from 'react-textarea-autosize';
 import { ChevronDown, Plus, ArrowUp, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File, Square, Code, GraduationCap, Microscope, ArrowLeft, Mic } from 'lucide-react';
 import { sendMessage, getChatDetails } from '@/app/actions/chatActions';
 import { getProjectDetails } from '@/app/actions/projectActions';
-import AiMessage from './AiMessage';
-import ThinkingIndicator from './ThinkingIndicator';
-import ModelSelector from './ModelSelector';
-import FloatingOrbs from './FloatingOrbs';
+import AiMessage from '@/components/chat/AiMessage';
+import ThinkingIndicator from '@/components/chat/ThinkingIndicator';
+import ModelSelector from '@/components/shared/ModelSelector';
+import FloatingOrbs from '@/components/ui/FloatingOrbs';
 import useAuth from '@/hooks/useAuth';
-import UpgradeModal from './UpgradeModal';
+import UpgradeModal from '@/components/modals/UpgradeModal';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -62,7 +63,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const [project, setProject] = useState(null);
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
+  const [selectedModel, setSelectedModel] = useState(GEMINI_MODELS.FLASH);
   const [thoughtTraces, setThoughtTraces] = useState([]);
   const [dynamicStatus, setDynamicStatus] = useState("Dosen AI sedang berpikir...");
   const statusIntervalRef = useRef(null);
@@ -101,7 +102,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
   // Simulated Thought Traces Effect
   useEffect(() => {
-    if (isPending && project?.agentId === 'deep-search') {
+    if (isPending && project?.agentId === AGENT_IDS.DEEP_SEARCH) {
       const traces = [
         '🔍 Menganalisis pertanyaan...',
         '📋 Membuat rencana riset...',
@@ -189,7 +190,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     const lowerInput = textToSend.toLowerCase();
     if (/bab|skripsi|materi|kuliah|akademik|tugas/.test(lowerInput)) {
       selectedPreset = presets.academic;
-    } else if (/cari|search|website|link|googling|internet/.test(lowerInput) || project?.agentId === 'deep-search') {
+    } else if (/cari|search|website|link|googling|internet/.test(lowerInput) || project?.agentId === AGENT_IDS.DEEP_SEARCH) {
       selectedPreset = presets.search;
     } else if (/kode|code|bug|sql|error|function|script|coding/.test(lowerInput)) {
       selectedPreset = presets.coding;
@@ -273,37 +274,37 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
   const getAgentIcon = (agentId) => {
     switch (agentId) {
-      case 'deep-search': return <Search size={16} className="text-blue-400" />;
-      case 'researcher': return <BookOpen size={16} className="text-green-400" />;
-      case 'editor': return <Edit3 size={16} className="text-amber-400" />;
+      case AGENT_IDS.DEEP_SEARCH: return <Search size={16} className="text-blue-400" />;
+      case AGENT_IDS.RESEARCHER: return <BookOpen size={16} className="text-green-400" />;
+      case AGENT_IDS.EDITOR: return <Edit3 size={16} className="text-amber-400" />;
       default: return <Rocket size={16} className="text-indigo-400" />;
     }
   };
 
   const getAgentName = (agentId) => {
     switch (agentId) {
-      case 'deep-search': return 'Deep Search Agent';
-      case 'researcher': return 'Profesor Riset';
-      case 'editor': return 'Editor Akademik';
+      case AGENT_IDS.DEEP_SEARCH: return 'Deep Search Agent';
+      case AGENT_IDS.RESEARCHER: return 'Profesor Riset';
+      case AGENT_IDS.EDITOR: return 'Editor Akademik';
       default: return 'EduSpaceAI';
     }
   };
 
   const getAgentTheme = (agentId) => {
     switch (agentId) {
-      case 'deep-search': return {
+      case AGENT_IDS.DEEP_SEARCH: return {
         bg: 'bg-blue-50 dark:bg-blue-900/10',
         border: 'border-blue-200 dark:border-blue-800/30',
         accent: 'bg-blue-500',
         text: 'text-blue-600 dark:text-blue-400'
       };
-      case 'researcher': return {
+      case AGENT_IDS.RESEARCHER: return {
         bg: 'bg-green-50 dark:bg-green-900/10',
         border: 'border-green-200 dark:border-green-800/30',
         accent: 'bg-green-500',
         text: 'text-green-600 dark:text-green-400'
       };
-      case 'editor': return {
+      case AGENT_IDS.EDITOR: return {
         bg: 'bg-amber-50 dark:bg-amber-900/10',
         border: 'border-amber-200 dark:border-amber-800/30',
         accent: 'bg-amber-500',
@@ -318,7 +319,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     }
   };
 
-  const agentTheme = project ? getAgentTheme(project.agentId) : getAgentTheme('default');
+  const agentTheme = project ? getAgentTheme(project.agentId) : getAgentTheme(AGENT_IDS.DEFAULT);
 
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
   const [isFooterScrolled, setIsFooterScrolled] = useState(false);

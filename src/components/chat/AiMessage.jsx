@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { ThumbsUp, ThumbsDown, Copy, Check, Volume2, Loader2, StopCircle } from 'lucide-react';
-import Mermaid from './Mermaid';
+import Mermaid from '@/components/editor/Mermaid';
 import 'katex/dist/katex.min.css';
 
 export default function AiMessage({ content, isUser = false, isTyping = false, onApply }) {

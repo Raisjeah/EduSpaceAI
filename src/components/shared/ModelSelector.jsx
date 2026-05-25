@@ -1,11 +1,12 @@
 'use client';
+import { GEMINI_MODELS, CLAUDE_MODELS } from '@/lib/constants';
 
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Lock, Zap, Search, PenTool, Sparkles } from 'lucide-react';
 
 const MODELS_DATA = [
   {
-    id: 'gemini-2.5-flash',
+    id: GEMINI_MODELS.FLASH,
     name: 'Gemini-2.5-flash',
     description: 'Untuk respons cepat/simpel',
     label: 'Fastest',
@@ -14,7 +15,7 @@ const MODELS_DATA = [
     provider: 'Google'
   },
   {
-    id: 'gemini-2.5-pro',
+    id: GEMINI_MODELS.PRO,
     name: 'Gemini-2.5-pro',
     description: 'Untuk analisis akademik mendalam',
     tier: 'CLASSIC',
@@ -22,16 +23,7 @@ const MODELS_DATA = [
     provider: 'Google'
   },
   {
-    id: 'gemini-3.1-pro',
-    name: 'Gemini-3.1-pro',
-    description: 'Model paling cerdas untuk riset kompleks',
-    label: 'Best for Research',
-    tier: 'PRO',
-    icon: <Sparkles size={14} className="text-indigo-400" />,
-    provider: 'Google'
-  },
-  {
-    id: 'claude-4-6-sonnet',
+    id: CLAUDE_MODELS.SONNET,
     name: 'Claude Sonnet 4.6',
     description: 'Untuk penulisan kreatif & koding',
     tier: 'ULTRA',
@@ -39,7 +31,7 @@ const MODELS_DATA = [
     provider: 'Anthropic'
   },
   {
-    id: 'gemini-3-pro-image-preview',
+    id: GEMINI_MODELS.IMAGE,
     name: 'Nano Banana (Image)',
     description: 'Generasi gambar canggih dengan Imagen 3',
     tier: 'ULTRA',

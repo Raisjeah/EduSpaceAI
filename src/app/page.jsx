@@ -1,8 +1,8 @@
 'use client';
 
 import { Suspense } from 'react';
-import ChatView from '@/components/ChatView';
-import LandingPage from '@/components/LandingPage';
+import ChatView from '@/components/chat/ChatView';
+import LandingPage from '@/components/shared/LandingPage';
 import useAuth from '@/hooks/useAuth';
 
 export default function Home() {

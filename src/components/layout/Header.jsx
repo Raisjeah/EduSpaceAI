@@ -3,7 +3,7 @@
 import { Menu, User, Sparkles, ArrowRight, X } from 'lucide-react';
 import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';
-import { useChat } from '@/context/ChatContext';
+import { useChat } from '@/hooks/useChat';
 import { useLayout } from '@/context/LayoutContext';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';

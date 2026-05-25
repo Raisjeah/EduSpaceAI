@@ -1,7 +1,8 @@
 import Plan from '@/models/Plan';
 import User from '@/models/User';
 import UsageCounter from '@/models/UsageCounter';
-import dbConnect from '@/lib/mongodb';
+import dbConnect from '@/lib/db/mongodb';
+import { GEMINI_MODELS, CLAUDE_MODELS } from '@/lib/constants';
 
 // Simple in-memory cache for plans
 const planCache = {
@@ -35,17 +36,17 @@ export const TIERS = {
 // Map plan -> guaranteed-real SDK model slug. IDs are stable for DB / UI selectors
 // while the actual underlying model can be swapped without breaking the contract.
 export const MODELS = {
-  [TIERS.FREE]: 'gemini-2.5-flash',
-  [TIERS.CLASSIC]: 'gemini-2.5-pro',
-  [TIERS.PRO]: 'gemini-2.5-pro',
-  [TIERS.ULTRA]: 'claude-3-5-sonnet-20241022',
+  [TIERS.FREE]: GEMINI_MODELS.FLASH,
+  [TIERS.CLASSIC]: GEMINI_MODELS.PRO,
+  [TIERS.PRO]: GEMINI_MODELS.PRO,
+  [TIERS.ULTRA]: CLAUDE_MODELS.SONNET,
 };
 
 export const MODEL_PERMISSIONS = {
-  'gemini-2.5-flash': TIERS.FREE,
-  'gemini-2.5-pro': TIERS.CLASSIC,
-  'claude-3-5-sonnet-20241022': TIERS.ULTRA,
-  'gemini-2.5-flash-image-preview': TIERS.ULTRA,
+  [GEMINI_MODELS.FLASH]: TIERS.FREE,
+  [GEMINI_MODELS.PRO]: TIERS.CLASSIC,
+  [CLAUDE_MODELS.SONNET]: TIERS.ULTRA,
+  [GEMINI_MODELS.IMAGE]: TIERS.ULTRA,
 };
 
 export function getModelByPlan(userPlan) {

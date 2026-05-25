@@ -1,4 +1,5 @@
 'use client';
+import { AGENT_IDS, GEMINI_MODELS, CLAUDE_MODELS } from '@/lib/constants';
 
 import { useState, useTransition } from 'react';
 import { X, Rocket, Search, BookOpen, Edit3 } from 'lucide-react';
@@ -7,16 +8,16 @@ import { useRouter } from 'next/navigation';
 
 export default function ProjectModal({ isOpen, onClose, userId }) {
   const [name, setName] = useState('');
-  const [agentId, setAgentId] = useState('default');
+  const [agentId, setAgentId] = useState(AGENT_IDS.DEFAULT);
   const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   const agents = [
-    { id: 'default', name: 'EduSpaceAI', desc: 'Dosen Umum', icon: <Rocket size={18} /> },
-    { id: 'deep-search', name: 'Deep Search', desc: 'Ahli Real-time Search', icon: <Search size={18} /> },
-    { id: 'researcher', name: 'Profesor Riset', desc: 'Ahli Metodologi', icon: <BookOpen size={18} /> },
-    { id: 'editor', name: 'Editor Akademik', desc: 'Koreksi Bahasa', icon: <Edit3 size={18} /> },
+    { id: AGENT_IDS.DEFAULT, name: 'EduSpaceAI', desc: 'Dosen Umum', icon: <Rocket size={18} /> },
+    { id: AGENT_IDS.DEEP_SEARCH, name: 'Deep Search', desc: 'Ahli Real-time Search', icon: <Search size={18} /> },
+    { id: AGENT_IDS.RESEARCHER, name: 'Profesor Riset', desc: 'Ahli Metodologi', icon: <BookOpen size={18} /> },
+    { id: AGENT_IDS.EDITOR, name: 'Editor Akademik', desc: 'Koreksi Bahasa', icon: <Edit3 size={18} /> },
   ];
 
   const handleSubmit = async (e) => {
@@ -30,7 +31,7 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
       startTransition(() => {
         onClose();
         setName('');
-        setAgentId('default');
+        setAgentId(AGENT_IDS.DEFAULT);
         setIsLoading(false);
         router.push(`/project/${result.project._id}`);
       });

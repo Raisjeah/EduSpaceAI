@@ -1,4 +1,4 @@
-import LiveCallDashboard from "@/components/LiveCallDashboard";
+import LiveCallDashboard from "@/components/live/LiveCallDashboard";
 
 export const metadata = {
   title: "Live Call | EduSpaceAI",

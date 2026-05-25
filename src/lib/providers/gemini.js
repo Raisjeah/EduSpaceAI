@@ -1,40 +1,32 @@
 import { GoogleGenAI } from "@google/genai";
-import Anthropic from "@anthropic-ai/sdk";
-import { deepSearchEngine } from "./deepSearchEngine";
+import { deepSearchEngine } from "@/lib/providers/deepSearch";
+import { getClaudeResponse } from "@/lib/providers/claude";
+import { AGENT_IDS, GEMINI_MODELS, CLAUDE_MODELS, DEFAULT_MODEL, MAX_OUTPUT_TOKENS } from "@/lib/constants";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
 
-// Whitelist of model IDs the app supports. Anything else is rejected at the
-// edge instead of being silently downgraded.
-const GEMINI_MODELS = new Set([
-  'gemini-2.5-flash',
-  'gemini-2.5-pro',
-  'gemini-2.5-flash-image-preview',
-]);
-
-const CLAUDE_MODELS = new Set([
-  'claude-3-5-sonnet-20241022',
-]);
-
-const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
-const DEFAULT_CLAUDE_MODEL = 'claude-3-5-sonnet-20241022';
+const DEFAULT_GEMINI_MODEL = DEFAULT_MODEL;
+const DEFAULT_CLAUDE_MODEL = CLAUDE_MODELS.SONNET;
 
 function resolveModel(modelName) {
   if (typeof modelName !== 'string' || !modelName) {
     return { provider: 'gemini', sdkModel: DEFAULT_GEMINI_MODEL };
   }
-  if (CLAUDE_MODELS.has(modelName)) {
+
+  const isClaude = Object.values(CLAUDE_MODELS).includes(modelName);
+  if (isClaude) {
     return { provider: 'claude', sdkModel: modelName };
   }
+
   if (modelName.startsWith('claude')) {
     return { provider: 'claude', sdkModel: DEFAULT_CLAUDE_MODEL };
   }
-  if (GEMINI_MODELS.has(modelName)) {
+
+  const isGemini = Object.values(GEMINI_MODELS).includes(modelName);
+  if (isGemini) {
     return { provider: 'gemini', sdkModel: modelName };
   }
+
   return { provider: 'gemini', sdkModel: DEFAULT_GEMINI_MODEL };
 }
 
@@ -105,7 +97,7 @@ const AGENT_CONFIGS = {
   },
   "image-generator": {
     name: "Nano Banana (Image Gen)",
-    instruction: `Kamu adalah Nano Banana, asisten generasi gambar canggih dari Google yang terintegrasi di EduSpaceAI.
+    instruction: `Kamu adalah Nano Banana, asisten generasi gambar canggih dari Google yang terintegrated di EduSpaceAI.
     Tugasmu:
     - Membantu pengguna menghasilkan gambar berkualitas tinggi berdasarkan deskripsi teks.
     - Memberikan saran prompt yang lebih detail untuk hasil visual yang lebih baik.
@@ -114,13 +106,13 @@ const AGENT_CONFIGS = {
   }
 };
 
-export async function getGeminiResponse(prompt, history = [], fileParts = [], agentId = 'default', modelName = DEFAULT_GEMINI_MODEL) {
+export async function getGeminiResponse(prompt, history = [], fileParts = [], agentId = AGENT_IDS.DEFAULT, modelName = DEFAULT_GEMINI_MODEL) {
   const config = AGENT_CONFIGS[agentId] || AGENT_CONFIGS.default;
   const { provider, sdkModel } = resolveModel(modelName);
 
   try {
     // 1. Deep Search Special Handling
-    if (agentId === 'deep-search') {
+    if (agentId === AGENT_IDS.DEEP_SEARCH) {
       return await deepSearchEngine(prompt, history, fileParts, sdkModel);
     }
 
@@ -134,7 +126,7 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
       config: {
         systemInstruction: config.instruction,
         tools: config.tools || [],
-        maxOutputTokens: 4096,
+        maxOutputTokens: MAX_OUTPUT_TOKENS,
         temperature: 0.7,
       },
       history: history,
@@ -143,7 +135,7 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
     const response = await chat.sendMessage({ message: [prompt, ...fileParts] });
 
     // Image-generation model output (base64 inline data).
-    if (sdkModel.endsWith('image-preview')) {
+    if (sdkModel === GEMINI_MODELS.IMAGE) {
       const candidates = response.candidates;
       if (candidates && candidates[0]?.content?.parts) {
         const imagePart = candidates[0].content.parts.find((p) => p.inlineData);
@@ -164,48 +156,5 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
       return "⚠️ Kuota API habis. Coba lagi nanti atau ganti API Key.";
     }
     return "⚠️ Terjadi kesalahan pada koneksi Dosen AI. Silakan coba lagi.";
-  }
-}
-
-async function getClaudeResponse(prompt, history, fileParts, systemInstruction, modelName = DEFAULT_CLAUDE_MODEL) {
-  try {
-    const messages = history.map(msg => ({
-      role: msg.role === 'user' ? 'user' : 'assistant',
-      content: msg.parts[0].text
-    }));
-
-    let content = [];
-
-    // Handle images for Claude
-    if (fileParts.length > 0) {
-      for (const part of fileParts) {
-        if (part.inlineData) {
-          content.push({
-            type: 'image',
-            source: {
-              type: 'base64',
-              media_type: part.inlineData.mimeType,
-              data: part.inlineData.data,
-            },
-          });
-        }
-      }
-    }
-
-    content.push({ type: 'text', text: prompt });
-
-    messages.push({ role: 'user', content });
-
-    const response = await anthropic.messages.create({
-      model: modelName,
-      max_tokens: 4096,
-      system: systemInstruction,
-      messages: messages,
-    });
-
-    return response.content[0].text;
-  } catch (error) {
-    console.error("Claude SDK Error:", error);
-    throw error;
   }
 }

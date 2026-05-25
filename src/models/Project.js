@@ -1,13 +1,14 @@
+import { AGENT_IDS } from '@/lib/constants';
 import mongoose from 'mongoose';
 
 const ALLOWED_AGENTS = [
-  'default',
-  'researcher',
-  'editor',
-  'deep-search',
-  'visualizer',
-  'citation',
-  'image-generator',
+  AGENT_IDS.DEFAULT,
+  AGENT_IDS.RESEARCHER,
+  AGENT_IDS.EDITOR,
+  AGENT_IDS.DEEP_SEARCH,
+  AGENT_IDS.VISUALIZER,
+  AGENT_IDS.CITATION,
+  AGENT_IDS.IMAGE_GENERATOR,
 ];
 
 const ProjectSchema = new mongoose.Schema({
@@ -16,7 +17,7 @@ const ProjectSchema = new mongoose.Schema({
   agentId: {
     type: String,
     required: true,
-    default: 'default',
+    default: AGENT_IDS.DEFAULT,
     enum: ALLOWED_AGENTS,
   },
   createdAt: { type: Date, default: Date.now },

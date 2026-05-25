@@ -6,9 +6,9 @@ import os from 'os';
 import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 import ExcelJS from 'exceljs';
-import dbConnect from '@/lib/mongodb';
-import { getFileSizeLimit } from '@/lib/subscription';
-import { getSessionUser } from '@/lib/session';
+import dbConnect from '@/lib/db/mongodb';
+import { getFileSizeLimit } from '@/lib/core/subscription';
+import { getSessionUser } from '@/lib/core/session';
 
 // ✅ Safe limits untuk file processing
 const MAX_CONTENT_LENGTH = 100000;           // 100k chars

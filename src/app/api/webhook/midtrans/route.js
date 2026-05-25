@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import dbConnect from '@/lib/mongodb';
+import dbConnect from '@/lib/db/mongodb';
 import Subscription from '@/models/Subscription';
 import User from '@/models/User';
 import Plan from '@/models/Plan';

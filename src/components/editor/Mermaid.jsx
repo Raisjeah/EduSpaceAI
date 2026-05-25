@@ -1,4 +1,5 @@
 'use client';
+import { AGENT_IDS, GEMINI_MODELS, CLAUDE_MODELS } from '@/lib/constants';
 
 import React, { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
@@ -14,7 +15,7 @@ const Mermaid = ({ chart }) => {
     const currentTheme = resolvedTheme || theme || 'light';
     mermaid.initialize({
       startOnLoad: false,
-      theme: currentTheme === 'dark' ? 'dark' : 'default',
+      theme: currentTheme === 'dark' ? 'dark' : AGENT_IDS.DEFAULT,
       securityLevel: 'loose',
       fontFamily: 'inherit',
     });

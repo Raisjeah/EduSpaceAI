@@ -8,9 +8,9 @@ import { saveChat, sendMessage } from '@/app/actions/chatActions';
 import { extractFileContent } from '@/app/actions/fileActions'; // server action
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import AiMessage from './AiMessage';
-import ThinkingIndicator from './ThinkingIndicator';
-import { useChat } from '@/context/ChatContext';
+import AiMessage from '@/components/chat/AiMessage';
+import ThinkingIndicator from '@/components/chat/ThinkingIndicator';
+import { useChat } from '@/hooks/useChat';
 import TextareaAutosize from 'react-textarea-autosize';
 
 // TipTap Imports

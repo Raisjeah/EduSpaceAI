@@ -1,14 +1,15 @@
 import { GoogleGenAI } from "@google/genai";
-import { search } from "./tavily";
-import { fetchPageContent } from "./jina";
+import { search } from "@/lib/providers/tavily";
+import { fetchPageContent } from "@/lib/providers/jina";
+import { GEMINI_MODELS } from '@/lib/constants';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Whitelist of model IDs supported by deep-search reasoning loops.
 // Image-only models cannot be used here, so they are not listed.
 const VALID_MODELS = new Set([
-  'gemini-2.5-flash',
-  'gemini-2.5-pro',
+  GEMINI_MODELS.FLASH,
+  GEMINI_MODELS.PRO,
 ]);
 
 /**
@@ -19,7 +20,7 @@ function getValidModelName(modelName) {
   if (typeof modelName === 'string' && VALID_MODELS.has(modelName)) {
     return modelName;
   }
-  return 'gemini-2.5-flash';
+  return GEMINI_MODELS.FLASH;
 }
 
 // ✅ NEW: Timeout wrapper for API calls
