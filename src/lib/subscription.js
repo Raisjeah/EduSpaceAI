@@ -38,14 +38,14 @@ export const MODELS = {
   [TIERS.FREE]: 'gemini-2.5-flash',
   [TIERS.CLASSIC]: 'gemini-2.5-pro',
   [TIERS.PRO]: 'gemini-2.5-pro',
-  [TIERS.ULTRA]: 'claude-3-5-sonnet-20241022',
+  [TIERS.ULTRA]: 'claude-sonnet-4-6',
 };
 
 export const MODEL_PERMISSIONS = {
   'gemini-2.5-flash': TIERS.FREE,
   'gemini-2.5-pro': TIERS.CLASSIC,
-  'claude-3-5-sonnet-20241022': TIERS.ULTRA,
-  'gemini-2.5-flash-image-preview': TIERS.ULTRA,
+  'claude-4-6-sonnet': TIERS.ULTRA,
+  'gemini-2.5-flash-image': TIERS.ULTRA,
 };
 
 export function getModelByPlan(userPlan) {

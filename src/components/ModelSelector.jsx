@@ -6,7 +6,7 @@ import { ChevronDown, Lock, Zap, Search, PenTool, Sparkles } from 'lucide-react'
 const MODELS_DATA = [
   {
     id: 'gemini-2.5-flash',
-    name: 'Gemini-2.5-flash',
+    name: 'Gemini 2.5 flash',
     description: 'Untuk respons cepat/simpel',
     label: 'Fastest',
     tier: 'FREE',
@@ -15,7 +15,7 @@ const MODELS_DATA = [
   },
   {
     id: 'gemini-2.5-pro',
-    name: 'Gemini-2.5-pro',
+    name: 'Gemini 2.5 pro',
     description: 'Untuk analisis akademik mendalam',
     tier: 'CLASSIC',
     icon: <Search size={14} className="text-blue-400" />,
@@ -23,7 +23,7 @@ const MODELS_DATA = [
   },
   {
     id: 'gemini-3.1-pro',
-    name: 'Gemini-3.1-pro',
+    name: 'Gemini 3.1 pro',
     description: 'Model paling cerdas untuk riset kompleks',
     label: 'Best for Research',
     tier: 'PRO',
@@ -31,7 +31,7 @@ const MODELS_DATA = [
     provider: 'Google'
   },
   {
-    id: 'claude-4-6-sonnet',
+    id: 'claude-sonnet-4-6',
     name: 'Claude Sonnet 4.6',
     description: 'Untuk penulisan kreatif & koding',
     tier: 'ULTRA',
@@ -39,7 +39,7 @@ const MODELS_DATA = [
     provider: 'Anthropic'
   },
   {
-    id: 'gemini-3-pro-image-preview',
+    id: 'gemini-2.5-flash-image',
     name: 'Nano Banana (Image)',
     description: 'Generasi gambar canggih dengan Imagen 3',
     tier: 'ULTRA',

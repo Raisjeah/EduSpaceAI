@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu, User, Sparkles, ArrowRight, X, Settings } from 'lucide-react';
+import { Menu, Sparkles, ArrowRight, X, Settings } from 'lucide-react';
 import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';
 import { useChat } from '@/context/ChatContext';
@@ -17,16 +17,13 @@ export default function Header() {
 
   useEffect(() => {
     const handleScroll = (e) => {
-      // Listen to scroll events on the chat container (if it exists)
       const target = e.target;
       if (target.classList && target.classList.contains('custom-scrollbar')) {
         setIsScrolled(target.scrollTop > 10);
       } else {
-        const scrollY = window.scrollY;
-        setIsScrolled(scrollY > 10);
+        setIsScrolled(window.scrollY > 10);
       }
     };
-
     window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
     return () => window.removeEventListener('scroll', handleScroll, { capture: true });
   }, []);
@@ -34,68 +31,77 @@ export default function Header() {
   const isDashboardPage = pathname.startsWith('/project') || pathname.startsWith('/tools');
 
   return (
-    <header className="flex justify-between items-center p-4 sticky top-0 z-50 bg-transparent pointer-events-none flex-none shadow-none backdrop-blur-none">
-      {/* Center Title - only visible when scrolled and not on dashboard */}
+    // Header selalu transparan — hanya garis bawah tipis saat scroll
+    <header className={`
+      flex justify-between items-center px-3 py-2.5
+      sticky top-0 z-50 flex-none pointer-events-none
+      bg-transparent transition-all duration-300
+      ${isScrolled ? 'border-b border-white/5' : 'border-b border-transparent'}
+    `}>
+
+      {/* Center Title — muncul saat scroll, style teks biasa */}
       {!isDashboardPage && (
-        <div className="absolute left-1/2 -translate-x-1/2 w-max pointer-events-none z-10">
-            <h1 className={`px-4 py-1.5 rounded-full bg-white/70 dark:bg-[#0F0F0F]/70 backdrop-blur-md border border-slate-200/50 dark:border-white/5 shadow-sm text-[11px] font-bold text-slate-500 dark:text-gray-400 tracking-wide transition-all duration-500 ${isScrolled ? 'opacity-100 translate-y-2' : 'opacity-0 -translate-y-4'}`}>
-              {activeChatTitle}
-            </h1>
+        <div className="absolute left-1/2 -translate-x-1/2 pointer-events-none z-10">
+          <span className={`
+            text-[13px] font-semibold text-slate-700 dark:text-gray-200
+            transition-all duration-300
+            ${isScrolled ? 'opacity-100' : 'opacity-0'}
+          `}>
+            {activeChatTitle}
+          </span>
         </div>
       )}
 
-      <div className="flex items-center gap-3 min-w-0">
+      {/* Left — Logo / Hamburger */}
+      <div className="flex items-center min-w-0">
         {!userId ? (
           <Link href="/" className="flex items-center gap-2 pointer-events-auto">
-             <div className="w-10 h-10 flex items-center justify-center">
-                <img
-                  src="/logo.png"
-                  alt="EduSpaceAI Logo"
-                  className="w-full h-full object-contain invert dark:invert-0"
-                />
-              </div>
-              <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white hidden sm:block">EduSpaceAI</span>
+            <div className="w-8 h-8 flex items-center justify-center">
+              <img src="/logo.png" alt="EduSpaceAI Logo" className="w-full h-full object-contain invert dark:invert-0" />
+            </div>
+            <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white hidden sm:block">
+              EduSpaceAI
+            </span>
           </Link>
         ) : (
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="w-11 h-11 flex items-center justify-center rounded-full bg-neutral-900/80 border border-neutral-800/50 shadow-xl backdrop-blur-md text-white transition-all shrink-0 pointer-events-auto hover:scale-105"
+            className="w-10 h-10 flex items-center justify-center rounded-full text-slate-700 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all pointer-events-auto"
           >
-            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+            {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         )}
       </div>
 
-      <div className="flex items-center gap-3 flex-none justify-end">
-        <div className="flex items-center gap-4 text-gray-400">
-          {!userId && (
+      {/* Right — Actions */}
+      <div className="flex items-center gap-1.5 flex-none">
+        {!userId && (
+          <Link
+            href="/auth/login"
+            className="group inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-sm font-medium transition-all pointer-events-auto"
+          >
+            Masuk
+            <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        )}
+
+        {userId && !isDashboardPage && (
+          <>
             <Link
-              href="/auth/login"
-              className="group inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-indigo-500/10 hover:bg-indigo-500/15 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-sm font-medium transition-colors pointer-events-auto"
+              href="/pricing"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-amber-500 dark:text-amber-400 text-xs font-bold hover:bg-black/10 dark:hover:bg-white/10 transition-all pointer-events-auto"
             >
-              Masuk
-              <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+              <Sparkles size={13} />
+              {user?.current_plan === 'FREE' ? 'Upgrade' : user?.current_plan}
             </Link>
-          )}
 
-          {userId && !isDashboardPage && (
-            <>
-              <Link
-                href="/pricing"
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neutral-900/80 border border-neutral-800/50 shadow-xl backdrop-blur-md text-amber-500 text-xs font-bold hover:scale-105 transition-all pointer-events-auto"
-              >
-                <Sparkles size={14} />
-                {user?.current_plan === 'FREE' ? 'Upgrade Pro' : user?.current_plan}
-              </Link>
-
-              <Link href="/dashboard" title="Dashboard & Pengaturan" className="pointer-events-auto hover:scale-105 transition-all">
-                <div className="w-11 h-11 rounded-full bg-neutral-900/80 flex items-center justify-center border border-neutral-800/50 shadow-xl backdrop-blur-md hover:border-indigo-500/50 transition-all">
-                  <Settings size={20} className="text-white" />
-                </div>
-              </Link>
-            </>
-          )}
-        </div>
+            <Link href="/dashboard" title="Pengaturan" className="pointer-events-auto">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-slate-700 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all">
+                <Settings size={20} />
+              </div>
+            </Link>
+          </>
+        )}
       </div>
     </header>
   );

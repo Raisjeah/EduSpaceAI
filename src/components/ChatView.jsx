@@ -17,6 +17,15 @@ import UpgradeModal from './UpgradeModal';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
+// ── PERUBAHAN 1: Suggested prompts untuk home screen ──
+const SUGGESTED_PROMPTS = [
+  { icon: <GraduationCap size={14} />, label: 'Bantu saya memahami materi kuliah' },
+  { icon: <Microscope size={14} />, label: 'Bantu susun kerangka skripsi' },
+  { icon: <Edit3 size={14} />, label: 'Koreksi tulisan akademik saya' },
+  { icon: <Search size={14} />, label: 'Carikan referensi terbaru' },
+];
+// ── END PERUBAHAN 1 ──
+
 export default function ChatView({ userId, activeChatId, projectId }) {
   const { user } = useAuth();
   const { isSidebarOpen } = useLayout();
@@ -45,7 +54,6 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     setActiveChatTitle
   } = useChat();
 
-  // Local state to track chatId after migration for first message
   const [internalId, setInternalId] = useState(null);
   const currentId = activeChatId || internalId || 'new';
 
@@ -73,7 +81,6 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const searchParams = useSearchParams();
   const isAnalyzing = searchParams.get('analyze') === 'true';
 
-  // Load project details if projectId exists
   useEffect(() => {
     if (projectId) {
       getProjectDetails(projectId).then(res => setProject(res));
@@ -82,7 +89,6 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     }
   }, [projectId]);
 
-  // Load last selected model from localStorage
   useEffect(() => {
     const savedModel = localStorage.getItem('eduspace_preferred_model');
     if (savedModel) {
@@ -99,7 +105,6 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     }
   };
 
-  // Simulated Thought Traces Effect
   useEffect(() => {
     if (isPending && project?.agentId === 'deep-search') {
       const traces = [
@@ -126,26 +131,21 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     }
   }, [isPending, project]);
 
-  // 1. Load detail chat saat activeChatId berubah
   useEffect(() => {
     if (activeChatId && userId) {
-      // Clear internal bridge once we are on the real route
       setInternalId(null);
 
-      // Hanya tampilkan loading jika messages memang kosong DAN tidak dalam proses migrasi
       if (messages.length === 0 && internalId !== activeChatId) {
         setIsLoadingChat(true);
       }
 
       getChatDetails(activeChatId).then(res => {
-        // Jangan menimpa jika sedang ada proses pengetikan AI (mencegah jumpy UI)
         setChatMessages(activeChatId, prev => {
           if (prev.length > 0 && (isTyping || isThinking)) return prev;
           return res;
         });
         setIsLoadingChat(false);
 
-        // Set Header Title based on first message
         if (res.length > 0) {
           const firstUserMsg = res.find(m => m.role === 'user');
           if (firstUserMsg) {
@@ -153,13 +153,11 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           }
         }
 
-        // Jika dari mode analisa, trigger AI untuk pesan terakhir
         if (isAnalyzing && res.length > 0 && res[res.length - 1].role === 'user') {
           handleSend(res[res.length - 1].text, true);
         }
       });
     } else if (!activeChatId) {
-      // Jika di halaman home (/), pastikan state 'new' bersih HANYA jika tidak sedang pending/migrasi
       if (!isPending && !internalId) {
         clearChat('new');
       }
@@ -177,7 +175,6 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     const textToSend = overrideInput || input;
     if ((!textToSend.trim() && !selectedFile) || (isPending && !isAutoTrigger)) return;
 
-    // --- Dynamic Status Setup ---
     const presets = {
       academic: ["Membaca file referensi...", "Menganalisis bab terkait...", "Menyusun struktur penjelasan...", "Memfinalisasi materi akademik..."],
       search: ["Membuka mesin pencari...", "Menjelajahi situs terkait...", "Menyaring informasi valid...", "Merangkum hasil penelusuran..."],
@@ -217,7 +214,6 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       setMessages(prev => [...prev, userMessage]);
       setInput('');
 
-      // If it's the very first message, set the title
       if (messages.length === 0) {
          setActiveChatTitle(userMessage.text.substring(0, 40) + (userMessage.text.length > 40 ? '...' : ''));
       }
@@ -256,7 +252,6 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           router.replace(targetUrl, { scroll: false });
         }
 
-        // --- TYPEWRITER EFFECT ---
         if (statusIntervalRef.current) clearInterval(statusIntervalRef.current);
         runTypewriter(result.chatId, result.aiResponse);
       } else {
@@ -336,7 +331,6 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     const currentRef = chatContainerRef.current;
     if (currentRef) {
       currentRef.addEventListener('scroll', handleScroll);
-      // Initial check
       handleScroll();
     }
     return () => {
@@ -351,7 +345,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         onClose={() => setUpgradeModal({ ...upgradeModal, isOpen: false })}
         featureName={upgradeModal.feature}
       />
-      {/* Project Header (If in project) */}
+      {/* Project Header */}
       {project && (
         <div className={`px-4 md:px-6 py-3 border-b ${agentTheme.border} bg-white/10 dark:bg-black/20 backdrop-blur-xl flex items-center justify-between z-10 flex-none transition-all`}>
           <div className="flex items-center gap-2 md:gap-4">
@@ -402,34 +396,61 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             </div>
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 relative overflow-hidden">
+          // ── PERUBAHAN 2: Home screen — logo lebih atas, tambah suggested prompts ──
+          <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 relative overflow-hidden gap-6">
             <div className="hidden md:block">
               <FloatingOrbs />
             </div>
-            <div className="flex flex-col items-center justify-center mb-4">
-              <div className="w-20 h-20 bg-white dark:bg-[#151515] rounded-2xl flex items-center justify-center mb-4 shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-slate-100 dark:border-white/5 overflow-hidden">
+
+            {/* Logo + Greeting */}
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-white dark:bg-[#151515] rounded-2xl flex items-center justify-center mb-3 shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-slate-100 dark:border-white/5 overflow-hidden">
                 <img
                   src="/logo.png"
                   alt="EduSpaceAI Logo"
-                  className="w-12 h-12 object-contain invert dark:invert-0"
+                  className="w-10 h-10 object-contain invert dark:invert-0"
                 />
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-1 text-center px-4">
+              <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white mb-1">
                 {project ? project.name : 'EduSpaceAI'}
               </h1>
-              <p className="text-slate-600 dark:text-gray-400 text-center max-w-sm text-sm md:text-base px-4 font-medium">
+              <p className="text-slate-500 dark:text-gray-500 text-sm max-w-xs font-medium">
                 {project
-                  ? `Sedang menggunakan agen ${getAgentName(project.agentId)} untuk membantumu di project ini.`
+                  ? `Menggunakan agen ${getAgentName(project.agentId)}`
                   : greeting}
               </p>
             </div>
+
+            {/* Suggested Prompts */}
+            {!project && (
+              <div className="grid grid-cols-2 gap-2 w-full max-w-sm">
+                {SUGGESTED_PROMPTS.map((prompt, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      setInput(prompt.label);
+                    }}
+                    className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.07] hover:border-indigo-400/40 hover:bg-indigo-50/50 dark:hover:bg-indigo-500/5 transition-all text-left group"
+                  >
+                    <span className="text-slate-400 dark:text-gray-500 group-hover:text-indigo-500 transition-colors mt-0.5 shrink-0">
+                      {prompt.icon}
+                    </span>
+                    <span className="text-[11px] text-slate-600 dark:text-gray-400 group-hover:text-slate-800 dark:group-hover:text-gray-200 font-medium leading-snug transition-colors">
+                      {prompt.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+          // ── END PERUBAHAN 2 ──
         ) : (
           <div
             ref={chatContainerRef}
             className="flex-1 overflow-y-auto custom-scrollbar"
           >
-            <div className="max-w-4xl mx-auto w-full pt-4 md:pt-12 pb-[160px] md:pb-[180px] px-4 sm:px-6 space-y-4 flex-1">
+            {/* ── PERUBAHAN 3: space-y-4 → space-y-3, pb sedikit dikurangi ── */}
+            <div className="max-w-4xl mx-auto w-full pt-4 md:pt-8 pb-[150px] md:pb-[160px] px-4 sm:px-6 space-y-3 flex-1">
               {messages.map((msg, idx) => (
                 <AiMessage
                   key={msg._id || idx}
@@ -439,7 +460,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                 />
               ))}
               {thoughtTraces.length > 0 && (
-                <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="space-y-1.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   {thoughtTraces.map((trace, idx) => (
                     <div key={idx} className={`flex items-center gap-2 px-3 py-1.5 ${agentTheme.bg} border ${agentTheme.border} rounded-lg w-fit`}>
                        <span className={`text-[11px] ${agentTheme.text} font-medium`}>{trace}</span>
@@ -448,7 +469,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                 </div>
               )}
               {(isThinking || isUploading) && (
-                <div className="px-1 flex flex-col gap-2">
+                <div className="px-1 flex flex-col gap-1.5">
                   <ThinkingIndicator status={dynamicStatus} />
                   {isUploading && (
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800/30 rounded-lg w-fit animate-pulse">
@@ -458,6 +479,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                   )}
                 </div>
               )}
+              {/* ── END PERUBAHAN 3 ── */}
               <div ref={chatEndRef} />
             </div>
           </div>
@@ -505,7 +527,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   );
 }
 
-// --- KOMPONEN PENDUKUNG ---
+// --- KOMPONEN PENDUKUNG --- (tidak diubah)
 
 function SuggestionChip({ label, icon, onClick, isLink, theme }) {
   const Component = isLink ? 'div' : 'button';
@@ -528,7 +550,6 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
   const [showNudge, setShowNudge] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Show nudge for new chats after a delay
   useEffect(() => {
     if (isNewChat) {
       const timer = setTimeout(() => {
@@ -542,11 +563,9 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
   const textareaRef = useRef(null);
   const actionSheetRef = useRef(null);
 
-
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Create a preview URL if it's an image
       if (file.type.startsWith('image/')) {
         file.preview = URL.createObjectURL(file);
       }
@@ -560,7 +579,6 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
       <AnimatePresence>
         {isActionSheetOpen && (
           <>
-          {/* Overlay to close action sheet */}
           <div
             className="fixed inset-0 z-40 cursor-default"
             onClick={() => setIsActionSheetOpen(false)}
@@ -669,29 +687,9 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           </button>
         </div>
 
-        {/* Hidden Inputs */}
-        <input
-          type="file"
-          ref={cameraInputRef}
-          onChange={handleFileChange}
-          className="hidden"
-          accept="image/*"
-          capture="environment"
-        />
-        <input
-          type="file"
-          ref={galleryInputRef}
-          onChange={handleFileChange}
-          className="hidden"
-          accept="image/*,video/*"
-        />
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="hidden"
-          accept=".pdf,.doc,.docx,.txt,.csv"
-        />
+        <input type="file" ref={cameraInputRef} onChange={handleFileChange} className="hidden" accept="image/*" capture="environment" />
+        <input type="file" ref={galleryInputRef} onChange={handleFileChange} className="hidden" accept="image/*,video/*" />
+        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".pdf,.doc,.docx,.txt,.csv" />
 
         <TextareaAutosize
           ref={textareaRef}

@@ -95,8 +95,6 @@ export default function Sidebar({
   }, [userId, activeProjectId, pathname]);
 
   const groupedChatHistory = useMemo(() => {
-    // Filter history based on mode: if projectId exists, only show chats for that project.
-    // If no projectId, only show chats without project.
     let currentHistory = chatGroups;
     if (activeProjectId) {
       currentHistory = chatGroups.filter(chat => chat.projectId === activeProjectId);
@@ -215,22 +213,38 @@ export default function Sidebar({
       `}>
         <div className="flex flex-col h-full p-4">
           {/* Spacer for floating header button area */}
-          <div className="h-14 md:hidden" />
+          <div className="h-10 md:hidden" />
 
-          {/* Agent Descriptions */}
-          <div className="mb-4 space-y-2 px-1">
-            <div className="p-2 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100/50 dark:border-indigo-900/30">
-               <p className="text-[10px] text-indigo-600 dark:text-indigo-400 leading-tight">
-                <span className="font-bold">Deep Search:</span> Riset mendalam dengan akses web real-time.
-               </p>
-               <p className="text-[10px] text-green-600 dark:text-green-400 leading-tight mt-1">
-                <span className="font-bold">Profesor Riset:</span> Ahli dalam menyusun metodologi dan analisis data.
-               </p>
-               <p className="text-[10px] text-amber-600 dark:text-amber-400 leading-tight mt-1">
-                <span className="font-bold">Editor Akademik:</span> Spesialis tata bahasa dan struktur karya ilmiah.
-               </p>
+          {/* ── PERUBAHAN 1: Tambah label + sederhanakan warna agent card ── */}
+          <div className="mb-4 px-1">
+            <p className="text-[9px] font-bold text-slate-400 dark:text-gray-600 uppercase tracking-[0.12em] mb-2 px-1">
+              Agen Tersedia
+            </p>
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.06] space-y-2">
+              <div className="flex items-start gap-2">
+                <Search size={11} className="text-slate-400 dark:text-gray-500 mt-0.5 shrink-0" />
+                <p className="text-[10px] text-slate-600 dark:text-gray-400 leading-snug">
+                  <span className="font-semibold text-slate-700 dark:text-gray-300">Deep Search</span>
+                  {' — '}Riset mendalam dengan akses web real-time.
+                </p>
+              </div>
+              <div className="flex items-start gap-2">
+                <BookOpen size={11} className="text-slate-400 dark:text-gray-500 mt-0.5 shrink-0" />
+                <p className="text-[10px] text-slate-600 dark:text-gray-400 leading-snug">
+                  <span className="font-semibold text-slate-700 dark:text-gray-300">Profesor Riset</span>
+                  {' — '}Ahli metodologi dan analisis data.
+                </p>
+              </div>
+              <div className="flex items-start gap-2">
+                <Edit3 size={11} className="text-slate-400 dark:text-gray-500 mt-0.5 shrink-0" />
+                <p className="text-[10px] text-slate-600 dark:text-gray-400 leading-snug">
+                  <span className="font-semibold text-slate-700 dark:text-gray-300">Editor Akademik</span>
+                  {' — '}Tata bahasa dan karya ilmiah.
+                </p>
+              </div>
             </div>
           </div>
+          {/* ── END PERUBAHAN 1 ── */}
 
           {/* Main Navigation */}
           <div className="flex flex-col gap-0.5 mb-4">
@@ -390,7 +404,6 @@ export default function Sidebar({
           </div>
         </div>
       </aside>
-
     </>
   );
 }

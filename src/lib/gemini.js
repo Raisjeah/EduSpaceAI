@@ -12,15 +12,15 @@ const anthropic = new Anthropic({
 const GEMINI_MODELS = new Set([
   'gemini-2.5-flash',
   'gemini-2.5-pro',
-  'gemini-2.5-flash-image-preview',
+  'gemini-2.5-flash-image',
 ]);
 
 const CLAUDE_MODELS = new Set([
-  'claude-3-5-sonnet-20241022',
+  'claude-sonnet-4-6',
 ]);
 
 const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
-const DEFAULT_CLAUDE_MODEL = 'claude-3-5-sonnet-20241022';
+const DEFAULT_CLAUDE_MODEL = 'claude-sonnet-4-6';
 
 function resolveModel(modelName) {
   if (typeof modelName !== 'string' || !modelName) {
@@ -114,6 +114,11 @@ const AGENT_CONFIGS = {
   }
 };
 
+// Models yang support image generation output
+const IMAGE_GEN_MODELS = new Set([
+  'gemini-2.5-flash-image',
+]);
+
 export async function getGeminiResponse(prompt, history = [], fileParts = [], agentId = 'default', modelName = DEFAULT_GEMINI_MODEL) {
   const config = AGENT_CONFIGS[agentId] || AGENT_CONFIGS.default;
   const { provider, sdkModel } = resolveModel(modelName);
@@ -136,6 +141,10 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
         tools: config.tools || [],
         maxOutputTokens: 4096,
         temperature: 0.7,
+        // Aktifkan response image untuk model yang mendukung
+        ...(IMAGE_GEN_MODELS.has(sdkModel) && {
+          responseModalities: ['TEXT', 'IMAGE'],
+        }),
       },
       history: history,
     });
@@ -143,7 +152,7 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
     const response = await chat.sendMessage({ message: [prompt, ...fileParts] });
 
     // Image-generation model output (base64 inline data).
-    if (sdkModel.endsWith('image-preview')) {
+    if (IMAGE_GEN_MODELS.has(sdkModel)) {
       const candidates = response.candidates;
       if (candidates && candidates[0]?.content?.parts) {
         const imagePart = candidates[0].content.parts.find((p) => p.inlineData);
@@ -209,3 +218,4 @@ async function getClaudeResponse(prompt, history, fileParts, systemInstruction, 
     throw error;
   }
 }
+
