@@ -84,26 +84,9 @@ export default function PricingPage() {
       return () => clearTimeout(timer);
     } else if (showSuccessModal && countdown === 0) {
       router.push('/');
+      router.refresh();
     }
   }, [showSuccessModal, countdown, router]);
-
-  useEffect(() => {
-    // Load Midtrans Snap script. Use production endpoint when the env flag is set,
-    // otherwise default to sandbox so local development keeps working.
-    const isProd = process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === 'true';
-    const snapUrl = isProd
-      ? 'https://app.midtrans.com/snap/snap.js'
-      : 'https://app.sandbox.midtrans.com/snap/snap.js';
-
-    const script = document.createElement('script');
-    script.src = snapUrl;
-    script.setAttribute('data-client-key', process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY);
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
 
   async function handleSubscribe(planName) {
     if (!userId) {
@@ -124,7 +107,7 @@ export default function PricingPage() {
           onSuccess: function(result) {
             setPurchasedPlan(planName);
             setShowSuccessModal(true);
-            fetchUser(); // Update user state without reload
+            setTimeout(() => { fetchUser(); }, 3000);
           },
           onPending: function(result) {
             showNotification('Menunggu pembayaran...');
@@ -176,7 +159,7 @@ export default function PricingPage() {
               </div>
 
               <button
-                onClick={() => router.push('/')}
+                onClick={() => { router.push('/'); router.refresh(); }}
                 className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
               >
                 Mulai Chat Sekarang
