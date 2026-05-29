@@ -498,6 +498,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
                   onClick={() => stopTypewriter(currentId)}
+                  aria-label="Berhenti Menghasilkan"
                   className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[11px] font-bold text-slate-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 hover:border-red-200 transition-all shadow-sm mb-2 pointer-events-auto"
                 >
                   <Square size={12} fill="currentColor" /> Berhenti Menghasilkan
@@ -677,6 +678,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               setIsActionSheetOpen(!isActionSheetOpen);
               setShowNudge(false);
             }}
+            aria-label="Pilihan unggah file"
             className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
               isActionSheetOpen
               ? 'bg-indigo-600 text-white rotate-45'
@@ -705,6 +707,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           maxRows={8}
           disabled={disabled}
           placeholder="Tanya apa saja ke Dosen AI-mu..."
+          aria-label="Input pesan"
           className="flex-1 w-full min-w-0 bg-transparent border-none outline-none py-2.5 px-3 text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
         />
         <div className="flex flex-col items-end gap-2">
@@ -734,6 +737,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
             <button
               onClick={(e) => { e.preventDefault(); handleSend(); }}
               disabled={disabled || (!input.trim() && !selectedFile)}
+              aria-label="Kirim pesan"
               className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
                 (input.trim() || selectedFile) && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40 hover:scale-105' : 'bg-white/5 text-slate-400 dark:text-gray-600'
               }`}

@@ -76,6 +76,7 @@ export default function ModelSelector({ currentPlan, selectedModel, onSelect }) 
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
+        aria-label="Pilih model AI"
         className="flex items-center gap-2 px-2 py-1.5 bg-neutral-900/5 dark:bg-white/5 hover:bg-neutral-900/10 dark:hover:bg-white/10 border border-transparent rounded-lg transition-all text-[11px] font-bold text-slate-600 dark:text-gray-400"
       >
         <span className="flex items-center gap-1.5 shrink-0">

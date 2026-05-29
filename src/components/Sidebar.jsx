@@ -285,6 +285,7 @@ export default function Sidebar({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari history..."
+                aria-label="Cari history chat"
                 className="w-full liquid-glass rounded-xl py-2 pl-8 pr-3 sm:pr-4 text-[11px] sm:text-[12px] text-slate-900 dark:text-white outline-none focus:border-indigo-500/50 transition-all"
               />
             </div>
@@ -351,6 +352,7 @@ export default function Sidebar({
                             onClick={(e) => handleDeleteChat(e, chat._id)}
                             className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-500/10 hover:text-red-500 rounded-md transition-all shrink-0"
                             title="Hapus chat"
+                            aria-label="Hapus chat"
                           >
                             <Trash2 size={12} />
                           </button>
