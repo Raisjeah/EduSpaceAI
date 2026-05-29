@@ -163,7 +163,7 @@ const LiveCallDashboard = () => {
         model: 'gemini-3.1-flash-live-preview',
         config: {
           responseModalities: ['AUDIO'],
-          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } },
+          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Aoede' } } },
           systemInstruction: {
             parts: [{ text: "Bertindaklah sebagai Dosen Pembimbing Akademik EduSpaceAI yang bijak, responsif, dan edukatif bernama Prof. Kore. Jawablah langsung menggunakan bahasa suara yang natural. Kamu bisa melihat video jika user menyalakan kamera." }]
           },
