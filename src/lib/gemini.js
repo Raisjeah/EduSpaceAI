@@ -74,7 +74,7 @@ const AGENT_CONFIGS = {
   }
 };
 
-export async function getGeminiResponse(prompt, history = [], fileParts = [], agentId = 'default', modelName = "gemini-2.5-flash") {
+export async function getGeminiResponse(prompt, history = [], fileParts = [], agentId = 'default', modelName = "gemini-1.5-flash") {
   try {
     // 1. Deep Search Special Handling
     if (agentId === 'deep-search') {
@@ -85,14 +85,10 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
 
     // Mapping model IDs to SDK expected names
     let actualModel = modelName;
-    if (modelName === 'gemini-2.5-flash') actualModel = 'gemini-2.5-flash'; // Assuming exp or similar if 2.5 is just label
-    if (modelName === 'gemini-2.5-pro') actualModel = 'gemini-2.5-pro';
-    if (modelName === 'gemini-3.1-pro') actualModel = 'gemini-3.1-pro'; // Fallback if 3.1 is future label
 
     // Claude Model Routing
     if (modelName.includes('claude')) {
-      const claudeModel = modelName === 'claude-4-6-sonnet' ? "claude-3-5-sonnet-20241022" : modelName;
-      return getClaudeResponse(prompt, history, fileParts, config.instruction, claudeModel);
+      return getClaudeResponse(prompt, history, fileParts, config.instruction, modelName);
     }
 
     // Gemini Models

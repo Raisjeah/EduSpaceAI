@@ -43,7 +43,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [project, setProject] = useState(null);
   const [isPending, startTransition] = useTransition();
-  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
+  const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash');
   const [thoughtTraces, setThoughtTraces] = useState([]);
   const [upgradeModal, setUpgradeModal] = useState({ isOpen: false, feature: '' });
   const [isLoadingChat, setIsLoadingChat] = useState(false);

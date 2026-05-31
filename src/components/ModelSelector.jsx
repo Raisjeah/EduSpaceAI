@@ -5,8 +5,8 @@ import { ChevronDown, Lock, Zap, Search, PenTool, Sparkles } from 'lucide-react'
 
 const MODELS_DATA = [
   {
-    id: 'gemini-2.5-flash',
-    name: 'Gemini-2.5-flash',
+    id: 'gemini-1.5-flash',
+    name: 'Gemini-1.5-flash',
     description: 'Untuk respons cepat/simpel',
     label: 'Fastest',
     tier: 'FREE',
@@ -14,25 +14,16 @@ const MODELS_DATA = [
     provider: 'Google'
   },
   {
-    id: 'gemini-2.5-pro',
-    name: 'Gemini-2.5-pro',
+    id: 'gemini-1.5-pro',
+    name: 'Gemini-1.5-pro',
     description: 'Untuk analisis akademik mendalam',
     tier: 'CLASSIC',
     icon: <Search size={14} className="text-blue-400" />,
     provider: 'Google'
   },
   {
-    id: 'gemini-3.1-pro',
-    name: 'Gemini-3.1-pro',
-    description: 'Model paling cerdas untuk riset kompleks',
-    label: 'Best for Research',
-    tier: 'PRO',
-    icon: <Sparkles size={14} className="text-indigo-400" />,
-    provider: 'Google'
-  },
-  {
-    id: 'claude-4-6-sonnet',
-    name: 'Claude Sonnet 4.6',
+    id: 'claude-3-5-sonnet-20241022',
+    name: 'Claude 3.5 Sonnet',
     description: 'Untuk penulisan kreatif & koding',
     tier: 'ULTRA',
     icon: <PenTool size={14} className="text-orange-400" />,
