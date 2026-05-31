@@ -677,6 +677,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               setIsActionSheetOpen(!isActionSheetOpen);
               setShowNudge(false);
             }}
+            aria-label={isActionSheetOpen ? "Tutup menu lampiran" : "Buka menu lampiran"}
             className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
               isActionSheetOpen
               ? 'bg-indigo-600 text-white rotate-45'
@@ -724,6 +725,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               href="/chat/live"
               className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/5 dark:bg-white/5 text-slate-900 dark:text-white hover:scale-105 transition-all shadow-sm border border-slate-200 dark:border-white/10"
               title="Voice Call (Live)"
+              aria-label="Panggilan Suara Langsung"
             >
               <div className="flex items-center gap-0.5">
                 <div className="w-0.5 h-2.5 bg-current rounded-full" />
@@ -734,6 +736,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
             <button
               onClick={(e) => { e.preventDefault(); handleSend(); }}
               disabled={disabled || (!input.trim() && !selectedFile)}
+              aria-label="Kirim pesan"
               className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
                 (input.trim() || selectedFile) && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40 hover:scale-105' : 'bg-white/5 text-slate-400 dark:text-gray-600'
               }`}
