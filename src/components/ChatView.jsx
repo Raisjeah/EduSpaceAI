@@ -106,6 +106,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   };
 
   useEffect(() => {
+    let timeout;
+    let interval;
     if (isPending && project?.agentId === 'deep-search') {
       const traces = [
         '🔍 Menganalisis pertanyaan...',
@@ -115,17 +117,26 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         '🧠 Menganalisis sumber data...',
         '✍️ Menyusun jawaban final...'
       ];
-      let i = 0;
-      setThoughtTraces([traces[0]]);
-      const interval = setInterval(() => {
-        i++;
-        if (i < traces.length) {
-          setThoughtTraces(prev => [...prev, traces[i]]);
-        } else {
-          clearInterval(interval);
-        }
-      }, 3000);
-      return () => clearInterval(interval);
+
+      setThoughtTraces([]); // Reset traces when pending starts
+
+      timeout = setTimeout(() => {
+        let i = 0;
+        setThoughtTraces([traces[0]]);
+        interval = setInterval(() => {
+          i++;
+          if (i < traces.length) {
+            setThoughtTraces(prev => [...prev, traces[i]]);
+          } else {
+            clearInterval(interval);
+          }
+        }, 3000);
+      }, 50); // Small delay to allow unmount and trigger fresh animation
+
+      return () => {
+        clearTimeout(timeout);
+        clearInterval(interval);
+      };
     } else {
       setThoughtTraces([]);
     }
