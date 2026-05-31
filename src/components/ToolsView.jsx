@@ -13,18 +13,18 @@ export default function ToolsView() {
   ];
 
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto h-full overflow-y-auto custom-scrollbar transition-colors duration-200">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto w-full h-full overflow-y-auto custom-scrollbar transition-colors duration-200">
       <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Workspace & Tools</h2>
-      <p className="text-[12px] text-slate-500 dark:text-gray-400 mb-8">Pilih tipe file untuk masuk ke Dashboard Editor, atau gunakan fitur asisten akademik.</p>
+      <p className="text-[12px] text-slate-500 dark:text-gray-400 mb-6 md:mb-8">Pilih tipe file untuk masuk ke Dashboard Editor, atau gunakan fitur asisten akademik.</p>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
         {tools.map(tool => (
           <Link
             key={tool.id} 
             href={tool.type === 'editor' ? `/editor/${tool.id}` : tool.link}
-            className="bg-slate-50 dark:bg-[#242424] p-5 rounded-[1.5rem] border border-slate-200 dark:border-[#333] hover:border-indigo-500/50 cursor-pointer transition-all group block"
+            className="bg-slate-50 dark:bg-[#242424] p-4 md:p-5 rounded-[1.25rem] md:rounded-[1.5rem] border border-slate-200 dark:border-[#333] hover:border-indigo-500/50 hover:shadow-md cursor-pointer transition-all group flex flex-col h-full"
           >
-            <div className="w-12 h-12 rounded-xl bg-white dark:bg-[#1A1A1A] border border-slate-100 dark:border-transparent flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-sm">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white dark:bg-[#1A1A1A] border border-slate-100 dark:border-transparent flex items-center justify-center mb-3 md:mb-4 group-hover:scale-110 transition-transform shadow-sm shrink-0">
               {tool.icon}
             </div>
             <h3 className="font-bold text-slate-800 dark:text-gray-200 text-sm mb-2">{tool.title}</h3>
