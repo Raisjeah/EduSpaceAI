@@ -9,6 +9,16 @@ import Mermaid from './Mermaid';
 import 'katex/dist/katex.min.css';
 
 export default function AiMessage({ content, isUser = false, isTyping = false, onApply }) {
+  // Detect Image Payload early to avoid ReferenceError in helper functions
+  let imageData = null;
+  if (content && typeof content === 'string' && content.startsWith('{"type":"image"')) {
+    try {
+      imageData = JSON.parse(content);
+    } catch (e) {
+      console.error("Failed to parse image payload", e);
+    }
+  }
+
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
@@ -100,16 +110,6 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
       console.error('Gagal menyalin teks: ', err);
     }
   };
-
-  // Detect Image Payload
-  let imageData = null;
-  if (content.startsWith('{"type":"image"')) {
-    try {
-      imageData = JSON.parse(content);
-    } catch (e) {
-      console.error("Failed to parse image payload", e);
-    }
-  }
 
   if (isUser) {
     return (

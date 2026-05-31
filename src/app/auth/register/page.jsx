@@ -88,7 +88,7 @@ export default function RegisterPage() {
       });
       google.accounts.id.renderButton(
         document.getElementById("googleSignIn"),
-        { theme: "outline", size: "large", width: "100%" }
+        { theme: "outline", size: "large", width: 380 }
       );
     }
   }, []);
