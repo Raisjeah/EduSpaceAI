@@ -93,7 +93,7 @@ export default function MainLayout({ children }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsSidebarOpen(false)}
-            className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
+            className="fixed inset-0 bg-black/50 z-[9998] md:hidden backdrop-blur-sm"
           />
         )}
       </AnimatePresence>

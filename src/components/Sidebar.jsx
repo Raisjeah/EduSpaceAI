@@ -204,7 +204,7 @@ export default function Sidebar({
   return (
     <>
       <aside className={`
-        fixed top-0 left-0 h-full z-50
+        fixed top-0 left-0 h-full z-[9999]
         bg-white dark:bg-[#0F0F0F]
         border-r border-neutral-200/50 dark:border-neutral-800/50
         transform transition-transform duration-300 ease-in-out flex-shrink-0

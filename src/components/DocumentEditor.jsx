@@ -406,7 +406,7 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
 
   return (
     <EditorErrorBoundary>
-    <div className="h-full flex bg-white dark:bg-[#0F0F0F] overflow-hidden transition-colors duration-200">
+    <div className="h-full flex bg-white dark:bg-[#0F0F0F] overflow-hidden overflow-x-hidden transition-colors duration-200">
       {/* Main Editor Area */}
       <div className={`flex-1 flex flex-col p-3 md:p-6 transition-all duration-300 ${isChatOpen ? 'md:mr-0' : ''}`}>
         <div className="flex justify-between items-center mb-4">
@@ -568,9 +568,17 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
         </div>
       </div>
 
+      {/* Mobile Backdrop for Chat Panel */}
+      {isChatOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-[9998] md:hidden backdrop-blur-sm"
+          onClick={() => setIsChatOpen(false)}
+        />
+      )}
+
       {/* Integrated Chat Panel */}
       <div className={`
-        fixed inset-y-0 right-0 w-full md:w-[400px] bg-slate-50 dark:bg-[#151515] border-l border-slate-200 dark:border-[#222] z-40 transform transition-transform duration-300 ease-in-out flex flex-col h-[100dvh]
+        fixed inset-y-0 right-0 w-full md:w-[400px] bg-slate-50 dark:bg-[#151515] border-l border-slate-200 dark:border-[#222] z-[9999] transform transition-transform duration-300 ease-in-out flex flex-col h-[100dvh]
         ${isChatOpen ? 'translate-x-0' : 'translate-x-full'}
       `}>
         <div className="p-4 border-b border-slate-200 dark:border-[#222] flex items-center justify-between bg-white dark:bg-[#1A1A1A]">
