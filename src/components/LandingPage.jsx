@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import Footer from '@/components/Footer';
 import FloatingOrbs from './FloatingOrbs';
+import NavbarLanding from './NavbarLanding';
 
 const fadeUp = {
   initial: { opacity: 0, y: 16 },
@@ -159,6 +160,9 @@ export default function LandingPage() {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto custom-scrollbar bg-transparent text-slate-900 dark:text-gray-200">
+
+      <NavbarLanding />
+
       {/* Hero */}
       <section className="relative flex-none pt-20 md:pt-32 pb-20 md:pb-28 px-6 overflow-hidden">
         {/* Animated Gradient Background with Floating Orbs */}
