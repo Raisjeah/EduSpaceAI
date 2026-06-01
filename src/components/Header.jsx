@@ -54,16 +54,7 @@ export default function Header() {
 
       {/* Left — Logo / Hamburger */}
       <div className="flex items-center min-w-0">
-        {!userId ? (
-          <Link href="/" className="flex items-center gap-2 pointer-events-auto">
-            <div className="w-8 h-8 flex items-center justify-center">
-              <img src="/logo.png" alt="EduSpaceAI Logo" className="w-full h-full object-contain invert dark:invert-0" />
-            </div>
-            <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white hidden sm:block">
-              EduSpaceAI
-            </span>
-          </Link>
-        ) : (
+        {userId && (
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="w-10 h-10 flex items-center justify-center rounded-full text-slate-700 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all pointer-events-auto"
@@ -75,16 +66,6 @@ export default function Header() {
 
       {/* Right — Actions */}
       <div className="flex items-center gap-1.5 flex-none">
-        {!userId && (
-          <Link
-            href="/auth/login"
-            className="group inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-sm font-medium transition-all pointer-events-auto"
-          >
-            Masuk
-            <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-        )}
-
         {userId && !isDashboardPage && (
           <>
             <Link
