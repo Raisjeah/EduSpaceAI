@@ -19,6 +19,7 @@ const ProjectSchema = new mongoose.Schema({
     default: 'default',
     enum: ALLOWED_AGENTS,
   },
+  manualSelection: { type: Boolean, default: false },
   isArchived: { type: Boolean, default: false },
   archivedAt: { type: Date },
   createdAt: { type: Date, default: Date.now },

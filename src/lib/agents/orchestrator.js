@@ -28,10 +28,6 @@ const AGENT_TASKS = {
 };
 
 const COMPLEXITY_MARKERS = [
-  'dan',
-  'lalu',
-  'kemudian',
-  'sekaligus',
   'lengkap',
   'mendalam',
   'bandingkan',
@@ -63,9 +59,17 @@ export default class OrchestratorAgent {
     this.agents.set(agent.id, agent);
   }
 
-  analyzeTask(prompt, requestedAgentId = 'default') {
+  analyzeTask(prompt, requestedAgentId = 'default', manualSelection = false) {
     const normalizedPrompt = prompt.toLowerCase();
     const selectedAgents = new Set();
+
+    if (manualSelection && requestedAgentId && requestedAgentId !== 'default') {
+      return {
+        isComplex: false,
+        agents: [requestedAgentId],
+        reason: 'Agent dipilih secara manual oleh pengguna.',
+      };
+    }
 
     if (requestedAgentId && requestedAgentId !== 'default') {
       selectedAgents.add(requestedAgentId);
@@ -103,7 +107,8 @@ export default class OrchestratorAgent {
   }
 
   async execute(prompt, context = {}) {
-    const analysis = this.analyzeTask(prompt, context.agentId);
+    const { manualSelection = false } = context;
+    const analysis = this.analyzeTask(prompt, context.agentId, manualSelection);
 
     if (!analysis.isComplex || analysis.agents.length <= 1) {
       const agentId = analysis.agents[0] || context.agentId || 'default';
@@ -142,6 +147,7 @@ export default class OrchestratorAgent {
         agentName: this.agents.get(agentId)?.name || agentId,
         task: AGENT_TASKS[agentId],
         output: `Agent ini gagal menyelesaikan subtugas: ${result.reason?.message || result.reason}`,
+        error: true,
       };
     });
 
@@ -164,7 +170,9 @@ export default class OrchestratorAgent {
   }
 
   async synthesizeResults(prompt, results, context = {}, analysis = {}) {
-    const collaborationContext = summarizeAgentResults(results);
+    const failedAgents = results.filter((result) => result.error || result.output?.toLowerCase().includes('gagal'));
+    const successfulResults = results.filter((result) => !result.error && !result.output?.toLowerCase().includes('gagal'));
+    const collaborationContext = summarizeAgentResults(successfulResults);
     const synthesisPrompt = `
 Kamu adalah Orchestrator EduSpaceAI yang menggabungkan hasil kerja multi-agent menjadi satu jawaban final untuk mahasiswa Indonesia.
 
@@ -173,16 +181,22 @@ ${prompt}
 
 ANALISIS WORKFLOW:
 ${analysis.reason || '-'}
-Agent terlibat: ${results.map((result) => result.agentName).join(', ')}
+Agent terlibat: ${successfulResults.map((result) => result.agentName).join(', ') || 'EduSpaceAI'}
 
+${failedAgents.length > 0 ? `
+CATATAN INTERNAL: Agent berikut gagal dieksekusi dan hasilnya diabaikan:
+${failedAgents.map((result) => `- ${result.agentName}`).join('\n')}
+Gunakan hanya hasil dari agent yang berhasil.
+` : ''}
 HASIL MASING-MASING AGENT:
-${collaborationContext}
+${collaborationContext || 'Tidak ada hasil agent yang berhasil. Berikan jawaban fallback yang aman dan minta pengguna mencoba lagi bila perlu.'}
 
 TUGAS SINTESIS:
-- Gabungkan hasil agent menjadi jawaban final yang koheren, tidak repetitif, dan mudah diikuti.
+- Gabungkan hasil agent yang berhasil menjadi jawaban final yang koheren, tidak repetitif, dan mudah diikuti.
 - Jika ada diagram Mermaid dari Visualizer, pertahankan blok diagramnya.
 - Jika ada sumber/sitasi dari Deep Search atau Citation, pertahankan daftar sumbernya.
-- Tandai bagian hasil kolaborasi dengan ringkas, tanpa membocorkan prompt internal.
+- Jangan menyertakan error message atau informasi tentang agent yang gagal.
+- Jangan menyebutkan bahwa ada agent yang gagal.
 - Gunakan Bahasa Indonesia yang santai, suportif, dan akademik.
     `.trim();
 

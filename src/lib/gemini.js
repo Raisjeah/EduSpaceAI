@@ -13,6 +13,24 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+let orchestratorInstance = null;
+let activeModelRunner = null;
+let activeDefaultAgent = null;
+
+function getOrchestrator(modelRunner, defaultAgent) {
+  activeModelRunner = modelRunner;
+  activeDefaultAgent = defaultAgent;
+
+  if (!orchestratorInstance) {
+    orchestratorInstance = new OrchestratorAgent({
+      modelRunner: (...args) => activeModelRunner(...args),
+      defaultAgent: (...args) => activeDefaultAgent(...args),
+    });
+  }
+
+  return orchestratorInstance;
+}
+
 // Whitelist of model IDs the app supports. Anything else is rejected at the
 // edge instead of being silently downgraded.
 const GEMINI_MODELS = new Set([
@@ -137,14 +155,14 @@ export async function getGeminiResponse(
       );
     };
 
-    const orchestrator = new OrchestratorAgent({
+    const orchestrator = getOrchestrator(
       modelRunner,
-      defaultAgent: (defaultPrompt, context = {}) => modelRunner(defaultPrompt, {
+      (defaultPrompt, context = {}) => modelRunner(defaultPrompt, {
         ...context,
         agentId: normalizedAgentId,
         instruction: config.instruction,
-      }),
-    });
+      })
+    );
 
     return await orchestrator.execute(prompt, {
       ...requestContext,
@@ -152,6 +170,7 @@ export async function getGeminiResponse(
       fileParts,
       agentId: normalizedAgentId,
       modelName: sdkModel,
+      manualSelection: requestContext.manualSelection || false,
     });
   } catch (error) {
     console.error("AI SDK Error:", error);

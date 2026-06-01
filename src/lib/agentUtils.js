@@ -32,6 +32,16 @@ export const AGENT_DISPLAY_CONFIGS = {
   },
 };
 
+
+export const AGENT_LIST = [
+  { id: 'default', name: 'EduSpaceAI', desc: 'Dosen Umum' },
+  { id: 'researcher', name: 'Profesor Riset', desc: 'Metodologi & riset' },
+  { id: 'deep-search', name: 'Deep Search', desc: 'Riset web real-time' },
+  { id: 'editor', name: 'Editor Akademik', desc: 'Koreksi & PUEBI' },
+  { id: 'citation', name: 'Citation Generator', desc: 'Sitasi & daftar pustaka' },
+  { id: 'visualizer', name: 'Visual Mapper', desc: 'Diagram & workflow' },
+];
+
 export function getAgentIcon(agentId, size = 18, className = '') {
   const iconProps = { size, className };
   const icons = {

@@ -1,18 +1,19 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { X, Rocket, Search, BookOpen, Edit3 } from 'lucide-react';
+import { X, Rocket, Search, BookOpen, Edit3, Workflow } from 'lucide-react';
 import { createProject } from '@/app/actions/projectActions';
 import { useRouter } from 'next/navigation';
 
 export default function ProjectModal({ isOpen, onClose, userId }) {
   const [name, setName] = useState('');
-  const [agentId, setAgentId] = useState('default');
+  const [agentId, setAgentId] = useState('auto');
   const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   const agents = [
+    { id: 'auto', name: 'Auto-detect', desc: 'Pilih agent otomatis', icon: <Workflow size={18} /> },
     { id: 'default', name: 'EduSpaceAI', desc: 'Dosen Umum', icon: <Rocket size={18} /> },
     { id: 'deep-search', name: 'Deep Search', desc: 'Ahli Real-time Search', icon: <Search size={18} /> },
     { id: 'researcher', name: 'Profesor Riset', desc: 'Ahli Metodologi', icon: <BookOpen size={18} /> },
@@ -24,13 +25,17 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
     if (!name.trim()) return;
 
     setIsLoading(true);
-    const result = await createProject(name, agentId);
+    const isAutoDetect = agentId === 'auto';
+    const finalAgentId = isAutoDetect ? 'default' : agentId;
+    const result = await createProject(name, finalAgentId, {
+      manualSelection: !isAutoDetect,
+    });
 
     if (result.success) {
       startTransition(() => {
         onClose();
         setName('');
-        setAgentId('default');
+        setAgentId('auto');
         setIsLoading(false);
         router.push(`/project/${result.project._id}`);
       });

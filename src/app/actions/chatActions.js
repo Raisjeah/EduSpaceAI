@@ -1,7 +1,7 @@
 'use server';
 import dbConnect from '@/lib/mongodb';
 import Chat from '@/models/Chat';
-import Project from '@/models/Project';
+import Project, { ALLOWED_AGENTS } from '@/models/Project';
 import UserMemory from '@/models/UserMemory';
 import { getGeminiResponse } from '@/lib/gemini';
 import { extractFileContent } from './fileActions';
@@ -48,6 +48,8 @@ export async function sendMessage(formData) {
   const projectId = formData.get('projectId');
   const chatId = formData.get('chatId') || `chat_${Date.now()}`;
   const requestedModel = formData.get('modelId');
+  const requestedAgentId = formData.get('agentId');
+  const manualSelection = formData.get('manualSelection') === 'true';
 
   if (!prompt && !file) return { error: "Prompt kosong!" };
 
@@ -72,7 +74,11 @@ export async function sendMessage(formData) {
     }
 
     let fileParts = [];
-    let agentId = project?.agentId || 'default';
+    const allowedAgentIds = new Set(ALLOWED_AGENTS);
+    const safeRequestedAgentId = allowedAgentIds.has(requestedAgentId) ? requestedAgentId : null;
+    let agentId = safeRequestedAgentId || project?.agentId || 'default';
+    const isManualAgentSelection = manualSelection || Boolean(project?.manualSelection && agentId === project.agentId);
+
 
     // B. & C. Feature Access & Memory check in parallel
     const [hasMemoryAccess, hasImageAccess, hasFileAccess] = await Promise.all([
@@ -169,6 +175,7 @@ export async function sendMessage(formData) {
       userId,
       chatId,
       projectId,
+      manualSelection: isManualAgentSelection,
     });
 
     await saveChat('model', aiResponse, chatId, projectId);

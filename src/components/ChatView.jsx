@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useTransition } from 'react';
+import { Suspense, useState, useEffect, useRef, useTransition } from 'react';
 import { useChat } from '@/context/ChatContext';
 import { useLayout } from '@/context/LayoutContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,9 +11,11 @@ import { getProjectDetails } from '@/app/actions/projectActions';
 import AiMessage from './AiMessage';
 import ThinkingIndicator from './ThinkingIndicator';
 import ModelSelector from './ModelSelector';
+import AgentSelector from './AgentSelector';
 import FloatingOrbs from './FloatingOrbs';
 import useAuth from '@/hooks/useAuth';
 import UpgradeModal from './UpgradeModal';
+import LoadingScreen from './LoadingScreen';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -26,7 +28,7 @@ const SUGGESTED_PROMPTS = [
 ];
 // ── END PERUBAHAN 1 ──
 
-export default function ChatView({ userId, activeChatId, projectId }) {
+function ChatViewContent({ userId, activeChatId, projectId }) {
   const { user } = useAuth();
   const { isSidebarOpen } = useLayout();
   const [greeting, setGreeting] = useState('');
@@ -65,9 +67,18 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const setMessages = (msgs) => setChatMessages(currentId, msgs);
   const setIsThinking = (val) => setChatStatus(currentId, { isThinking: val });
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const isAnalyzing = searchParams.get('analyze') === 'true';
+  const requestedAgentId = searchParams.get('agent');
+  const requestedPrompt = searchParams.get('prompt');
+
   const [input, setInput] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [project, setProject] = useState(null);
+  const [currentAgentId, setCurrentAgentId] = useState(requestedAgentId || 'default');
+  const [isManualAgentSelection, setIsManualAgentSelection] = useState(Boolean(requestedAgentId && requestedAgentId !== 'default'));
+  const [hasUserSelectedAgent, setHasUserSelectedAgent] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
@@ -77,9 +88,6 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const [upgradeModal, setUpgradeModal] = useState({ isOpen: false, feature: '' });
   const [isLoadingChat, setIsLoadingChat] = useState(false);
   const chatEndRef = useRef(null);
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const isAnalyzing = searchParams.get('analyze') === 'true';
 
   useEffect(() => {
     if (projectId) {
@@ -88,6 +96,37 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       setProject(null);
     }
   }, [projectId]);
+
+  useEffect(() => {
+    if (hasUserSelectedAgent) return;
+
+    if (requestedAgentId) {
+      setCurrentAgentId(requestedAgentId);
+      setIsManualAgentSelection(requestedAgentId !== 'default');
+      return;
+    }
+
+    if (project?.agentId) {
+      setCurrentAgentId(project.agentId);
+      setIsManualAgentSelection(Boolean(project.manualSelection && project.agentId !== 'default'));
+      return;
+    }
+
+    setCurrentAgentId('default');
+    setIsManualAgentSelection(false);
+  }, [hasUserSelectedAgent, project?.agentId, project?.manualSelection, requestedAgentId]);
+
+  useEffect(() => {
+    if (!activeChatId && requestedPrompt && !input) {
+      setInput(requestedPrompt);
+    }
+  }, [activeChatId, input, requestedPrompt]);
+
+  const handleAgentSelect = (agentId) => {
+    setCurrentAgentId(agentId);
+    setIsManualAgentSelection(agentId !== 'default');
+    setHasUserSelectedAgent(true);
+  };
 
   useEffect(() => {
     const savedModel = localStorage.getItem('eduspace_preferred_model');
@@ -106,7 +145,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   };
 
   useEffect(() => {
-    if (isPending && project?.agentId === 'deep-search') {
+    if (isPending && currentAgentId === 'deep-search') {
       const traces = [
         '🔍 Menganalisis pertanyaan...',
         '📋 Membuat rencana riset...',
@@ -129,7 +168,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     } else {
       setThoughtTraces([]);
     }
-  }, [isPending, project]);
+  }, [isPending, currentAgentId]);
 
   useEffect(() => {
     if (activeChatId && userId) {
@@ -186,7 +225,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     const lowerInput = textToSend.toLowerCase();
     if (/bab|skripsi|materi|kuliah|akademik|tugas/.test(lowerInput)) {
       selectedPreset = presets.academic;
-    } else if (/cari|search|website|link|googling|internet/.test(lowerInput) || project?.agentId === 'deep-search') {
+    } else if (/cari|search|website|link|googling|internet/.test(lowerInput) || currentAgentId === 'deep-search') {
       selectedPreset = presets.search;
     } else if (/kode|code|bug|sql|error|function|script|coding/.test(lowerInput)) {
       selectedPreset = presets.coding;
@@ -234,6 +273,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       formData.append('modelId', selectedModel);
       if (currentId !== 'new') formData.append('chatId', currentId);
       if (projectId) formData.append('projectId', projectId);
+      formData.append('agentId', currentAgentId);
+      formData.append('manualSelection', String(isManualAgentSelection));
       if (isAutoTrigger) formData.append('skipSave', 'true');
       if (fileToUpload) formData.append('file', fileToUpload);
 
@@ -245,9 +286,13 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           migrateNewChatToId(result.chatId);
           setInternalId(result.chatId);
 
-          const targetUrl = projectId
-            ? `/chat/${result.chatId}?projectId=${projectId}`
-            : `/chat/${result.chatId}`;
+          const targetParams = new URLSearchParams();
+          if (projectId) targetParams.set('projectId', projectId);
+          if (isManualAgentSelection && currentAgentId !== 'default') {
+            targetParams.set('agent', currentAgentId);
+          }
+          const targetQuery = targetParams.toString();
+          const targetUrl = `/chat/${result.chatId}${targetQuery ? `?${targetQuery}` : ''}`;
 
           router.replace(targetUrl, { scroll: false });
         }
@@ -313,7 +358,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     }
   };
 
-  const agentTheme = project ? getAgentTheme(project.agentId) : getAgentTheme('default');
+  const agentTheme = getAgentTheme(currentAgentId);
 
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
   const [isFooterScrolled, setIsFooterScrolled] = useState(false);
@@ -416,7 +461,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
               </h1>
               <p className="text-slate-500 dark:text-gray-500 text-sm max-w-xs font-medium">
                 {project
-                  ? `Menggunakan agen ${getAgentName(project.agentId)}`
+                  ? `Menggunakan agen ${getAgentName(currentAgentId)}`
                   : greeting}
               </p>
             </div>
@@ -520,6 +565,9 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                 onSelect={handleModelChange}
               />
             }
+            currentAgentId={currentAgentId}
+            onAgentSelect={handleAgentSelect}
+            projectId={projectId}
           />
         </div>
       </div>
@@ -544,8 +592,7 @@ function SuggestionChip({ label, icon, onClick, isLink, theme }) {
   );
 }
 
-function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile, isNewChat, modelSelector }) {
-  const { setIsProjectModalOpen } = useLayout();
+function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile, isNewChat, modelSelector, currentAgentId, onAgentSelect, projectId }) {
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [showNudge, setShowNudge] = useState(false);
   const fileInputRef = useRef(null);
@@ -711,12 +758,11 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           <div className="flex items-center gap-1.5 px-2 mb-0.5">
             <Link href="/tools" className="text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-indigo-500 transition-colors tracking-widest uppercase">TOOLS</Link>
             <div className="w-[1px] h-2.5 bg-slate-200 dark:bg-white/10" />
-            <button
-              onClick={() => setIsProjectModalOpen(true)}
-              className="text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-indigo-500 transition-colors tracking-widest uppercase"
-            >
-              AGENT
-            </button>
+            <AgentSelector
+              currentAgent={currentAgentId}
+              onSelect={onAgentSelect}
+              projectId={projectId}
+            />
           </div>
           <div className="flex items-center gap-1">
             {modelSelector}
@@ -744,5 +790,14 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
         </div>
       </div>
     </div>
+  );
+}
+
+
+export default function ChatView(props) {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <ChatViewContent {...props} />
+    </Suspense>
   );
 }

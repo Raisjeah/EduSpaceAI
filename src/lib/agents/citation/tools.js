@@ -3,9 +3,12 @@ export const citationKeywords = [
   'citation',
   'daftar pustaka',
   'apa style',
+  'apa',
   'mla',
   'chicago',
   'ieee',
   'doi',
   'referensi',
+  'format sitasi',
+  'bibliografi',
 ];
