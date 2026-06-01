@@ -338,6 +338,15 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     };
   }, [messages]);
 
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-white dark:bg-[#0F0F0F] overflow-hidden transition-colors duration-200">
       <UpgradeModal
@@ -490,8 +499,20 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           isSidebarOpen ? 'left-0 md:left-[280px]' : 'left-0'
         } bg-transparent pointer-events-none`}>
         <div className="max-w-4xl mx-auto flex flex-col gap-3 pointer-events-auto">
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-2">
             <AnimatePresence>
+              {isFooterScrolled && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.5, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.5, y: 10 }}
+                  onClick={scrollToBottom}
+                  className="flex items-center justify-center w-9 h-9 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-slate-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-lg pointer-events-auto"
+                  aria-label="Scroll ke bawah"
+                >
+                  <ChevronDown size={18} />
+                </motion.button>
+              )}
               {isTyping && (
                 <motion.button
                   initial={{ opacity: 0, y: 10 }}
