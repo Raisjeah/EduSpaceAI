@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3, Mic, Trash2, LayoutDashboard, FolderKanban } from 'lucide-react';
+import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3, Mic, Trash2, LayoutDashboard, FolderKanban, Workflow } from 'lucide-react';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useLayout } from '@/context/LayoutContext';
 import { getChatHistory, deleteChatHistory } from '@/app/actions/chatActions';
@@ -263,6 +263,14 @@ export default function Sidebar({
             >
               <FolderKanban size={18} />
               <span>Workspace</span>
+            </Link>
+            <Link
+              href="/agents"
+              onClick={closeSidebar}
+              className={`flex items-center gap-3 w-full px-3 py-2 text-[13px] font-medium transition-all rounded-xl ${pathname === '/agents' ? 'bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/5'}`}
+            >
+              <Workflow size={18} />
+              <span>Agent Hub</span>
             </Link>
           </div>
 

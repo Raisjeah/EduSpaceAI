@@ -44,7 +44,7 @@ function resolveModel(modelName) {
   return { provider: 'gemini', sdkModel: DEFAULT_GEMINI_MODEL };
 }
 
-const AGENT_CONFIGS = {
+export const AGENT_CONFIGS = {
   default: {
     name: "EduSpaceAI",
     instruction: `Nama kamu adalah EduSpaceAI, seorang Dosen Pribadi yang cerdas, suportif, dan ramah.

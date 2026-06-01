@@ -77,9 +77,6 @@ export default class OrchestratorAgent {
       }
     });
 
-    if (selectedAgents.has('deep-search')) {
-      selectedAgents.add('citation');
-    }
 
     const markerCount = COMPLEXITY_MARKERS.filter((marker) => normalizedPrompt.includes(marker)).length;
     const isLongPrompt = normalizedPrompt.split(/\s+/).length > 28;
