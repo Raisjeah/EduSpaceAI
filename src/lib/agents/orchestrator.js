@@ -122,7 +122,7 @@ export default class OrchestratorAgent {
       agents: analysis.agents,
       reason: analysis.reason,
       startedAt: new Date().toISOString(),
-    });
+    }, context);
 
     const settledResults = await Promise.allSettled(
       analysis.agents.map((agentId) => {
@@ -148,7 +148,11 @@ export default class OrchestratorAgent {
       };
     });
 
-    updateSharedMemory('lastWorkflowResults', results.map(({ agentId, agentName, task }) => ({ agentId, agentName, task })));
+    updateSharedMemory(
+      'lastWorkflowResults',
+      results.map(({ agentId, agentName, task }) => ({ agentId, agentName, task })),
+      context
+    );
 
     return this.synthesizeResults(prompt, results, context, analysis);
   }

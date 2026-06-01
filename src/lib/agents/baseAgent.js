@@ -16,8 +16,8 @@ export default class BaseAgent {
   async execute(task, context = {}) {
     const prompt = this.buildPrompt(task, context);
     const output = await this.runModel(prompt, context);
-    this.updateMemory('lastTask', task);
-    this.updateMemory('lastOutput', output);
+    this.updateMemory('lastTask', task, context);
+    this.updateMemory('lastOutput', output, context);
 
     return {
       agentId: this.id,
@@ -38,16 +38,16 @@ export default class BaseAgent {
     });
   }
 
-  updateMemory(key, value) {
-    return updateAgentMemory(this.id, key, value);
+  updateMemory(key, value, context = {}) {
+    return updateAgentMemory(this.id, key, value, context);
   }
 
-  getMemory(key) {
-    return getAgentMemory(this.id, key);
+  getMemory(key, context = {}) {
+    return getAgentMemory(this.id, key, context);
   }
 
   buildPrompt(task, context = {}) {
-    const memory = snapshotMemory(this.id);
+    const memory = snapshotMemory(this.id, context);
     return `
 ${this.instruction}
 

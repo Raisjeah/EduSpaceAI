@@ -165,7 +165,11 @@ export async function sendMessage(formData) {
     }
 
     // F. Get AI Response
-    const aiResponse = await getGeminiResponse(prompt, historyForGemini, fileParts, agentId, modelName);
+    const aiResponse = await getGeminiResponse(prompt, historyForGemini, fileParts, agentId, modelName, {
+      userId,
+      chatId,
+      projectId,
+    });
 
     await saveChat('model', aiResponse, chatId, projectId);
 

@@ -99,7 +99,14 @@ const IMAGE_GEN_MODELS = new Set([
   'gemini-2.5-flash-image',
 ]);
 
-export async function getGeminiResponse(prompt, history = [], fileParts = [], agentId = 'default', modelName = DEFAULT_GEMINI_MODEL) {
+export async function getGeminiResponse(
+  prompt,
+  history = [],
+  fileParts = [],
+  agentId = 'default',
+  modelName = DEFAULT_GEMINI_MODEL,
+  requestContext = {}
+) {
   const { provider, sdkModel } = resolveModel(modelName);
   const normalizedAgentId = agentId === 'profesor' ? 'researcher' : agentId === 'visual' ? 'visualizer' : agentId;
   const config = AGENT_CONFIGS[normalizedAgentId] || AGENT_CONFIGS.default;
@@ -140,6 +147,7 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
     });
 
     return await orchestrator.execute(prompt, {
+      ...requestContext,
       history,
       fileParts,
       agentId: normalizedAgentId,
