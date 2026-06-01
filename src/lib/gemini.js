@@ -1,6 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
 import Anthropic from "@anthropic-ai/sdk";
-import { deepSearchEngine } from "./deepSearchEngine";
+import OrchestratorAgent from "./agents/orchestrator";
+import { deepSearchEngine } from "./agents/deepSearch/workflow";
+import { researcherInstruction } from "./agents/researcher";
+import { editorInstruction } from "./agents/editor";
+import { deepSearchInstruction } from "./agents/deepSearch";
+import { visualizerInstruction } from "./agents/visualizer";
+import { citationInstruction } from "./agents/citation";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const anthropic = new Anthropic({
@@ -54,30 +60,15 @@ const AGENT_CONFIGS = {
   },
   researcher: {
     name: "Profesor Riset",
-    instruction: `Kamu adalah Profesor Riset di EduSpaceAI. Ahli dalam metodologi penelitian, analisis data, dan penulisan ilmiah.
-    Tugasmu:
-    - Membantu menyusun kerangka penelitian (Bab 1-5).
-    - Menjelaskan metode penelitian (kualitatif/kuantitatif) dengan mendalam.
-    - Memberikan saran kritis terhadap argumen penelitian.
-    - Tetap suportif dan membimbing.`
+    instruction: researcherInstruction
   },
   editor: {
     name: "Editor Akademik",
-    instruction: `Kamu adalah Editor Akademik di EduSpaceAI. Ahli dalam tata bahasa Indonesia (PUEBI), struktur kalimat, dan format sitasi.
-    Tugasmu:
-    - Mengoreksi kesalahan ketik atau logika kalimat.
-    - Memberikan saran kata baku yang lebih tepat.
-    - Membantu format sitasi (APA, MLA, dll).
-    - Fokus pada kejelasan dan profesionalisme tulisan.`
+    instruction: editorInstruction
   },
   "deep-search": {
     name: "Deep Search Agent",
-    instruction: `Kamu adalah Deep Search Agent di EduSpaceAI. Kamu memiliki kemampuan untuk mencari informasi terbaru secara real-time.
-    Tugasmu:
-    - Memberikan informasi paling update mengenai topik yang ditanyakan.
-    - Menyertakan sumber atau referensi jika memungkinkan.
-    - Menganalisis tren terbaru dalam dunia akademik dan teknologi.
-    - Gunakan alat pencarian jika tersedia untuk memastikan akurasi data terbaru.`,
+    instruction: deepSearchInstruction,
     tools: [
       {
         googleSearch: {},
@@ -86,22 +77,11 @@ const AGENT_CONFIGS = {
   },
   visualizer: {
     name: "Visual Concept Mapper",
-    instruction: `Kamu adalah Visual Concept Mapper di EduSpaceAI. Ahli dalam menyederhanakan konsep kompleks menjadi diagram visual.
-    Tugasmu:
-    - Menganalisis teks atau konsep yang diberikan dan membuat representasi visualnya.
-    - WAJIB menggunakan MERMAID SYNTAX untuk membuat diagram.
-    - Gunakan code block dengan bahasa 'mermaid' (contoh: \`\`\`mermaid ... \`\`\`).
-    - Pilih tipe diagram yang paling sesuai: graph TD (flowchart), sequenceDiagram, classDiagram, stateDiagram, erDiagram, atau gantt.
-    - Berikan penjelasan singkat di bawah diagram mengenai poin-poin pentingnya.`
+    instruction: visualizerInstruction
   },
   citation: {
     name: "Citation Generator",
-    instruction: `Kamu adalah Citation Generator di EduSpaceAI. Ahli dalam berbagai format sitasi akademik (APA, MLA, Chicago, IEEE, dll).
-    Tugasmu:
-    - Mengonversi informasi sumber (URL, DOI, atau data mentah) menjadi sitasi yang akurat.
-    - Membantu membuat daftar pustaka yang rapi.
-    - Memberikan penjelasan singkat tentang aturan sitasi jika diminta.
-    - Pastikan mengikuti pedoman terbaru dari masing-masing gaya sitasi.`
+    instruction: citationInstruction
   },
   "image-generator": {
     name: "Nano Banana (Image Gen)",
@@ -119,54 +99,60 @@ const IMAGE_GEN_MODELS = new Set([
   'gemini-2.5-flash-image',
 ]);
 
-export async function getGeminiResponse(prompt, history = [], fileParts = [], agentId = 'default', modelName = DEFAULT_GEMINI_MODEL) {
-  const config = AGENT_CONFIGS[agentId] || AGENT_CONFIGS.default;
+export async function getGeminiResponse(
+  prompt,
+  history = [],
+  fileParts = [],
+  agentId = 'default',
+  modelName = DEFAULT_GEMINI_MODEL,
+  requestContext = {}
+) {
   const { provider, sdkModel } = resolveModel(modelName);
+  const normalizedAgentId = agentId === 'profesor' ? 'researcher' : agentId === 'visual' ? 'visualizer' : agentId;
+  const config = AGENT_CONFIGS[normalizedAgentId] || AGENT_CONFIGS.default;
 
   try {
-    // 1. Deep Search Special Handling
-    if (agentId === 'deep-search') {
-      return await deepSearchEngine(prompt, history, fileParts, sdkModel);
+    // Keep image generation single-agent so binary response handling remains unchanged.
+    if (normalizedAgentId === 'image-generator' || IMAGE_GEN_MODELS.has(sdkModel)) {
+      return generateDirectResponse(prompt, history, fileParts, config, provider, sdkModel);
     }
 
-    if (provider === 'claude') {
-      return getClaudeResponse(prompt, history, fileParts, config.instruction, sdkModel);
-    }
+    const modelRunner = (agentPrompt, context = {}) => {
+      const baseConfig = AGENT_CONFIGS[context.agentId] || {
+        name: context.agentId || config.name,
+        instruction: config.instruction,
+      };
+      const agentConfig = {
+        ...baseConfig,
+        instruction: context.instruction || baseConfig.instruction,
+      };
 
-    // Gemini Models
-    const chat = ai.chats.create({
-      model: sdkModel,
-      config: {
-        systemInstruction: config.instruction,
-        tools: config.tools || [],
-        maxOutputTokens: 4096,
-        temperature: 0.7,
-        // Aktifkan response image untuk model yang mendukung
-        ...(IMAGE_GEN_MODELS.has(sdkModel) && {
-          responseModalities: ['TEXT', 'IMAGE'],
-        }),
-      },
-      history: history,
+      return generateDirectResponse(
+        agentPrompt,
+        context.history || history,
+        context.fileParts || fileParts,
+        agentConfig,
+        provider,
+        context.modelName || sdkModel
+      );
+    };
+
+    const orchestrator = new OrchestratorAgent({
+      modelRunner,
+      defaultAgent: (defaultPrompt, context = {}) => modelRunner(defaultPrompt, {
+        ...context,
+        agentId: normalizedAgentId,
+        instruction: config.instruction,
+      }),
     });
 
-    const response = await chat.sendMessage({ message: [prompt, ...fileParts] });
-
-    // Image-generation model output (base64 inline data).
-    if (IMAGE_GEN_MODELS.has(sdkModel)) {
-      const candidates = response.candidates;
-      if (candidates && candidates[0]?.content?.parts) {
-        const imagePart = candidates[0].content.parts.find((p) => p.inlineData);
-        if (imagePart) {
-          return JSON.stringify({
-            type: "image",
-            mimeType: imagePart.inlineData.mimeType,
-            base64Data: imagePart.inlineData.data,
-          });
-        }
-      }
-    }
-
-    return response.text;
+    return await orchestrator.execute(prompt, {
+      ...requestContext,
+      history,
+      fileParts,
+      agentId: normalizedAgentId,
+      modelName: sdkModel,
+    });
   } catch (error) {
     console.error("AI SDK Error:", error);
     if (typeof error?.message === 'string' && error.message.toLowerCase().includes('quota')) {
@@ -174,6 +160,48 @@ export async function getGeminiResponse(prompt, history = [], fileParts = [], ag
     }
     return "⚠️ Terjadi kesalahan pada koneksi Dosen AI. Silakan coba lagi.";
   }
+}
+
+async function generateDirectResponse(prompt, history, fileParts, config, provider, sdkModel) {
+  if (config.name === 'Deep Search Agent') {
+    return deepSearchEngine(prompt, history, fileParts, sdkModel);
+  }
+
+  if (provider === 'claude') {
+    return getClaudeResponse(prompt, history, fileParts, config.instruction, sdkModel);
+  }
+
+  const chat = ai.chats.create({
+    model: sdkModel,
+    config: {
+      systemInstruction: config.instruction,
+      tools: config.tools || [],
+      maxOutputTokens: 4096,
+      temperature: 0.7,
+      ...(IMAGE_GEN_MODELS.has(sdkModel) && {
+        responseModalities: ['TEXT', 'IMAGE'],
+      }),
+    },
+    history: history,
+  });
+
+  const response = await chat.sendMessage({ message: [prompt, ...fileParts] });
+
+  if (IMAGE_GEN_MODELS.has(sdkModel)) {
+    const candidates = response.candidates;
+    if (candidates && candidates[0]?.content?.parts) {
+      const imagePart = candidates[0].content.parts.find((part) => part.inlineData);
+      if (imagePart) {
+        return JSON.stringify({
+          type: "image",
+          mimeType: imagePart.inlineData.mimeType,
+          base64Data: imagePart.inlineData.data,
+        });
+      }
+    }
+  }
+
+  return response.text;
 }
 
 async function getClaudeResponse(prompt, history, fileParts, systemInstruction, modelName = DEFAULT_CLAUDE_MODEL) {

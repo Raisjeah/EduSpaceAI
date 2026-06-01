@@ -30,6 +30,10 @@ export default function Header() {
 
   const isDashboardPage = pathname.startsWith('/project') || pathname.startsWith('/tools');
 
+  if (!userId && pathname === '/') {
+    return null;
+  }
+
   return (
     // Header selalu transparan — hanya garis bawah tipis saat scroll
     <header className={`
