@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import Footer from '@/components/Footer';
 import FloatingOrbs from './FloatingOrbs';
+import NavbarLanding from '@/components/NavbarLanding';
 
 const fadeUp = {
   initial: { opacity: 0, y: 16 },
@@ -159,8 +160,9 @@ export default function LandingPage() {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto custom-scrollbar bg-transparent text-slate-900 dark:text-gray-200">
+      <NavbarLanding />
       {/* Hero */}
-      <section className="relative flex-none pt-20 md:pt-32 pb-20 md:pb-28 px-6 overflow-hidden">
+      <section className="relative flex-none pt-24 md:pt-32 pb-20 md:pb-28 px-6 overflow-hidden">
         {/* Animated Gradient Background with Floating Orbs */}
         <div className="hidden md:block">
           <FloatingOrbs />
@@ -280,7 +282,7 @@ export default function LandingPage() {
       </section>
 
       {/* Capabilities */}
-      <section className="relative flex-none py-20 md:py-28 px-6 border-t border-slate-100 dark:border-[#1A1A1A]">
+      <section id="fitur" className="relative flex-none py-20 md:py-28 px-6 border-t border-slate-100 dark:border-[#1A1A1A]">
         <div className="max-w-6xl mx-auto">
           <motion.div {...fadeUp} className="max-w-2xl mb-16">
             <SectionLabel>kemampuan</SectionLabel>
@@ -313,7 +315,7 @@ export default function LandingPage() {
       </section>
 
       {/* Agents */}
-      <section id="features" className="relative flex-none py-20 md:py-28 px-6 border-t border-slate-100 dark:border-[#1A1A1A] bg-slate-50/40 dark:bg-[#0A0A0A]/40">
+      <section id="agen" className="relative flex-none py-20 md:py-28 px-6 border-t border-slate-100 dark:border-[#1A1A1A] bg-slate-50/40 dark:bg-[#0A0A0A]/40">
         <div className="max-w-6xl mx-auto">
           <motion.div {...fadeUp} className="max-w-2xl mb-16">
             <SectionLabel>agen spesialis</SectionLabel>
@@ -360,7 +362,7 @@ export default function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section className="relative flex-none py-20 md:py-28 px-6 border-t border-slate-100 dark:border-[#1A1A1A]">
+      <section id="cara-kerja" className="relative flex-none py-20 md:py-28 px-6 border-t border-slate-100 dark:border-[#1A1A1A]">
         <div className="max-w-6xl mx-auto">
           <motion.div {...fadeUp} className="max-w-2xl mb-16">
             <SectionLabel>cara kerja</SectionLabel>
@@ -393,7 +395,7 @@ export default function LandingPage() {
       </section>
 
       {/* FAQ */}
-      <section className="relative flex-none py-20 md:py-28 px-6 border-t border-slate-100 dark:border-[#1A1A1A] bg-slate-50/40 dark:bg-[#0A0A0A]/40">
+      <section id="faq" className="relative flex-none py-20 md:py-28 px-6 border-t border-slate-100 dark:border-[#1A1A1A] bg-slate-50/40 dark:bg-[#0A0A0A]/40">
         <div className="max-w-3xl mx-auto">
           <motion.div {...fadeUp} className="mb-12">
             <SectionLabel>pertanyaan umum</SectionLabel>
