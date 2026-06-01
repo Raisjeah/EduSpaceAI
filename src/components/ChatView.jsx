@@ -126,6 +126,16 @@ function ChatViewContent({ userId, activeChatId, projectId }) {
     setCurrentAgentId(agentId);
     setIsManualAgentSelection(agentId !== 'default');
     setHasUserSelectedAgent(true);
+
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (agentId === 'default') {
+        url.searchParams.delete('agent');
+      } else {
+        url.searchParams.set('agent', agentId);
+      }
+      window.history.replaceState({}, '', url);
+    }
   };
 
   useEffect(() => {
@@ -145,29 +155,62 @@ function ChatViewContent({ userId, activeChatId, projectId }) {
   };
 
   useEffect(() => {
-    if (isPending && currentAgentId === 'deep-search') {
-      const traces = [
+    if (!isPending) {
+      setThoughtTraces([]);
+      return;
+    }
+
+    const agentTraces = {
+      'deep-search': [
         '🔍 Menganalisis pertanyaan...',
         '📋 Membuat rencana riset...',
         '🌐 Mencari informasi di web...',
         '📄 Membaca konten website...',
         '🧠 Menganalisis sumber data...',
-        '✍️ Menyusun jawaban final...'
-      ];
-      let i = 0;
-      setThoughtTraces([traces[0]]);
-      const interval = setInterval(() => {
-        i++;
-        if (i < traces.length) {
-          setThoughtTraces(prev => [...prev, traces[i]]);
-        } else {
-          clearInterval(interval);
-        }
-      }, 3000);
-      return () => clearInterval(interval);
-    } else {
-      setThoughtTraces([]);
-    }
+        '✍️ Menyusun jawaban final...',
+      ],
+      researcher: [
+        '🎓 Menganalisis konteks akademik...',
+        '📚 Meninjau metodologi...',
+        '🧩 Menyusun argumen...',
+        '✅ Memvalidasi struktur...',
+      ],
+      editor: [
+        '✍️ Membaca teks...',
+        '🔎 Mengoreksi tata bahasa...',
+        '📖 Memeriksa PUEBI...',
+        '✅ Finalisasi editing...',
+      ],
+      visualizer: [
+        '🧭 Memetakan konsep...',
+        '📊 Menyusun alur visual...',
+        '🧩 Membuat struktur diagram...',
+      ],
+      citation: [
+        '🔖 Membaca data sumber...',
+        '📚 Memformat referensi...',
+        '✅ Memvalidasi kelengkapan sitasi...',
+      ],
+      default: [
+        '💭 Berpikir...',
+        '🧠 Memproses informasi...',
+        '✍️ Menyusun jawaban...',
+      ],
+    };
+
+    const traces = agentTraces[currentAgentId] || agentTraces.default;
+    let i = 0;
+    setThoughtTraces([traces[0]]);
+    const interval = setInterval(() => {
+      i++;
+      if (i < traces.length) {
+        setThoughtTraces(prev => [...prev, traces[i]]);
+      } else {
+        clearInterval(interval);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
   }, [isPending, currentAgentId]);
 
   useEffect(() => {
@@ -274,7 +317,7 @@ function ChatViewContent({ userId, activeChatId, projectId }) {
       if (currentId !== 'new') formData.append('chatId', currentId);
       if (projectId) formData.append('projectId', projectId);
       formData.append('agentId', currentAgentId);
-      formData.append('manualSelection', String(isManualAgentSelection));
+      formData.append('isManualSelection', String(isManualAgentSelection));
       if (isAutoTrigger) formData.append('skipSave', 'true');
       if (fileToUpload) formData.append('file', fileToUpload);
 
@@ -392,26 +435,25 @@ function ChatViewContent({ userId, activeChatId, projectId }) {
       />
       {/* Project Header */}
       {project && (
-        <div className={`px-4 md:px-6 py-3 border-b ${agentTheme.border} bg-white/10 dark:bg-black/20 backdrop-blur-xl flex items-center justify-between z-10 flex-none transition-all`}>
+        <div className="px-4 md:px-6 py-3 border-b border-slate-200 dark:border-white/10 bg-white/10 dark:bg-black/20 backdrop-blur-xl flex items-center justify-between z-10 flex-none transition-all">
           <div className="flex items-center gap-2 md:gap-4">
             <Link
               href="/"
-              className={`p-2 rounded-lg hover:bg-white/50 dark:hover:bg-black/20 ${agentTheme.text} transition-all`}
+              className="p-2 rounded-lg hover:bg-white/50 dark:hover:bg-black/20 text-slate-700 dark:text-white transition-all"
               title="Keluar dari Workspace"
             >
               <ArrowLeft size={18} />
             </Link>
             <div className="flex items-center gap-3">
-              <div className={`w-8 h-8 rounded-lg ${agentTheme.bg} border ${agentTheme.border} flex items-center justify-center`}>
-                {getAgentIcon(project.agentId)}
+              <div className="w-8 h-8 rounded-lg bg-indigo-600/10 dark:bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center">
+                <Briefcase size={16} className="text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
                 <h2 className="text-[12px] font-bold text-slate-900 dark:text-white leading-tight">{project.name}</h2>
-                <p className={`text-[10px] ${agentTheme.text} uppercase tracking-widest font-semibold`}>{getAgentName(project.agentId)}</p>
+                <p className="text-[10px] text-slate-500 dark:text-gray-500 uppercase tracking-widest font-semibold">Workspace</p>
               </div>
             </div>
           </div>
-          <div className={`hidden sm:block text-[10px] ${agentTheme.text} ${agentTheme.bg} px-2 py-1 rounded border ${agentTheme.border} font-bold uppercase tracking-wider`}>Workspace Agent</div>
         </div>
       )}
 
@@ -704,7 +746,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
         )}
       </AnimatePresence>
 
-      <div className="relative bg-white dark:bg-[#151515] border border-slate-200 dark:border-white/10 rounded-[24px] p-1.5 flex items-end gap-1 focus-within:border-indigo-500/30 transition-all shadow-2xl pointer-events-auto">
+      <div className="relative bg-white dark:bg-[#151515] border border-slate-200 dark:border-white/10 rounded-[24px] p-1.5 md:p-2 flex items-end gap-1 focus-within:border-indigo-500/30 transition-all shadow-2xl pointer-events-auto">
         <div className="relative">
           <AnimatePresence>
             {showNudge && !isActionSheetOpen && (
@@ -724,13 +766,13 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               setIsActionSheetOpen(!isActionSheetOpen);
               setShowNudge(false);
             }}
-            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
+            className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
               isActionSheetOpen
               ? 'bg-indigo-600 text-white rotate-45'
               : 'text-slate-400 dark:text-gray-500 hover:text-indigo-400'
             } ${showNudge && !isActionSheetOpen ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-[#0F0F0F] animate-pulse' : ''}`}
           >
-            <Plus size={20} />
+            <Plus size={18} className="md:w-5 md:h-5" />
           </button>
         </div>
 
@@ -752,12 +794,12 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           maxRows={8}
           disabled={disabled}
           placeholder="Tanya apa saja ke Dosen AI-mu..."
-          className="flex-1 w-full min-w-0 bg-transparent border-none outline-none py-2.5 px-3 text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
+          className="flex-1 w-full min-w-0 bg-transparent border-none outline-none py-2 md:py-2.5 px-2 md:px-3 text-sm md:text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
         />
-        <div className="flex flex-col items-end gap-2">
-          <div className="flex items-center gap-1.5 px-2 mb-0.5">
-            <Link href="/tools" className="text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-indigo-500 transition-colors tracking-widest uppercase">TOOLS</Link>
-            <div className="w-[1px] h-2.5 bg-slate-200 dark:bg-white/10" />
+        <div className="flex flex-col items-end gap-1.5 md:gap-2">
+          <div className="flex items-center gap-1 md:gap-1.5 px-1.5 md:px-2 mb-0.5">
+            <Link href="/tools" className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-indigo-500 transition-colors tracking-widest uppercase">TOOLS</Link>
+            <div className="w-[1px] h-2 md:h-2.5 bg-slate-200 dark:bg-white/10" />
             <AgentSelector
               currentAgent={currentAgentId}
               onSelect={onAgentSelect}
@@ -768,7 +810,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
             {modelSelector}
             <Link
               href="/chat/live"
-              className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/5 dark:bg-white/5 text-slate-900 dark:text-white hover:scale-105 transition-all shadow-sm border border-slate-200 dark:border-white/10"
+              className="w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center bg-white/5 dark:bg-white/5 text-slate-900 dark:text-white hover:scale-105 transition-all shadow-sm border border-slate-200 dark:border-white/10"
               title="Voice Call (Live)"
             >
               <div className="flex items-center gap-0.5">
@@ -780,11 +822,11 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
             <button
               onClick={(e) => { e.preventDefault(); handleSend(); }}
               disabled={disabled || (!input.trim() && !selectedFile)}
-              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+              className={`w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center transition-all ${
                 (input.trim() || selectedFile) && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40 hover:scale-105' : 'bg-white/5 text-slate-400 dark:text-gray-600'
               }`}
             >
-              <ArrowUp size={16} />
+              <ArrowUp size={14} className="md:w-4 md:h-4" />
             </button>
           </div>
         </div>

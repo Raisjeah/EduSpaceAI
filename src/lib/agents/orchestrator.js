@@ -59,15 +59,15 @@ export default class OrchestratorAgent {
     this.agents.set(agent.id, agent);
   }
 
-  analyzeTask(prompt, requestedAgentId = 'default', manualSelection = false) {
+  analyzeTask(prompt, requestedAgentId = 'default', isManualSelection = false) {
     const normalizedPrompt = prompt.toLowerCase();
     const selectedAgents = new Set();
 
-    if (manualSelection && requestedAgentId && requestedAgentId !== 'default') {
+    if (isManualSelection && requestedAgentId && requestedAgentId !== 'default') {
       return {
         isComplex: false,
         agents: [requestedAgentId],
-        reason: 'Agent dipilih secara manual oleh pengguna.',
+        reason: `Agent dipilih secara manual: ${requestedAgentId}`,
       };
     }
 
@@ -107,8 +107,8 @@ export default class OrchestratorAgent {
   }
 
   async execute(prompt, context = {}) {
-    const { manualSelection = false } = context;
-    const analysis = this.analyzeTask(prompt, context.agentId, manualSelection);
+    const isManualSelection = context.isManualSelection || context.manualSelection || false;
+    const analysis = this.analyzeTask(prompt, context.agentId, isManualSelection);
 
     if (!analysis.isComplex || analysis.agents.length <= 1) {
       const agentId = analysis.agents[0] || context.agentId || 'default';

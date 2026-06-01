@@ -49,7 +49,7 @@ export async function sendMessage(formData) {
   const chatId = formData.get('chatId') || `chat_${Date.now()}`;
   const requestedModel = formData.get('modelId');
   const requestedAgentId = formData.get('agentId');
-  const manualSelection = formData.get('manualSelection') === 'true';
+  const isManualSelection = formData.get('isManualSelection') === 'true' || formData.get('manualSelection') === 'true';
 
   if (!prompt && !file) return { error: "Prompt kosong!" };
 
@@ -77,7 +77,7 @@ export async function sendMessage(formData) {
     const allowedAgentIds = new Set(ALLOWED_AGENTS);
     const safeRequestedAgentId = allowedAgentIds.has(requestedAgentId) ? requestedAgentId : null;
     let agentId = safeRequestedAgentId || project?.agentId || 'default';
-    const isManualAgentSelection = manualSelection || Boolean(project?.manualSelection && agentId === project.agentId);
+    const isManualAgentSelection = isManualSelection || Boolean(project?.manualSelection && agentId === project.agentId);
 
 
     // B. & C. Feature Access & Memory check in parallel
@@ -175,7 +175,7 @@ export async function sendMessage(formData) {
       userId,
       chatId,
       projectId,
-      manualSelection: isManualAgentSelection,
+      isManualSelection: isManualAgentSelection,
     });
 
     await saveChat('model', aiResponse, chatId, projectId);

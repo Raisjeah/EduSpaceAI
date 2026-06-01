@@ -39,12 +39,12 @@ export default function AgentSelector({ currentAgent = 'default', onSelect, proj
       <button
         type="button"
         onClick={() => setIsOpen((value) => !value)}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${theme.softBg} ${theme.text} border ${theme.border} transition-all hover:scale-[1.02]`}
+        className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 rounded-lg ${theme.softBg} ${theme.text} border ${theme.border} transition-all hover:scale-[1.02]`}
         aria-expanded={isOpen}
         aria-haspopup="menu"
       >
         {getAgentIcon(currentAgent, 14)}
-        <span className="text-[10px] font-bold uppercase tracking-wider max-w-[110px] truncate">{currentAgentData.name}</span>
+        <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider max-w-[64px] sm:max-w-[110px] truncate">{currentAgentData.name}</span>
         <ChevronDown size={14} />
       </button>
 

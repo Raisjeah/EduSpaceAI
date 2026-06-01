@@ -23,7 +23,17 @@ function LoginPageInner() {
   const searchParams = useSearchParams();
   const { fetchUser, showNotification } = useAuth();
 
-  const callbackUrl = sanitizeCallbackUrl(searchParams.get('callbackUrl'));
+  const promptParam = searchParams.get('prompt');
+  const agentParam = searchParams.get('agent');
+  const fallbackCallbackUrl = (() => {
+    if (!promptParam && !agentParam) return '/';
+
+    const params = new URLSearchParams();
+    if (agentParam) params.set('agent', agentParam);
+    if (promptParam) params.set('prompt', promptParam);
+    return `/?${params.toString()}`;
+  })();
+  const callbackUrl = sanitizeCallbackUrl(searchParams.get('callbackUrl') || fallbackCallbackUrl);
 
   async function handleSubmit(e) {
     e.preventDefault();

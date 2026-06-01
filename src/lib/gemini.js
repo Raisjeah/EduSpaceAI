@@ -170,7 +170,7 @@ export async function getGeminiResponse(
       fileParts,
       agentId: normalizedAgentId,
       modelName: sdkModel,
-      manualSelection: requestContext.manualSelection || false,
+      isManualSelection: requestContext.isManualSelection || requestContext.manualSelection || false,
     });
   } catch (error) {
     console.error("AI SDK Error:", error);

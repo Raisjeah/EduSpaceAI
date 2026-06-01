@@ -215,25 +215,6 @@ export default function Sidebar({
           {/* Spacer for floating header button area */}
           <div className="h-10 md:hidden" />
 
-          <div className="mb-4 px-1">
-            <p className="text-[9px] font-bold text-slate-400 dark:text-gray-600 uppercase tracking-[0.12em] mb-2 px-1">
-              Agen
-            </p>
-            <Link
-              href="/agents"
-              onClick={closeSidebar}
-              className="block p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.06] hover:border-indigo-500/50 transition-all group"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <Workflow size={14} className="text-indigo-500" />
-                <span className="text-xs font-semibold text-slate-700 dark:text-gray-300">Agent Hub</span>
-              </div>
-              <p className="text-[10px] text-slate-500 dark:text-gray-500 leading-snug">
-                Kelola dan monitor semua agent AI-mu
-              </p>
-            </Link>
-          </div>
-
           {/* Main Navigation */}
           <div className="flex flex-col gap-0.5 mb-4">
             <Link

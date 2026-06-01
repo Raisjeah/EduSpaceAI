@@ -144,21 +144,16 @@ export default function LandingPage() {
 
   const activeModeData = agentModes.find((m) => m.id === activeMode) ?? agentModes[0];
 
-  const buildChatUrl = (q, agentId = activeMode) => {
+  const goToLoginWithPrompt = (q, agentId = activeMode) => {
     const params = new URLSearchParams();
-    params.set('agent', agentId);
-
     const trimmed = (q ?? '').trim();
+
     if (trimmed) {
       params.set('prompt', trimmed);
     }
+    params.set('agent', agentId);
 
-    return `/?${params.toString()}`;
-  };
-
-  const goToLoginWithPrompt = (q, agentId = activeMode) => {
-    const callbackUrl = buildChatUrl(q, agentId);
-    router.push(`/auth/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+    router.push(`/auth/login?${params.toString()}`);
   };
 
   const handleSubmit = (e) => {
