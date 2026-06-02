@@ -71,6 +71,7 @@ export default function Header() {
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="w-10 h-10 flex items-center justify-center rounded-full text-slate-700 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all pointer-events-auto"
+            aria-label={isSidebarOpen ? "Tutup menu samping" : "Buka menu samping"}
           >
             {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
           </button>

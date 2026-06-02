@@ -351,6 +351,7 @@ export default function Sidebar({
                             onClick={(e) => handleDeleteChat(e, chat._id)}
                             className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-500/10 hover:text-red-500 rounded-md transition-all shrink-0"
                             title="Hapus chat"
+                            aria-label="Hapus chat"
                           >
                             <Trash2 size={12} />
                           </button>

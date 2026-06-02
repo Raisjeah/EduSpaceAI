@@ -198,6 +198,7 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
             onClick={() => { setLiked(!liked); if (!liked) setDisliked(false); }}
             className={`p-1.5 rounded-lg transition-all ${liked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'}`}
             title="Suka"
+            aria-label="Suka"
           >
             <ThumbsUp size={16} />
           </button>
@@ -205,6 +206,7 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
             onClick={() => { setDisliked(!disliked); if (!disliked) setLiked(false); }}
             className={`p-1.5 rounded-lg transition-all ${disliked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'}`}
             title="Tidak Suka"
+            aria-label="Tidak Suka"
           >
             <ThumbsDown size={16} />
           </button>
@@ -214,6 +216,7 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
                 onClick={handleCopy}
                 className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent transition-all flex items-center gap-1.5"
                 title="Salin Pesan"
+                aria-label="Salin Pesan"
               >
                 {copied ? (
                   <>
@@ -234,6 +237,7 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
                     : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'
                 }`}
                 title={isPlaying ? "Berhenti" : "Dengarkan"}
+                aria-label={isPlaying ? "Berhenti mendengarkan" : "Dengarkan pesan"}
               >
                 {isLoadingAudio ? (
                   <Loader2 size={16} className="animate-spin" />
