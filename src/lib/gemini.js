@@ -170,6 +170,8 @@ export async function getGeminiResponse(
       fileParts,
       agentId: normalizedAgentId,
       modelName: sdkModel,
+      projectId: requestContext.projectId || requestContext.project?._id,
+      chatId: requestContext.chatId || requestContext.project?._id,
       isManualSelection: requestContext.isManualSelection || requestContext.manualSelection || false,
     });
   } catch (error) {

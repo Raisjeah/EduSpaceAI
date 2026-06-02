@@ -10,6 +10,7 @@ import { citationKeywords } from './citation/tools';
 import { visualizerKeywords } from './visualizer/tools';
 import { hasAnyKeyword, summarizeAgentResults } from './shared/tools';
 import { updateSharedMemory } from './shared/memory';
+import { logAgentActivity } from './shared/activityLogger';
 
 const AGENT_KEYWORDS = {
   researcher: researcherKeywords,
@@ -44,6 +45,7 @@ export default class OrchestratorAgent {
     this.modelRunner = modelRunner;
     this.defaultAgent = defaultAgent;
     this.agents = new Map();
+    this.workflowCounter = 0;
 
     [
       new ResearcherAgent({ modelRunner }),
@@ -106,17 +108,78 @@ export default class OrchestratorAgent {
     };
   }
 
+  getAgentName(agentId) {
+    if (agentId === 'default') return 'EduSpaceAI';
+    if (agentId === 'orchestrator') return 'Orchestrator';
+    return this.agents.get(agentId)?.name || agentId;
+  }
+
+  async logActivity(data, context = {}) {
+    return logAgentActivity({
+      userId: context.userId,
+      projectId: context.projectId,
+      chatId: context.chatId,
+      modelUsed: context.modelName,
+      ...data,
+    });
+  }
+
   async execute(prompt, context = {}) {
     const isManualSelection = context.isManualSelection || context.manualSelection || false;
     const analysis = this.analyzeTask(prompt, context.agentId, isManualSelection);
+    const workflowId = `workflow-${Date.now()}-${this.workflowCounter++}`;
 
     if (!analysis.isComplex || analysis.agents.length <= 1) {
       const agentId = analysis.agents[0] || context.agentId || 'default';
-      if (agentId !== 'default' && this.agents.has(agentId)) {
-        const result = await this.executeAgent(agentId, prompt, context);
+      const startedAt = new Date();
+      const activityId = await this.logActivity({
+        agentId,
+        agentName: this.getAgentName(agentId),
+        task: prompt,
+        originalPrompt: prompt,
+        status: 'started',
+        startedAt: startedAt.toISOString(),
+        workflowId,
+        isMultiAgent: false,
+      }, context);
+
+      try {
+        const result = agentId !== 'default' && this.agents.has(agentId)
+          ? await this.executeAgent(agentId, prompt, context)
+          : { output: await this.defaultAgent(prompt, context) };
+
+        await this.logActivity({
+          activityId,
+          agentId,
+          agentName: this.getAgentName(agentId),
+          task: prompt,
+          originalPrompt: prompt,
+          status: 'completed',
+          startedAt: startedAt.toISOString(),
+          completedAt: new Date().toISOString(),
+          output: result.output,
+          workflowId,
+          isMultiAgent: false,
+        }, context);
+
         return result.output;
+      } catch (error) {
+        await this.logActivity({
+          activityId,
+          agentId,
+          agentName: this.getAgentName(agentId),
+          task: prompt,
+          originalPrompt: prompt,
+          status: 'failed',
+          startedAt: startedAt.toISOString(),
+          completedAt: new Date().toISOString(),
+          error: error.message,
+          workflowId,
+          isMultiAgent: false,
+        }, context);
+
+        throw error;
       }
-      return this.defaultAgent(prompt, context);
     }
 
     updateSharedMemory('lastWorkflow', {
@@ -124,15 +187,78 @@ export default class OrchestratorAgent {
       agents: analysis.agents,
       reason: analysis.reason,
       startedAt: new Date().toISOString(),
+      workflowId,
+    }, context);
+
+    const orchestratorStartedAt = new Date();
+    const orchestratorActivityId = await this.logActivity({
+      agentId: 'orchestrator',
+      agentName: 'Orchestrator',
+      task: `Multi-agent workflow: ${analysis.reason}`,
+      originalPrompt: prompt,
+      status: 'started',
+      startedAt: orchestratorStartedAt.toISOString(),
+      workflowId,
+      isMultiAgent: true,
+      workflowAgents: analysis.agents,
     }, context);
 
     const settledResults = await Promise.allSettled(
-      analysis.agents.map((agentId) => {
+      analysis.agents.map(async (agentId) => {
         const delegatedTask = `${AGENT_TASKS[agentId]}\n\nPermintaan pengguna:\n${prompt}`;
-        return this.executeAgent(agentId, delegatedTask, {
-          ...context,
+        const startedAt = new Date();
+        const activityId = await this.logActivity({
+          agentId,
+          agentName: this.getAgentName(agentId),
+          task: AGENT_TASKS[agentId],
           originalPrompt: prompt,
-        });
+          status: 'started',
+          startedAt: startedAt.toISOString(),
+          workflowId,
+          isMultiAgent: true,
+          workflowAgents: analysis.agents,
+        }, context);
+
+        try {
+          const result = await this.executeAgent(agentId, delegatedTask, {
+            ...context,
+            originalPrompt: prompt,
+          });
+
+          await this.logActivity({
+            activityId,
+            agentId,
+            agentName: this.getAgentName(agentId),
+            task: AGENT_TASKS[agentId],
+            originalPrompt: prompt,
+            status: 'completed',
+            startedAt: startedAt.toISOString(),
+            completedAt: new Date().toISOString(),
+            output: result.output,
+            workflowId,
+            isMultiAgent: true,
+            workflowAgents: analysis.agents,
+          }, context);
+
+          return result;
+        } catch (error) {
+          await this.logActivity({
+            activityId,
+            agentId,
+            agentName: this.getAgentName(agentId),
+            task: AGENT_TASKS[agentId],
+            originalPrompt: prompt,
+            status: 'failed',
+            startedAt: startedAt.toISOString(),
+            completedAt: new Date().toISOString(),
+            error: error.message,
+            workflowId,
+            isMultiAgent: true,
+            workflowAgents: analysis.agents,
+          }, context);
+
+          throw error;
+        }
       })
     );
 
@@ -144,7 +270,7 @@ export default class OrchestratorAgent {
       const agentId = analysis.agents[index];
       return {
         agentId,
-        agentName: this.agents.get(agentId)?.name || agentId,
+        agentName: this.getAgentName(agentId),
         task: AGENT_TASKS[agentId],
         output: `Agent ini gagal menyelesaikan subtugas: ${result.reason?.message || result.reason}`,
         error: true,
@@ -157,7 +283,43 @@ export default class OrchestratorAgent {
       context
     );
 
-    return this.synthesizeResults(prompt, results, context, analysis);
+    try {
+      const synthesis = await this.synthesizeResults(prompt, results, context, analysis);
+
+      await this.logActivity({
+        activityId: orchestratorActivityId,
+        agentId: 'orchestrator',
+        agentName: 'Orchestrator',
+        task: `Multi-agent workflow: ${analysis.reason}`,
+        originalPrompt: prompt,
+        status: 'completed',
+        startedAt: orchestratorStartedAt.toISOString(),
+        completedAt: new Date().toISOString(),
+        output: synthesis,
+        workflowId,
+        isMultiAgent: true,
+        workflowAgents: analysis.agents,
+      }, context);
+
+      return synthesis;
+    } catch (error) {
+      await this.logActivity({
+        activityId: orchestratorActivityId,
+        agentId: 'orchestrator',
+        agentName: 'Orchestrator',
+        task: `Multi-agent workflow: ${analysis.reason}`,
+        originalPrompt: prompt,
+        status: 'failed',
+        startedAt: orchestratorStartedAt.toISOString(),
+        completedAt: new Date().toISOString(),
+        error: error.message,
+        workflowId,
+        isMultiAgent: true,
+        workflowAgents: analysis.agents,
+      }, context);
+
+      throw error;
+    }
   }
 
   async executeAgent(agentId, task, context = {}) {
