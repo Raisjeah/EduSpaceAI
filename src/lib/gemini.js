@@ -132,7 +132,36 @@ export async function getGeminiResponse(
   try {
     // Keep image generation single-agent so binary response handling remains unchanged.
     if (normalizedAgentId === 'image-generator' || IMAGE_GEN_MODELS.has(sdkModel)) {
-      return generateDirectResponse(prompt, history, fileParts, config, provider, sdkModel);
+      if (typeof requestContext.onAgentEvent === 'function') {
+        requestContext.onAgentEvent({
+          type: 'agent_start',
+          agentId: normalizedAgentId,
+          task: prompt.substring(0, 120),
+        });
+      }
+
+      try {
+        const directResult = await generateDirectResponse(prompt, history, fileParts, config, provider, sdkModel);
+        if (typeof requestContext.onAgentEvent === 'function') {
+          requestContext.onAgentEvent({
+            type: 'agent_end',
+            agentId: normalizedAgentId,
+            output: directResult,
+            error: null,
+          });
+        }
+        return directResult;
+      } catch (directError) {
+        if (typeof requestContext.onAgentEvent === 'function') {
+          requestContext.onAgentEvent({
+            type: 'agent_end',
+            agentId: normalizedAgentId,
+            output: null,
+            error: directError.message,
+          });
+        }
+        throw directError;
+      }
     }
 
     const modelRunner = (agentPrompt, context = {}) => {

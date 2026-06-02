@@ -41,9 +41,10 @@ const COMPLEXITY_MARKERS = [
 ];
 
 export default class OrchestratorAgent {
-  constructor({ modelRunner, defaultAgent }) {
+  constructor({ modelRunner, defaultAgent, onAgentEvent = null }) {
     this.modelRunner = modelRunner;
     this.defaultAgent = defaultAgent;
+    this.onAgentEvent = onAgentEvent;
     this.agents = new Map();
     this.workflowCounter = 0;
 
@@ -124,6 +125,17 @@ export default class OrchestratorAgent {
     });
   }
 
+  emitAgentEvent(event, context = {}) {
+    const emitter = context.onAgentEvent || this.onAgentEvent;
+    if (typeof emitter !== 'function') return;
+
+    try {
+      emitter(event);
+    } catch (error) {
+      console.error('Agent event handler failed:', error);
+    }
+  }
+
   async execute(prompt, context = {}) {
     const isManualSelection = context.isManualSelection || context.manualSelection || false;
     const analysis = this.analyzeTask(prompt, context.agentId, isManualSelection);
@@ -144,9 +156,23 @@ export default class OrchestratorAgent {
       }, context);
 
       try {
-        const result = agentId !== 'default' && this.agents.has(agentId)
-          ? await this.executeAgent(agentId, prompt, context)
-          : { output: await this.defaultAgent(prompt, context) };
+        let result;
+        if (agentId !== 'default' && this.agents.has(agentId)) {
+          result = await this.executeAgent(agentId, prompt, context);
+        } else {
+          this.emitAgentEvent({
+            type: 'agent_start',
+            agentId: 'default',
+            task: prompt.substring(0, 120),
+          }, context);
+          result = { output: await this.defaultAgent(prompt, context) };
+          this.emitAgentEvent({
+            type: 'agent_end',
+            agentId: 'default',
+            output: result.output,
+            error: null,
+          }, context);
+        }
 
         await this.logActivity({
           activityId,
@@ -164,6 +190,15 @@ export default class OrchestratorAgent {
 
         return result.output;
       } catch (error) {
+        if (agentId === 'default') {
+          this.emitAgentEvent({
+            type: 'agent_end',
+            agentId: 'default',
+            output: null,
+            error: error.message,
+          }, context);
+        }
+
         await this.logActivity({
           activityId,
           agentId,
@@ -325,10 +360,39 @@ export default class OrchestratorAgent {
   async executeAgent(agentId, task, context = {}) {
     const agent = this.agents.get(agentId);
     if (!agent) {
+      this.emitAgentEvent({
+        type: 'agent_end',
+        agentId,
+        output: null,
+        error: `Unknown agent: ${agentId}`,
+      }, context);
       throw new Error(`Unknown agent: ${agentId}`);
     }
 
-    return agent.execute(task, context);
+    this.emitAgentEvent({
+      type: 'agent_start',
+      agentId,
+      task: task.substring(0, 120),
+    }, context);
+
+    try {
+      const result = await agent.execute(task, context);
+      this.emitAgentEvent({
+        type: 'agent_end',
+        agentId,
+        output: result.output,
+        error: null,
+      }, context);
+      return result;
+    } catch (error) {
+      this.emitAgentEvent({
+        type: 'agent_end',
+        agentId,
+        output: null,
+        error: error.message,
+      }, context);
+      throw error;
+    }
   }
 
   async synthesizeResults(prompt, results, context = {}, analysis = {}) {

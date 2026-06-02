@@ -18,7 +18,7 @@ function sanitizeUserContent(text) {
 }
 
 // 1. Fungsi Simpan Chat
-export async function saveChat(role, text, chatId, projectId = null) {
+export async function saveChat(role, text, chatId, projectId = null, agentMetadata = {}) {
   try {
     const user = await getSessionUser();
     if (!user) return { success: false, error: "Sesi berakhir." };
@@ -30,7 +30,8 @@ export async function saveChat(role, text, chatId, projectId = null) {
       text, 
       userId, 
       chatId: chatId || 'default',
-      projectId
+      projectId,
+      ...agentMetadata
     });
     await newChat.save();
     return { success: true };
@@ -170,20 +171,60 @@ export async function sendMessage(formData) {
       await saveChat('user', prompt, chatId, projectId);
     }
 
-    // F. Get AI Response
+    // F. Get AI Response + capture agent execution trace for the model message
+    const executionStartTime = Date.now();
+    const agentTrace = [];
+    const onAgentEvent = (event = {}) => {
+      const eventAgentId = event.agentId || agentId || 'default';
+
+      if (event.type === 'agent_start') {
+        agentTrace.push({
+          agent: eventAgentId,
+          task: event.task || prompt.substring(0, 120) || 'Processing',
+          status: 'running',
+          startTime: new Date(),
+        });
+        return;
+      }
+
+      if (event.type === 'agent_end') {
+        const traceEntry = [...agentTrace].reverse().find((trace) => trace.agent === eventAgentId && trace.status === 'running');
+        if (traceEntry) {
+          traceEntry.status = event.error ? 'failed' : 'completed';
+          traceEntry.endTime = new Date();
+          traceEntry.executionTimeMs = Math.max(0, traceEntry.endTime.getTime() - traceEntry.startTime.getTime());
+          traceEntry.output = event.output ? String(event.output).substring(0, 1000) : '';
+          traceEntry.error = event.error ? String(event.error).substring(0, 1000) : '';
+        }
+      }
+    };
+
     const aiResponse = await getGeminiResponse(prompt, historyForGemini, fileParts, agentId, modelName, {
       userId,
       chatId,
       projectId,
       isManualSelection: isManualAgentSelection,
+      onAgentEvent,
     });
 
-    await saveChat('model', aiResponse, chatId, projectId);
+    const executionTimeMs = Date.now() - executionStartTime;
+    const delegatedAgents = [...new Set(agentTrace.map((trace) => trace.agent).filter(Boolean))];
+
+    await saveChat('model', aiResponse, chatId, projectId, {
+      agentId,
+      delegatedAgents,
+      executionTimeMs,
+      agentTrace,
+      isManualSelection: isManualAgentSelection,
+    });
 
     return { 
       success: true, 
       aiResponse, 
-      chatId 
+      chatId,
+      agentId,
+      agentTrace,
+      executionTimeMs,
     };
 
   } catch (error) {

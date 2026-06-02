@@ -5,7 +5,7 @@ import { useChat } from '@/context/ChatContext';
 import { useLayout } from '@/context/LayoutContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import TextareaAutosize from 'react-textarea-autosize';
-import { ChevronDown, Plus, ArrowUp, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File, Square, Code, GraduationCap, Microscope, ArrowLeft, Mic } from 'lucide-react';
+import { ChevronDown, Plus, ArrowUp, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File, Square, Code, GraduationCap, Microscope, ArrowLeft, Mic, Workflow, Quote } from 'lucide-react';
 import { sendMessage, getChatDetails } from '@/app/actions/chatActions';
 import { getProjectDetails } from '@/app/actions/projectActions';
 import AiMessage from './AiMessage';
@@ -83,6 +83,7 @@ function ChatViewContent({ userId, activeChatId, projectId }) {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
   const [thoughtTraces, setThoughtTraces] = useState([]);
+  const [agentWorkflow, setAgentWorkflow] = useState([]);
   const [dynamicStatus, setDynamicStatus] = useState("Dosen AI sedang berpikir...");
   const statusIntervalRef = useRef(null);
   const [upgradeModal, setUpgradeModal] = useState({ isOpen: false, feature: '' });
@@ -157,10 +158,11 @@ function ChatViewContent({ userId, activeChatId, projectId }) {
   useEffect(() => {
     if (!isPending) {
       setThoughtTraces([]);
+      setAgentWorkflow([]);
       return;
     }
 
-    const agentTraces = {
+    const agentWorkflows = {
       'deep-search': [
         '🔍 Menganalisis pertanyaan...',
         '📋 Membuat rencana riset...',
@@ -198,17 +200,27 @@ function ChatViewContent({ userId, activeChatId, projectId }) {
       ],
     };
 
-    const traces = agentTraces[currentAgentId] || agentTraces.default;
-    let i = 0;
-    setThoughtTraces([traces[0]]);
+    const workflow = agentWorkflows[currentAgentId] || agentWorkflows.default;
+    setThoughtTraces([workflow[0]]);
+    setAgentWorkflow(workflow.map((step, idx) => ({
+      step,
+      status: idx === 0 ? 'running' : 'pending',
+    })));
+
+    let stepIndex = 0;
     const interval = setInterval(() => {
-      i++;
-      if (i < traces.length) {
-        setThoughtTraces(prev => [...prev, traces[i]]);
+      stepIndex++;
+      if (stepIndex < workflow.length) {
+        setThoughtTraces(prev => [...prev, workflow[stepIndex]]);
+        setAgentWorkflow(prev => prev.map((item, idx) => ({
+          ...item,
+          status: idx < stepIndex ? 'completed' : idx === stepIndex ? 'running' : 'pending',
+        })));
       } else {
+        setAgentWorkflow(prev => prev.map((item) => ({ ...item, status: 'completed' })));
         clearInterval(interval);
       }
-    }, 3000);
+    }, 2500);
 
     return () => clearInterval(interval);
   }, [isPending, currentAgentId]);
@@ -359,6 +371,8 @@ function ChatViewContent({ userId, activeChatId, projectId }) {
       case 'deep-search': return <Search size={16} className="text-blue-400" />;
       case 'researcher': return <BookOpen size={16} className="text-green-400" />;
       case 'editor': return <Edit3 size={16} className="text-amber-400" />;
+      case 'visualizer': return <Workflow size={16} className="text-pink-400" />;
+      case 'citation': return <Quote size={16} className="text-purple-400" />;
       default: return <Rocket size={16} className="text-indigo-400" />;
     }
   };
@@ -368,6 +382,8 @@ function ChatViewContent({ userId, activeChatId, projectId }) {
       case 'deep-search': return 'Deep Search Agent';
       case 'researcher': return 'Profesor Riset';
       case 'editor': return 'Editor Akademik';
+      case 'visualizer': return 'Visual Mapper';
+      case 'citation': return 'Citation Generator';
       default: return 'EduSpaceAI';
     }
   };
@@ -391,6 +407,18 @@ function ChatViewContent({ userId, activeChatId, projectId }) {
         border: 'border-amber-200 dark:border-amber-800/30',
         accent: 'bg-amber-500',
         text: 'text-amber-600 dark:text-amber-400'
+      };
+      case 'visualizer': return {
+        bg: 'bg-pink-50 dark:bg-pink-900/10',
+        border: 'border-pink-200 dark:border-pink-800/30',
+        accent: 'bg-pink-500',
+        text: 'text-pink-600 dark:text-pink-400'
+      };
+      case 'citation': return {
+        bg: 'bg-purple-50 dark:bg-purple-900/10',
+        border: 'border-purple-200 dark:border-purple-800/30',
+        accent: 'bg-purple-500',
+        text: 'text-purple-600 dark:text-purple-400'
       };
       default: return {
         bg: 'bg-indigo-50 dark:bg-indigo-900/10',
@@ -453,6 +481,46 @@ function ChatViewContent({ userId, activeChatId, projectId }) {
                 <p className="text-[10px] text-slate-500 dark:text-gray-500 uppercase tracking-widest font-semibold">Workspace</p>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {isManualAgentSelection && (
+        <div className={`px-4 md:px-6 py-3 ${agentTheme.bg} border-b ${agentTheme.border} flex items-center justify-between gap-3 z-10 flex-none`}>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className={`w-2 h-2 rounded-full ${agentTheme.accent} animate-pulse shrink-0`} />
+            <span className={`text-sm font-semibold ${agentTheme.text} truncate`}>
+              Menggunakan: {getAgentName(currentAgentId)}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleAgentSelect('default')}
+            className={`text-xs font-semibold ${agentTheme.text} hover:underline whitespace-nowrap`}
+          >
+            Reset Default
+          </button>
+        </div>
+      )}
+
+      {agentWorkflow.length > 0 && (
+        <div className="px-4 md:px-6 py-3 bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/5 z-10 flex-none">
+          <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
+            {agentWorkflow.map((step, idx) => (
+              <div
+                key={`${step.step}-${idx}`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap border ${
+                  step.status === 'running'
+                    ? `${agentTheme.bg} ${agentTheme.border} ${agentTheme.text}`
+                    : step.status === 'completed'
+                      ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800/30 text-green-600 dark:text-green-400'
+                      : 'bg-white dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-500 dark:text-gray-400'
+                }`}
+              >
+                {step.status === 'running' && <span className={`w-1.5 h-1.5 rounded-full ${agentTheme.accent} animate-pulse`} />}
+                {step.status === 'completed' && <span>✓</span>}
+                {step.step}
+              </div>
+            ))}
           </div>
         </div>
       )}
