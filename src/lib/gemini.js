@@ -13,6 +13,24 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+let orchestratorInstance = null;
+let activeModelRunner = null;
+let activeDefaultAgent = null;
+
+function getOrchestrator(modelRunner, defaultAgent) {
+  activeModelRunner = modelRunner;
+  activeDefaultAgent = defaultAgent;
+
+  if (!orchestratorInstance) {
+    orchestratorInstance = new OrchestratorAgent({
+      modelRunner: (...args) => activeModelRunner(...args),
+      defaultAgent: (...args) => activeDefaultAgent(...args),
+    });
+  }
+
+  return orchestratorInstance;
+}
+
 // Whitelist of model IDs the app supports. Anything else is rejected at the
 // edge instead of being silently downgraded.
 const GEMINI_MODELS = new Set([
@@ -44,7 +62,7 @@ function resolveModel(modelName) {
   return { provider: 'gemini', sdkModel: DEFAULT_GEMINI_MODEL };
 }
 
-const AGENT_CONFIGS = {
+export const AGENT_CONFIGS = {
   default: {
     name: "EduSpaceAI",
     instruction: `Nama kamu adalah EduSpaceAI, seorang Dosen Pribadi yang cerdas, suportif, dan ramah.
@@ -114,7 +132,36 @@ export async function getGeminiResponse(
   try {
     // Keep image generation single-agent so binary response handling remains unchanged.
     if (normalizedAgentId === 'image-generator' || IMAGE_GEN_MODELS.has(sdkModel)) {
-      return generateDirectResponse(prompt, history, fileParts, config, provider, sdkModel);
+      if (typeof requestContext.onAgentEvent === 'function') {
+        requestContext.onAgentEvent({
+          type: 'agent_start',
+          agentId: normalizedAgentId,
+          task: prompt.substring(0, 120),
+        });
+      }
+
+      try {
+        const directResult = await generateDirectResponse(prompt, history, fileParts, config, provider, sdkModel);
+        if (typeof requestContext.onAgentEvent === 'function') {
+          requestContext.onAgentEvent({
+            type: 'agent_end',
+            agentId: normalizedAgentId,
+            output: directResult,
+            error: null,
+          });
+        }
+        return directResult;
+      } catch (directError) {
+        if (typeof requestContext.onAgentEvent === 'function') {
+          requestContext.onAgentEvent({
+            type: 'agent_end',
+            agentId: normalizedAgentId,
+            output: null,
+            error: directError.message,
+          });
+        }
+        throw directError;
+      }
     }
 
     const modelRunner = (agentPrompt, context = {}) => {
@@ -137,14 +184,14 @@ export async function getGeminiResponse(
       );
     };
 
-    const orchestrator = new OrchestratorAgent({
+    const orchestrator = getOrchestrator(
       modelRunner,
-      defaultAgent: (defaultPrompt, context = {}) => modelRunner(defaultPrompt, {
+      (defaultPrompt, context = {}) => modelRunner(defaultPrompt, {
         ...context,
         agentId: normalizedAgentId,
         instruction: config.instruction,
-      }),
-    });
+      })
+    );
 
     return await orchestrator.execute(prompt, {
       ...requestContext,
@@ -152,6 +199,9 @@ export async function getGeminiResponse(
       fileParts,
       agentId: normalizedAgentId,
       modelName: sdkModel,
+      projectId: requestContext.projectId || requestContext.project?._id,
+      chatId: requestContext.chatId || requestContext.project?._id,
+      isManualSelection: requestContext.isManualSelection || requestContext.manualSelection || false,
     });
   } catch (error) {
     console.error("AI SDK Error:", error);

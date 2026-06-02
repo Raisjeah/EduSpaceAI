@@ -32,10 +32,20 @@ export default class BaseAgent {
       throw new Error(`Agent ${this.id} cannot delegate without an orchestrator.`);
     }
 
-    return this.orchestrator.executeAgent(agentId, task, {
-      ...context,
-      delegatedBy: this.id,
-    });
+    try {
+      return await this.orchestrator.executeAgent(agentId, task, {
+        ...context,
+        delegatedBy: this.id,
+      });
+    } catch (error) {
+      return {
+        agentId,
+        agentName: agentId,
+        task,
+        output: `Gagal mendelegasikan ke ${agentId}: ${error.message}`,
+        error: true,
+      };
+    }
   }
 
   updateMemory(key, value, context = {}) {

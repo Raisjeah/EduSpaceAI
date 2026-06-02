@@ -5,7 +5,7 @@ import Project from '@/models/Project';
 import { revalidatePath } from 'next/cache';
 import { getSessionUser } from '@/lib/session';
 
-export async function createProject(name, agentId) {
+export async function createProject(name, agentId, options = {}) {
   try {
     const user = await getSessionUser();
     if (!user) return { success: false, error: "Sesi berakhir. Silakan login kembali." };
@@ -15,7 +15,8 @@ export async function createProject(name, agentId) {
     const newProject = new Project({
       name,
       userId,
-      agentId
+      agentId,
+      manualSelection: Boolean(options.manualSelection),
     });
     const savedProject = await newProject.save();
     revalidatePath('/');

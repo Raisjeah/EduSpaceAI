@@ -10,6 +10,7 @@ import { citationKeywords } from './citation/tools';
 import { visualizerKeywords } from './visualizer/tools';
 import { hasAnyKeyword, summarizeAgentResults } from './shared/tools';
 import { updateSharedMemory } from './shared/memory';
+import { logAgentActivity } from './shared/activityLogger';
 
 const AGENT_KEYWORDS = {
   researcher: researcherKeywords,
@@ -28,10 +29,6 @@ const AGENT_TASKS = {
 };
 
 const COMPLEXITY_MARKERS = [
-  'dan',
-  'lalu',
-  'kemudian',
-  'sekaligus',
   'lengkap',
   'mendalam',
   'bandingkan',
@@ -44,10 +41,12 @@ const COMPLEXITY_MARKERS = [
 ];
 
 export default class OrchestratorAgent {
-  constructor({ modelRunner, defaultAgent }) {
+  constructor({ modelRunner, defaultAgent, onAgentEvent = null }) {
     this.modelRunner = modelRunner;
     this.defaultAgent = defaultAgent;
+    this.onAgentEvent = onAgentEvent;
     this.agents = new Map();
+    this.workflowCounter = 0;
 
     [
       new ResearcherAgent({ modelRunner }),
@@ -63,9 +62,17 @@ export default class OrchestratorAgent {
     this.agents.set(agent.id, agent);
   }
 
-  analyzeTask(prompt, requestedAgentId = 'default') {
+  analyzeTask(prompt, requestedAgentId = 'default', isManualSelection = false) {
     const normalizedPrompt = prompt.toLowerCase();
     const selectedAgents = new Set();
+
+    if (isManualSelection && requestedAgentId && requestedAgentId !== 'default') {
+      return {
+        isComplex: false,
+        agents: [requestedAgentId],
+        reason: `Agent dipilih secara manual: ${requestedAgentId}`,
+      };
+    }
 
     if (requestedAgentId && requestedAgentId !== 'default') {
       selectedAgents.add(requestedAgentId);
@@ -77,9 +84,6 @@ export default class OrchestratorAgent {
       }
     });
 
-    if (selectedAgents.has('deep-search')) {
-      selectedAgents.add('citation');
-    }
 
     const markerCount = COMPLEXITY_MARKERS.filter((marker) => normalizedPrompt.includes(marker)).length;
     const isLongPrompt = normalizedPrompt.split(/\s+/).length > 28;
@@ -105,16 +109,112 @@ export default class OrchestratorAgent {
     };
   }
 
+  getAgentName(agentId) {
+    if (agentId === 'default') return 'EduSpaceAI';
+    if (agentId === 'orchestrator') return 'Orchestrator';
+    return this.agents.get(agentId)?.name || agentId;
+  }
+
+  async logActivity(data, context = {}) {
+    return logAgentActivity({
+      userId: context.userId,
+      projectId: context.projectId,
+      chatId: context.chatId,
+      modelUsed: context.modelName,
+      ...data,
+    });
+  }
+
+  emitAgentEvent(event, context = {}) {
+    const emitter = context.onAgentEvent || this.onAgentEvent;
+    if (typeof emitter !== 'function') return;
+
+    try {
+      emitter(event);
+    } catch (error) {
+      console.error('Agent event handler failed:', error);
+    }
+  }
+
   async execute(prompt, context = {}) {
-    const analysis = this.analyzeTask(prompt, context.agentId);
+    const isManualSelection = context.isManualSelection || context.manualSelection || false;
+    const analysis = this.analyzeTask(prompt, context.agentId, isManualSelection);
+    const workflowId = `workflow-${Date.now()}-${this.workflowCounter++}`;
 
     if (!analysis.isComplex || analysis.agents.length <= 1) {
       const agentId = analysis.agents[0] || context.agentId || 'default';
-      if (agentId !== 'default' && this.agents.has(agentId)) {
-        const result = await this.executeAgent(agentId, prompt, context);
+      const startedAt = new Date();
+      const activityId = await this.logActivity({
+        agentId,
+        agentName: this.getAgentName(agentId),
+        task: prompt,
+        originalPrompt: prompt,
+        status: 'started',
+        startedAt: startedAt.toISOString(),
+        workflowId,
+        isMultiAgent: false,
+      }, context);
+
+      try {
+        let result;
+        if (agentId !== 'default' && this.agents.has(agentId)) {
+          result = await this.executeAgent(agentId, prompt, context);
+        } else {
+          this.emitAgentEvent({
+            type: 'agent_start',
+            agentId: 'default',
+            task: prompt.substring(0, 120),
+          }, context);
+          result = { output: await this.defaultAgent(prompt, context) };
+          this.emitAgentEvent({
+            type: 'agent_end',
+            agentId: 'default',
+            output: result.output,
+            error: null,
+          }, context);
+        }
+
+        await this.logActivity({
+          activityId,
+          agentId,
+          agentName: this.getAgentName(agentId),
+          task: prompt,
+          originalPrompt: prompt,
+          status: 'completed',
+          startedAt: startedAt.toISOString(),
+          completedAt: new Date().toISOString(),
+          output: result.output,
+          workflowId,
+          isMultiAgent: false,
+        }, context);
+
         return result.output;
+      } catch (error) {
+        if (agentId === 'default') {
+          this.emitAgentEvent({
+            type: 'agent_end',
+            agentId: 'default',
+            output: null,
+            error: error.message,
+          }, context);
+        }
+
+        await this.logActivity({
+          activityId,
+          agentId,
+          agentName: this.getAgentName(agentId),
+          task: prompt,
+          originalPrompt: prompt,
+          status: 'failed',
+          startedAt: startedAt.toISOString(),
+          completedAt: new Date().toISOString(),
+          error: error.message,
+          workflowId,
+          isMultiAgent: false,
+        }, context);
+
+        throw error;
       }
-      return this.defaultAgent(prompt, context);
     }
 
     updateSharedMemory('lastWorkflow', {
@@ -122,15 +222,78 @@ export default class OrchestratorAgent {
       agents: analysis.agents,
       reason: analysis.reason,
       startedAt: new Date().toISOString(),
+      workflowId,
+    }, context);
+
+    const orchestratorStartedAt = new Date();
+    const orchestratorActivityId = await this.logActivity({
+      agentId: 'orchestrator',
+      agentName: 'Orchestrator',
+      task: `Multi-agent workflow: ${analysis.reason}`,
+      originalPrompt: prompt,
+      status: 'started',
+      startedAt: orchestratorStartedAt.toISOString(),
+      workflowId,
+      isMultiAgent: true,
+      workflowAgents: analysis.agents,
     }, context);
 
     const settledResults = await Promise.allSettled(
-      analysis.agents.map((agentId) => {
+      analysis.agents.map(async (agentId) => {
         const delegatedTask = `${AGENT_TASKS[agentId]}\n\nPermintaan pengguna:\n${prompt}`;
-        return this.executeAgent(agentId, delegatedTask, {
-          ...context,
+        const startedAt = new Date();
+        const activityId = await this.logActivity({
+          agentId,
+          agentName: this.getAgentName(agentId),
+          task: AGENT_TASKS[agentId],
           originalPrompt: prompt,
-        });
+          status: 'started',
+          startedAt: startedAt.toISOString(),
+          workflowId,
+          isMultiAgent: true,
+          workflowAgents: analysis.agents,
+        }, context);
+
+        try {
+          const result = await this.executeAgent(agentId, delegatedTask, {
+            ...context,
+            originalPrompt: prompt,
+          });
+
+          await this.logActivity({
+            activityId,
+            agentId,
+            agentName: this.getAgentName(agentId),
+            task: AGENT_TASKS[agentId],
+            originalPrompt: prompt,
+            status: 'completed',
+            startedAt: startedAt.toISOString(),
+            completedAt: new Date().toISOString(),
+            output: result.output,
+            workflowId,
+            isMultiAgent: true,
+            workflowAgents: analysis.agents,
+          }, context);
+
+          return result;
+        } catch (error) {
+          await this.logActivity({
+            activityId,
+            agentId,
+            agentName: this.getAgentName(agentId),
+            task: AGENT_TASKS[agentId],
+            originalPrompt: prompt,
+            status: 'failed',
+            startedAt: startedAt.toISOString(),
+            completedAt: new Date().toISOString(),
+            error: error.message,
+            workflowId,
+            isMultiAgent: true,
+            workflowAgents: analysis.agents,
+          }, context);
+
+          throw error;
+        }
       })
     );
 
@@ -142,9 +305,10 @@ export default class OrchestratorAgent {
       const agentId = analysis.agents[index];
       return {
         agentId,
-        agentName: this.agents.get(agentId)?.name || agentId,
+        agentName: this.getAgentName(agentId),
         task: AGENT_TASKS[agentId],
         output: `Agent ini gagal menyelesaikan subtugas: ${result.reason?.message || result.reason}`,
+        error: true,
       };
     });
 
@@ -154,20 +318,87 @@ export default class OrchestratorAgent {
       context
     );
 
-    return this.synthesizeResults(prompt, results, context, analysis);
+    try {
+      const synthesis = await this.synthesizeResults(prompt, results, context, analysis);
+
+      await this.logActivity({
+        activityId: orchestratorActivityId,
+        agentId: 'orchestrator',
+        agentName: 'Orchestrator',
+        task: `Multi-agent workflow: ${analysis.reason}`,
+        originalPrompt: prompt,
+        status: 'completed',
+        startedAt: orchestratorStartedAt.toISOString(),
+        completedAt: new Date().toISOString(),
+        output: synthesis,
+        workflowId,
+        isMultiAgent: true,
+        workflowAgents: analysis.agents,
+      }, context);
+
+      return synthesis;
+    } catch (error) {
+      await this.logActivity({
+        activityId: orchestratorActivityId,
+        agentId: 'orchestrator',
+        agentName: 'Orchestrator',
+        task: `Multi-agent workflow: ${analysis.reason}`,
+        originalPrompt: prompt,
+        status: 'failed',
+        startedAt: orchestratorStartedAt.toISOString(),
+        completedAt: new Date().toISOString(),
+        error: error.message,
+        workflowId,
+        isMultiAgent: true,
+        workflowAgents: analysis.agents,
+      }, context);
+
+      throw error;
+    }
   }
 
   async executeAgent(agentId, task, context = {}) {
     const agent = this.agents.get(agentId);
     if (!agent) {
+      this.emitAgentEvent({
+        type: 'agent_end',
+        agentId,
+        output: null,
+        error: `Unknown agent: ${agentId}`,
+      }, context);
       throw new Error(`Unknown agent: ${agentId}`);
     }
 
-    return agent.execute(task, context);
+    this.emitAgentEvent({
+      type: 'agent_start',
+      agentId,
+      task: task.substring(0, 120),
+    }, context);
+
+    try {
+      const result = await agent.execute(task, context);
+      this.emitAgentEvent({
+        type: 'agent_end',
+        agentId,
+        output: result.output,
+        error: null,
+      }, context);
+      return result;
+    } catch (error) {
+      this.emitAgentEvent({
+        type: 'agent_end',
+        agentId,
+        output: null,
+        error: error.message,
+      }, context);
+      throw error;
+    }
   }
 
   async synthesizeResults(prompt, results, context = {}, analysis = {}) {
-    const collaborationContext = summarizeAgentResults(results);
+    const failedAgents = results.filter((result) => result.error || result.output?.toLowerCase().includes('gagal'));
+    const successfulResults = results.filter((result) => !result.error && !result.output?.toLowerCase().includes('gagal'));
+    const collaborationContext = summarizeAgentResults(successfulResults);
     const synthesisPrompt = `
 Kamu adalah Orchestrator EduSpaceAI yang menggabungkan hasil kerja multi-agent menjadi satu jawaban final untuk mahasiswa Indonesia.
 
@@ -176,16 +407,22 @@ ${prompt}
 
 ANALISIS WORKFLOW:
 ${analysis.reason || '-'}
-Agent terlibat: ${results.map((result) => result.agentName).join(', ')}
+Agent terlibat: ${successfulResults.map((result) => result.agentName).join(', ') || 'EduSpaceAI'}
 
+${failedAgents.length > 0 ? `
+CATATAN INTERNAL: Agent berikut gagal dieksekusi dan hasilnya diabaikan:
+${failedAgents.map((result) => `- ${result.agentName}`).join('\n')}
+Gunakan hanya hasil dari agent yang berhasil.
+` : ''}
 HASIL MASING-MASING AGENT:
-${collaborationContext}
+${collaborationContext || 'Tidak ada hasil agent yang berhasil. Berikan jawaban fallback yang aman dan minta pengguna mencoba lagi bila perlu.'}
 
 TUGAS SINTESIS:
-- Gabungkan hasil agent menjadi jawaban final yang koheren, tidak repetitif, dan mudah diikuti.
+- Gabungkan hasil agent yang berhasil menjadi jawaban final yang koheren, tidak repetitif, dan mudah diikuti.
 - Jika ada diagram Mermaid dari Visualizer, pertahankan blok diagramnya.
 - Jika ada sumber/sitasi dari Deep Search atau Citation, pertahankan daftar sumbernya.
-- Tandai bagian hasil kolaborasi dengan ringkas, tanpa membocorkan prompt internal.
+- Jangan menyertakan error message atau informasi tentang agent yang gagal.
+- Jangan menyebutkan bahwa ada agent yang gagal.
 - Gunakan Bahasa Indonesia yang santai, suportif, dan akademik.
     `.trim();
 

@@ -1,19 +1,21 @@
 'use client';
 
-import { useState, useEffect, useRef, useTransition } from 'react';
+import { Suspense, useState, useEffect, useRef, useTransition } from 'react';
 import { useChat } from '@/context/ChatContext';
 import { useLayout } from '@/context/LayoutContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import TextareaAutosize from 'react-textarea-autosize';
-import { ChevronDown, Plus, ArrowUp, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File, Square, Code, GraduationCap, Microscope, ArrowLeft, Mic } from 'lucide-react';
+import { ChevronDown, Plus, ArrowUp, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File, Square, Code, GraduationCap, Microscope, ArrowLeft, Mic, Workflow, Quote } from 'lucide-react';
 import { sendMessage, getChatDetails } from '@/app/actions/chatActions';
 import { getProjectDetails } from '@/app/actions/projectActions';
 import AiMessage from './AiMessage';
 import ThinkingIndicator from './ThinkingIndicator';
 import ModelSelector from './ModelSelector';
+import AgentSelector from './AgentSelector';
 import FloatingOrbs from './FloatingOrbs';
 import useAuth from '@/hooks/useAuth';
 import UpgradeModal from './UpgradeModal';
+import LoadingScreen from './LoadingScreen';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -26,7 +28,7 @@ const SUGGESTED_PROMPTS = [
 ];
 // ── END PERUBAHAN 1 ──
 
-export default function ChatView({ userId, activeChatId, projectId }) {
+function ChatViewContent({ userId, activeChatId, projectId }) {
   const { user } = useAuth();
   const { isSidebarOpen } = useLayout();
   const [greeting, setGreeting] = useState('');
@@ -65,21 +67,28 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const setMessages = (msgs) => setChatMessages(currentId, msgs);
   const setIsThinking = (val) => setChatStatus(currentId, { isThinking: val });
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const isAnalyzing = searchParams.get('analyze') === 'true';
+  const requestedAgentId = searchParams.get('agent');
+  const requestedPrompt = searchParams.get('prompt');
+
   const [input, setInput] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [project, setProject] = useState(null);
+  const [currentAgentId, setCurrentAgentId] = useState(requestedAgentId || 'default');
+  const [isManualAgentSelection, setIsManualAgentSelection] = useState(Boolean(requestedAgentId && requestedAgentId !== 'default'));
+  const [hasUserSelectedAgent, setHasUserSelectedAgent] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
   const [thoughtTraces, setThoughtTraces] = useState([]);
+  const [agentWorkflow, setAgentWorkflow] = useState([]);
   const [dynamicStatus, setDynamicStatus] = useState("Dosen AI sedang berpikir...");
   const statusIntervalRef = useRef(null);
   const [upgradeModal, setUpgradeModal] = useState({ isOpen: false, feature: '' });
   const [isLoadingChat, setIsLoadingChat] = useState(false);
   const chatEndRef = useRef(null);
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const isAnalyzing = searchParams.get('analyze') === 'true';
 
   useEffect(() => {
     if (projectId) {
@@ -88,6 +97,47 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       setProject(null);
     }
   }, [projectId]);
+
+  useEffect(() => {
+    if (hasUserSelectedAgent) return;
+
+    if (requestedAgentId) {
+      setCurrentAgentId(requestedAgentId);
+      setIsManualAgentSelection(requestedAgentId !== 'default');
+      return;
+    }
+
+    if (project?.agentId) {
+      setCurrentAgentId(project.agentId);
+      setIsManualAgentSelection(Boolean(project.manualSelection && project.agentId !== 'default'));
+      return;
+    }
+
+    setCurrentAgentId('default');
+    setIsManualAgentSelection(false);
+  }, [hasUserSelectedAgent, project?.agentId, project?.manualSelection, requestedAgentId]);
+
+  useEffect(() => {
+    if (!activeChatId && requestedPrompt && !input) {
+      setInput(requestedPrompt);
+    }
+  }, [activeChatId, input, requestedPrompt]);
+
+  const handleAgentSelect = (agentId) => {
+    setCurrentAgentId(agentId);
+    setIsManualAgentSelection(agentId !== 'default');
+    setHasUserSelectedAgent(true);
+
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (agentId === 'default') {
+        url.searchParams.delete('agent');
+      } else {
+        url.searchParams.set('agent', agentId);
+      }
+      window.history.replaceState({}, '', url);
+    }
+  };
 
   useEffect(() => {
     const savedModel = localStorage.getItem('eduspace_preferred_model');
@@ -106,30 +156,74 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   };
 
   useEffect(() => {
-    if (isPending && project?.agentId === 'deep-search') {
-      const traces = [
+    if (!isPending) {
+      setThoughtTraces([]);
+      setAgentWorkflow([]);
+      return;
+    }
+
+    const agentWorkflows = {
+      'deep-search': [
         '🔍 Menganalisis pertanyaan...',
         '📋 Membuat rencana riset...',
         '🌐 Mencari informasi di web...',
         '📄 Membaca konten website...',
         '🧠 Menganalisis sumber data...',
-        '✍️ Menyusun jawaban final...'
-      ];
-      let i = 0;
-      setThoughtTraces([traces[0]]);
-      const interval = setInterval(() => {
-        i++;
-        if (i < traces.length) {
-          setThoughtTraces(prev => [...prev, traces[i]]);
-        } else {
-          clearInterval(interval);
-        }
-      }, 3000);
-      return () => clearInterval(interval);
-    } else {
-      setThoughtTraces([]);
-    }
-  }, [isPending, project]);
+        '✍️ Menyusun jawaban final...',
+      ],
+      researcher: [
+        '🎓 Menganalisis konteks akademik...',
+        '📚 Meninjau metodologi...',
+        '🧩 Menyusun argumen...',
+        '✅ Memvalidasi struktur...',
+      ],
+      editor: [
+        '✍️ Membaca teks...',
+        '🔎 Mengoreksi tata bahasa...',
+        '📖 Memeriksa PUEBI...',
+        '✅ Finalisasi editing...',
+      ],
+      visualizer: [
+        '🧭 Memetakan konsep...',
+        '📊 Menyusun alur visual...',
+        '🧩 Membuat struktur diagram...',
+      ],
+      citation: [
+        '🔖 Membaca data sumber...',
+        '📚 Memformat referensi...',
+        '✅ Memvalidasi kelengkapan sitasi...',
+      ],
+      default: [
+        '💭 Berpikir...',
+        '🧠 Memproses informasi...',
+        '✍️ Menyusun jawaban...',
+      ],
+    };
+
+    const workflow = agentWorkflows[currentAgentId] || agentWorkflows.default;
+    setThoughtTraces([workflow[0]]);
+    setAgentWorkflow(workflow.map((step, idx) => ({
+      step,
+      status: idx === 0 ? 'running' : 'pending',
+    })));
+
+    let stepIndex = 0;
+    const interval = setInterval(() => {
+      stepIndex++;
+      if (stepIndex < workflow.length) {
+        setThoughtTraces(prev => [...prev, workflow[stepIndex]]);
+        setAgentWorkflow(prev => prev.map((item, idx) => ({
+          ...item,
+          status: idx < stepIndex ? 'completed' : idx === stepIndex ? 'running' : 'pending',
+        })));
+      } else {
+        setAgentWorkflow(prev => prev.map((item) => ({ ...item, status: 'completed' })));
+        clearInterval(interval);
+      }
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [isPending, currentAgentId]);
 
   useEffect(() => {
     if (activeChatId && userId) {
@@ -186,7 +280,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     const lowerInput = textToSend.toLowerCase();
     if (/bab|skripsi|materi|kuliah|akademik|tugas/.test(lowerInput)) {
       selectedPreset = presets.academic;
-    } else if (/cari|search|website|link|googling|internet/.test(lowerInput) || project?.agentId === 'deep-search') {
+    } else if (/cari|search|website|link|googling|internet/.test(lowerInput) || currentAgentId === 'deep-search') {
       selectedPreset = presets.search;
     } else if (/kode|code|bug|sql|error|function|script|coding/.test(lowerInput)) {
       selectedPreset = presets.coding;
@@ -234,6 +328,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       formData.append('modelId', selectedModel);
       if (currentId !== 'new') formData.append('chatId', currentId);
       if (projectId) formData.append('projectId', projectId);
+      formData.append('agentId', currentAgentId);
+      formData.append('isManualSelection', String(isManualAgentSelection));
       if (isAutoTrigger) formData.append('skipSave', 'true');
       if (fileToUpload) formData.append('file', fileToUpload);
 
@@ -245,9 +341,13 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           migrateNewChatToId(result.chatId);
           setInternalId(result.chatId);
 
-          const targetUrl = projectId
-            ? `/chat/${result.chatId}?projectId=${projectId}`
-            : `/chat/${result.chatId}`;
+          const targetParams = new URLSearchParams();
+          if (projectId) targetParams.set('projectId', projectId);
+          if (isManualAgentSelection && currentAgentId !== 'default') {
+            targetParams.set('agent', currentAgentId);
+          }
+          const targetQuery = targetParams.toString();
+          const targetUrl = `/chat/${result.chatId}${targetQuery ? `?${targetQuery}` : ''}`;
 
           router.replace(targetUrl, { scroll: false });
         }
@@ -271,6 +371,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       case 'deep-search': return <Search size={16} className="text-blue-400" />;
       case 'researcher': return <BookOpen size={16} className="text-green-400" />;
       case 'editor': return <Edit3 size={16} className="text-amber-400" />;
+      case 'visualizer': return <Workflow size={16} className="text-pink-400" />;
+      case 'citation': return <Quote size={16} className="text-purple-400" />;
       default: return <Rocket size={16} className="text-indigo-400" />;
     }
   };
@@ -280,6 +382,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       case 'deep-search': return 'Deep Search Agent';
       case 'researcher': return 'Profesor Riset';
       case 'editor': return 'Editor Akademik';
+      case 'visualizer': return 'Visual Mapper';
+      case 'citation': return 'Citation Generator';
       default: return 'EduSpaceAI';
     }
   };
@@ -304,6 +408,18 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         accent: 'bg-amber-500',
         text: 'text-amber-600 dark:text-amber-400'
       };
+      case 'visualizer': return {
+        bg: 'bg-pink-50 dark:bg-pink-900/10',
+        border: 'border-pink-200 dark:border-pink-800/30',
+        accent: 'bg-pink-500',
+        text: 'text-pink-600 dark:text-pink-400'
+      };
+      case 'citation': return {
+        bg: 'bg-purple-50 dark:bg-purple-900/10',
+        border: 'border-purple-200 dark:border-purple-800/30',
+        accent: 'bg-purple-500',
+        text: 'text-purple-600 dark:text-purple-400'
+      };
       default: return {
         bg: 'bg-indigo-50 dark:bg-indigo-900/10',
         border: 'border-indigo-200 dark:border-indigo-800/30',
@@ -313,7 +429,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     }
   };
 
-  const agentTheme = project ? getAgentTheme(project.agentId) : getAgentTheme('default');
+  const agentTheme = getAgentTheme(currentAgentId);
 
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
   const [isFooterScrolled, setIsFooterScrolled] = useState(false);
@@ -347,26 +463,65 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       />
       {/* Project Header */}
       {project && (
-        <div className={`px-4 md:px-6 py-3 border-b ${agentTheme.border} bg-white/10 dark:bg-black/20 backdrop-blur-xl flex items-center justify-between z-10 flex-none transition-all`}>
+        <div className="px-4 md:px-6 py-3 border-b border-slate-200 dark:border-white/10 bg-white/10 dark:bg-black/20 backdrop-blur-xl flex items-center justify-between z-10 flex-none transition-all">
           <div className="flex items-center gap-2 md:gap-4">
             <Link
               href="/"
-              className={`p-2 rounded-lg hover:bg-white/50 dark:hover:bg-black/20 ${agentTheme.text} transition-all`}
+              className="p-2 rounded-lg hover:bg-white/50 dark:hover:bg-black/20 text-slate-700 dark:text-white transition-all"
               title="Keluar dari Workspace"
             >
               <ArrowLeft size={18} />
             </Link>
             <div className="flex items-center gap-3">
-              <div className={`w-8 h-8 rounded-lg ${agentTheme.bg} border ${agentTheme.border} flex items-center justify-center`}>
-                {getAgentIcon(project.agentId)}
+              <div className="w-8 h-8 rounded-lg bg-indigo-600/10 dark:bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center">
+                <Briefcase size={16} className="text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
                 <h2 className="text-[12px] font-bold text-slate-900 dark:text-white leading-tight">{project.name}</h2>
-                <p className={`text-[10px] ${agentTheme.text} uppercase tracking-widest font-semibold`}>{getAgentName(project.agentId)}</p>
+                <p className="text-[10px] text-slate-500 dark:text-gray-500 uppercase tracking-widest font-semibold">Workspace</p>
               </div>
             </div>
           </div>
-          <div className={`hidden sm:block text-[10px] ${agentTheme.text} ${agentTheme.bg} px-2 py-1 rounded border ${agentTheme.border} font-bold uppercase tracking-wider`}>Workspace Agent</div>
+        </div>
+      )}
+      {isManualAgentSelection && (
+        <div className={`px-4 md:px-6 py-3 ${agentTheme.bg} border-b ${agentTheme.border} flex items-center justify-between gap-3 z-10 flex-none`}>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className={`w-2 h-2 rounded-full ${agentTheme.accent} animate-pulse shrink-0`} />
+            <span className={`text-sm font-semibold ${agentTheme.text} truncate`}>
+              Menggunakan: {getAgentName(currentAgentId)}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleAgentSelect('default')}
+            className={`text-xs font-semibold ${agentTheme.text} hover:underline whitespace-nowrap`}
+          >
+            Reset Default
+          </button>
+        </div>
+      )}
+
+      {agentWorkflow.length > 0 && (
+        <div className="px-4 md:px-6 py-3 bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/5 z-10 flex-none">
+          <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
+            {agentWorkflow.map((step, idx) => (
+              <div
+                key={`${step.step}-${idx}`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap border ${
+                  step.status === 'running'
+                    ? `${agentTheme.bg} ${agentTheme.border} ${agentTheme.text}`
+                    : step.status === 'completed'
+                      ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800/30 text-green-600 dark:text-green-400'
+                      : 'bg-white dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-500 dark:text-gray-400'
+                }`}
+              >
+                {step.status === 'running' && <span className={`w-1.5 h-1.5 rounded-full ${agentTheme.accent} animate-pulse`} />}
+                {step.status === 'completed' && <span>✓</span>}
+                {step.step}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -416,7 +571,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
               </h1>
               <p className="text-slate-500 dark:text-gray-500 text-sm max-w-xs font-medium">
                 {project
-                  ? `Menggunakan agen ${getAgentName(project.agentId)}`
+                  ? `Menggunakan agen ${getAgentName(currentAgentId)}`
                   : greeting}
               </p>
             </div>
@@ -520,6 +675,9 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                 onSelect={handleModelChange}
               />
             }
+            currentAgentId={currentAgentId}
+            onAgentSelect={handleAgentSelect}
+            projectId={projectId}
           />
         </div>
       </div>
@@ -544,8 +702,7 @@ function SuggestionChip({ label, icon, onClick, isLink, theme }) {
   );
 }
 
-function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile, isNewChat, modelSelector }) {
-  const { setIsProjectModalOpen } = useLayout();
+function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile, isNewChat, modelSelector, currentAgentId, onAgentSelect, projectId }) {
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [showNudge, setShowNudge] = useState(false);
   const fileInputRef = useRef(null);
@@ -657,7 +814,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
         )}
       </AnimatePresence>
 
-      <div className="relative bg-white dark:bg-[#151515] border border-slate-200 dark:border-white/10 rounded-[24px] p-1.5 flex items-end gap-1 focus-within:border-indigo-500/30 transition-all shadow-2xl pointer-events-auto">
+      <div className="relative bg-white dark:bg-[#151515] border border-slate-200 dark:border-white/10 rounded-[24px] p-1.5 md:p-2 flex items-end gap-1 focus-within:border-indigo-500/30 transition-all shadow-2xl pointer-events-auto">
         <div className="relative">
           <AnimatePresence>
             {showNudge && !isActionSheetOpen && (
@@ -677,13 +834,13 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               setIsActionSheetOpen(!isActionSheetOpen);
               setShowNudge(false);
             }}
-            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
+            className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
               isActionSheetOpen
               ? 'bg-indigo-600 text-white rotate-45'
               : 'text-slate-400 dark:text-gray-500 hover:text-indigo-400'
             } ${showNudge && !isActionSheetOpen ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-[#0F0F0F] animate-pulse' : ''}`}
           >
-            <Plus size={20} />
+            <Plus size={18} className="md:w-5 md:h-5" />
           </button>
         </div>
 
@@ -705,24 +862,23 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           maxRows={8}
           disabled={disabled}
           placeholder="Tanya apa saja ke Dosen AI-mu..."
-          className="flex-1 w-full min-w-0 bg-transparent border-none outline-none py-2.5 px-3 text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
+          className="flex-1 w-full min-w-0 bg-transparent border-none outline-none py-2 md:py-2.5 px-2 md:px-3 text-sm md:text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
         />
-        <div className="flex flex-col items-end gap-2">
-          <div className="flex items-center gap-1.5 px-2 mb-0.5">
-            <Link href="/tools" className="text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-indigo-500 transition-colors tracking-widest uppercase">TOOLS</Link>
-            <div className="w-[1px] h-2.5 bg-slate-200 dark:bg-white/10" />
-            <button
-              onClick={() => setIsProjectModalOpen(true)}
-              className="text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-indigo-500 transition-colors tracking-widest uppercase"
-            >
-              AGENT
-            </button>
+        <div className="flex flex-col items-end gap-1.5 md:gap-2">
+          <div className="flex items-center gap-1 md:gap-1.5 px-1.5 md:px-2 mb-0.5">
+            <Link href="/tools" className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-indigo-500 transition-colors tracking-widest uppercase">TOOLS</Link>
+            <div className="w-[1px] h-2 md:h-2.5 bg-slate-200 dark:bg-white/10" />
+            <AgentSelector
+              currentAgent={currentAgentId}
+              onSelect={onAgentSelect}
+              projectId={projectId}
+            />
           </div>
           <div className="flex items-center gap-1">
             {modelSelector}
             <Link
               href="/chat/live"
-              className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/5 dark:bg-white/5 text-slate-900 dark:text-white hover:scale-105 transition-all shadow-sm border border-slate-200 dark:border-white/10"
+              className="w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center bg-white/5 dark:bg-white/5 text-slate-900 dark:text-white hover:scale-105 transition-all shadow-sm border border-slate-200 dark:border-white/10"
               title="Voice Call (Live)"
             >
               <div className="flex items-center gap-0.5">
@@ -734,15 +890,24 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
             <button
               onClick={(e) => { e.preventDefault(); handleSend(); }}
               disabled={disabled || (!input.trim() && !selectedFile)}
-              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+              className={`w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center transition-all ${
                 (input.trim() || selectedFile) && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40 hover:scale-105' : 'bg-white/5 text-slate-400 dark:text-gray-600'
               }`}
             >
-              <ArrowUp size={16} />
+              <ArrowUp size={14} className="md:w-4 md:h-4" />
             </button>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+
+export default function ChatView(props) {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <ChatViewContent {...props} />
+    </Suspense>
   );
 }

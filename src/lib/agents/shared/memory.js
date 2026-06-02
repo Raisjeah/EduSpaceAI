@@ -1,5 +1,10 @@
 const agentMemoryStore = new Map();
 const sharedMemoryStore = new Map();
+const scopeTimestamps = new Map();
+
+const MEMORY_TTL = 30 * 60 * 1000;
+const MAX_SCOPES = 1000;
+const CLEANUP_INTERVAL = 5 * 60 * 1000;
 
 function normalizeScopePart(value) {
   if (typeof value !== 'string' && typeof value !== 'number') {
@@ -10,9 +15,55 @@ function normalizeScopePart(value) {
   return normalized || null;
 }
 
+function touchScope(scopeId) {
+  if (!scopeId) {
+    return;
+  }
+
+  scopeTimestamps.set(scopeId, Date.now());
+
+  if (scopeTimestamps.size > MAX_SCOPES) {
+    cleanupOldScopes();
+  }
+}
+
+export function cleanupOldScopes() {
+  const now = Date.now();
+  const expiredScopes = [];
+
+  for (const [scopeId, timestamp] of scopeTimestamps.entries()) {
+    if (now - timestamp > MEMORY_TTL) {
+      expiredScopes.push(scopeId);
+    }
+  }
+
+  for (const scopeId of expiredScopes) {
+    agentMemoryStore.delete(scopeId);
+    sharedMemoryStore.delete(scopeId);
+    scopeTimestamps.delete(scopeId);
+  }
+
+  if (scopeTimestamps.size > MAX_SCOPES) {
+    const sortedScopes = Array.from(scopeTimestamps.entries()).sort((a, b) => a[1] - b[1]);
+    const scopesToRemove = sortedScopes.slice(0, sortedScopes.length - MAX_SCOPES);
+
+    for (const [scopeId] of scopesToRemove) {
+      agentMemoryStore.delete(scopeId);
+      sharedMemoryStore.delete(scopeId);
+      scopeTimestamps.delete(scopeId);
+    }
+  }
+}
+
+if (typeof setInterval !== 'undefined') {
+  const cleanupTimer = setInterval(cleanupOldScopes, CLEANUP_INTERVAL);
+  cleanupTimer.unref?.();
+}
+
 export function createMemoryScope(context = {}) {
   const explicitScope = normalizeScopePart(context.memoryScopeId);
   if (explicitScope) {
+    touchScope(explicitScope);
     return explicitScope;
   }
 
@@ -25,18 +76,23 @@ export function createMemoryScope(context = {}) {
     return null;
   }
 
-  return [
+  const scopeId = [
     `user:${userId || 'anonymous'}`,
     `session:${sessionId || 'none'}`,
     `project:${projectId || 'none'}`,
     `chat:${chatId || 'none'}`,
   ].join('|');
+
+  touchScope(scopeId);
+  return scopeId;
 }
 
 function getAgentScopeStore(scopeId, shouldCreate = false) {
   if (!scopeId) {
     return null;
   }
+
+  touchScope(scopeId);
 
   if (!agentMemoryStore.has(scopeId)) {
     if (!shouldCreate) {
@@ -69,6 +125,8 @@ function getSharedStore(context = {}, shouldCreate = false) {
   if (!scopeId) {
     return null;
   }
+
+  touchScope(scopeId);
 
   if (!sharedMemoryStore.has(scopeId)) {
     if (!shouldCreate) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3, Mic, Trash2, LayoutDashboard, FolderKanban } from 'lucide-react';
+import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3, Mic, Trash2, LayoutDashboard, FolderKanban, Workflow } from 'lucide-react';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useLayout } from '@/context/LayoutContext';
 import { getChatHistory, deleteChatHistory } from '@/app/actions/chatActions';
@@ -215,37 +215,6 @@ export default function Sidebar({
           {/* Spacer for floating header button area */}
           <div className="h-10 md:hidden" />
 
-          {/* ── PERUBAHAN 1: Tambah label + sederhanakan warna agent card ── */}
-          <div className="mb-4 px-1">
-            <p className="text-[9px] font-bold text-slate-400 dark:text-gray-600 uppercase tracking-[0.12em] mb-2 px-1">
-              Agen Tersedia
-            </p>
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.06] space-y-2">
-              <div className="flex items-start gap-2">
-                <Search size={11} className="text-slate-400 dark:text-gray-500 mt-0.5 shrink-0" />
-                <p className="text-[10px] text-slate-600 dark:text-gray-400 leading-snug">
-                  <span className="font-semibold text-slate-700 dark:text-gray-300">Deep Search</span>
-                  {' — '}Riset mendalam dengan akses web real-time.
-                </p>
-              </div>
-              <div className="flex items-start gap-2">
-                <BookOpen size={11} className="text-slate-400 dark:text-gray-500 mt-0.5 shrink-0" />
-                <p className="text-[10px] text-slate-600 dark:text-gray-400 leading-snug">
-                  <span className="font-semibold text-slate-700 dark:text-gray-300">Profesor Riset</span>
-                  {' — '}Ahli metodologi dan analisis data.
-                </p>
-              </div>
-              <div className="flex items-start gap-2">
-                <Edit3 size={11} className="text-slate-400 dark:text-gray-500 mt-0.5 shrink-0" />
-                <p className="text-[10px] text-slate-600 dark:text-gray-400 leading-snug">
-                  <span className="font-semibold text-slate-700 dark:text-gray-300">Editor Akademik</span>
-                  {' — '}Tata bahasa dan karya ilmiah.
-                </p>
-              </div>
-            </div>
-          </div>
-          {/* ── END PERUBAHAN 1 ── */}
-
           {/* Main Navigation */}
           <div className="flex flex-col gap-0.5 mb-4">
             <Link
@@ -263,6 +232,14 @@ export default function Sidebar({
             >
               <FolderKanban size={18} />
               <span>Workspace</span>
+            </Link>
+            <Link
+              href="/agents"
+              onClick={closeSidebar}
+              className={`flex items-center gap-3 w-full px-3 py-2 text-[13px] font-medium transition-all rounded-xl ${pathname === '/agents' ? 'bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/5'}`}
+            >
+              <Workflow size={18} />
+              <span>Agent Hub</span>
             </Link>
           </div>
 
