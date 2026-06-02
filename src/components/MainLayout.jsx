@@ -54,6 +54,7 @@ export default function MainLayout({ children }) {
   const isChatPage = pathname.startsWith('/chat') && pathname !== '/chat/live';
   const isLiveCallPage = pathname === '/chat/live';
   const isProjectPage = pathname.startsWith('/project');
+  const isAgentMode = pathname.startsWith('/project/');
 
   // Key untuk AnimatePresence agar transisi dari "/", "/chat/:id", atau "/project/:id" tidak re-render layout
   const layoutKey = (isHomePage || isChatPage || isProjectPage) ? 'chat-view' : pathname;
@@ -105,7 +106,9 @@ export default function MainLayout({ children }) {
           userId={userId}
         />
 
-        <div className={`flex-1 flex flex-col min-h-0 overflow-hidden relative transition-all duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-[280px] md:translate-x-0 md:ml-[280px]' : 'translate-x-0 ml-0'}`}>
+        <div className={`flex-1 flex flex-col min-h-0 overflow-hidden relative transition-all duration-300 ease-in-out ${
+          isSidebarOpen ? 'translate-x-[280px] md:translate-x-0 md:ml-[280px]' : 'translate-x-0 ml-0'
+        } ${isAgentMode ? 'md:ml-0' : ''}`}>
           <Header />
 
           <AnimatePresence mode="wait">

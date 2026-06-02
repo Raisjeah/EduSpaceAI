@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu, Sparkles, ArrowRight, X, Settings } from 'lucide-react';
+import { Grid3x3, Sparkles, ArrowRight, X, Settings } from 'lucide-react';
 import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';
 import { useChat } from '@/context/ChatContext';
@@ -29,8 +29,13 @@ export default function Header() {
   }, []);
 
   const isDashboardPage = pathname.startsWith('/project') || pathname.startsWith('/tools');
+  const isAgentMode = pathname.startsWith('/project/');
 
   if (!userId && pathname === '/') {
+    return null;
+  }
+
+  if (isAgentMode) {
     return null;
   }
 
@@ -72,7 +77,7 @@ export default function Header() {
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="w-10 h-10 flex items-center justify-center rounded-full text-slate-700 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all pointer-events-auto"
           >
-            {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
+            {isSidebarOpen ? <X size={22} /> : <Grid3x3 size={22} />}
           </button>
         )}
       </div>

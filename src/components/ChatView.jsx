@@ -514,6 +514,7 @@ function SuggestionChip({ label, icon, onClick, isLink, theme }) {
 function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile, isNewChat, modelSelector }) {
   const { setIsProjectModalOpen } = useLayout();
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
+  const [activeActionSection, setActiveActionSection] = useState('files');
   const [showNudge, setShowNudge] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -552,41 +553,95 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           />
           <motion.div
             ref={actionSheetRef}
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute bottom-full left-0 mb-4 w-52 sm:w-56 max-w-[85vw] liquid-glass rounded-2xl shadow-2xl p-2 z-50"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="absolute bottom-full left-0 right-0 mb-4 bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-2xl shadow-2xl overflow-hidden z-50 w-full md:w-[400px]"
           >
-            <div className="flex flex-col gap-1">
+            {/* Section Tabs */}
+            <div className="flex border-b border-slate-200 dark:border-[#333]">
               <button
-                onClick={() => cameraInputRef.current?.click()}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-[#252525] rounded-xl transition-all text-left group"
+                onClick={() => setActiveActionSection('files')}
+                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${
+                  activeActionSection === 'files' ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'text-slate-400 dark:text-gray-500'
+                }`}
               >
-                <div className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center text-pink-500 group-hover:scale-110 transition-transform">
-                  <Camera size={18} />
-                </div>
-                <span className="text-sm font-medium text-slate-700 dark:text-gray-200">Kamera</span>
+                Files
               </button>
+              <button
+                onClick={() => setActiveActionSection('tools')}
+                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${
+                  activeActionSection === 'tools' ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'text-slate-400 dark:text-gray-500'
+                }`}
+              >
+                Tools
+              </button>
+              <button
+                onClick={() => setActiveActionSection('agent')}
+                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${
+                  activeActionSection === 'agent' ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'text-slate-400 dark:text-gray-500'
+                }`}
+              >
+                Agent
+              </button>
+              <button
+                onClick={() => setActiveActionSection('model')}
+                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${
+                  activeActionSection === 'model' ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : 'text-slate-400 dark:text-gray-500'
+                }`}
+              >
+                Model
+              </button>
+            </div>
 
-              <button
-                onClick={() => galleryInputRef.current?.click()}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-[#252525] rounded-xl transition-all text-left group"
-              >
-                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
-                  <ImageIcon size={18} />
+            {/* Section Content */}
+            <div className="p-4">
+              {activeActionSection === 'files' && (
+                <div className="grid grid-cols-3 gap-3">
+                  <button onClick={() => { cameraInputRef.current?.click(); setIsActionSheetOpen(false); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50 dark:bg-[#242424] hover:bg-slate-100 dark:hover:bg-[#2A2A2A] transition-all">
+                    <Camera size={24} className="text-slate-600 dark:text-gray-400" />
+                    <span className="text-[10px] font-bold text-slate-600 dark:text-gray-400">Camera</span>
+                  </button>
+                  <button onClick={() => { galleryInputRef.current?.click(); setIsActionSheetOpen(false); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50 dark:bg-[#242424] hover:bg-slate-100 dark:hover:bg-[#2A2A2A] transition-all">
+                    <ImageIcon size={24} className="text-slate-600 dark:text-gray-400" />
+                    <span className="text-[10px] font-bold text-slate-600 dark:text-gray-400">Gallery</span>
+                  </button>
+                  <button onClick={() => { fileInputRef.current?.click(); setIsActionSheetOpen(false); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50 dark:bg-[#242424] hover:bg-slate-100 dark:hover:bg-[#2A2A2A] transition-all">
+                    <FileText size={24} className="text-slate-600 dark:text-gray-400" />
+                    <span className="text-[10px] font-bold text-slate-600 dark:text-gray-400">Document</span>
+                  </button>
                 </div>
-                <span className="text-sm font-medium text-slate-700 dark:text-gray-200">Galeri</span>
-              </button>
+              )}
 
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-[#252525] rounded-xl transition-all text-left group"
-              >
-                <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
-                  <FileText size={18} />
+              {activeActionSection === 'tools' && (
+                <Link href="/tools" onClick={() => setIsActionSheetOpen(false)} className="block p-4 rounded-xl bg-slate-50 dark:bg-[#242424] hover:bg-slate-100 dark:hover:bg-[#2A2A2A] transition-all text-left">
+                  <div className="flex items-center gap-3">
+                    <Briefcase size={24} className="text-indigo-500" />
+                    <div>
+                      <div className="text-sm font-bold text-slate-900 dark:text-white">Tools</div>
+                      <div className="text-[10px] text-slate-500 dark:text-gray-500">Akses tools tambahan</div>
+                    </div>
+                  </div>
+                </Link>
+              )}
+
+              {activeActionSection === 'agent' && (
+                <button onClick={() => { setIsProjectModalOpen(true); setIsActionSheetOpen(false); }} className="w-full p-4 rounded-xl bg-slate-50 dark:bg-[#242424] hover:bg-slate-100 dark:hover:bg-[#2A2A2A] transition-all text-left">
+                  <div className="flex items-center gap-3">
+                    <Rocket size={24} className="text-indigo-500" />
+                    <div>
+                      <div className="text-sm font-bold text-slate-900 dark:text-white">Agent</div>
+                      <div className="text-[10px] text-slate-500 dark:text-gray-500">Pilih agent workspace</div>
+                    </div>
+                  </div>
+                </button>
+              )}
+
+              {activeActionSection === 'model' && (
+                <div className="p-2 flex justify-center">
+                  {modelSelector}
                 </div>
-                <span className="text-sm font-medium text-slate-700 dark:text-gray-200">Dokumen/File</span>
-              </button>
+              )}
             </div>
           </motion.div>
           </>
@@ -669,24 +724,13 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
             }
           }}
           minRows={1}
-          maxRows={8}
+          maxRows={20}
           disabled={disabled}
           placeholder="Tanya apa saja ke Dosen AI-mu..."
           className="flex-1 w-full min-w-0 bg-transparent border-none outline-none py-2.5 px-3 text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
         />
-        <div className="flex flex-col items-end gap-2">
-          <div className="flex items-center gap-1.5 px-2 mb-0.5">
-            <Link href="/tools" className="text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-indigo-500 transition-colors tracking-widest uppercase">TOOLS</Link>
-            <div className="w-[1px] h-2.5 bg-slate-200 dark:bg-white/10" />
-            <button
-              onClick={() => setIsProjectModalOpen(true)}
-              className="text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-indigo-500 transition-colors tracking-widest uppercase"
-            >
-              AGENT
-            </button>
-          </div>
-          <div className="flex items-center gap-1">
-            {modelSelector}
+        <div className="flex flex-col items-end gap-2 justify-end mb-1">
+          <div className="flex items-center gap-1 mt-auto">
             <Link
               href="/chat/live"
               className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/5 dark:bg-white/5 text-slate-900 dark:text-white hover:scale-105 transition-all shadow-sm border border-slate-200 dark:border-white/10"
