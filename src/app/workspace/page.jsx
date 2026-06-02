@@ -85,22 +85,55 @@ export default function WorkspacePage() {
   return (
     <div className="flex-1 flex flex-col bg-slate-50 dark:bg-[#0F0F0F] overflow-hidden">
       {/* Header */}
-      <div className="p-4 md:p-8 space-y-6">
+      <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto w-full">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Briefcase className="text-indigo-600" /> Workspace
+              <Rocket className="text-indigo-600" /> Agentic AI Dashboard
             </h1>
-            <p className="text-sm text-slate-500 dark:text-gray-400">Kelola semua proyek riset dan dokumen akademik Anda di sini.</p>
+            <p className="text-sm text-slate-500 dark:text-gray-400">Pusat kendali Agent AI Anda. Kelola sesi riset, dokumen, dan pantau status AI bekerja.</p>
           </div>
           <div className="flex items-center gap-3">
              <button
                onClick={() => setIsProjectModalOpen(true)}
                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-900/20"
              >
-               <Plus size={18} /> Proyek Baru
+               <Rocket size={18} /> Mulai Sesi Agent Baru
              </button>
           </div>
+        </div>
+
+        {/* Quick Agent Actions */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+           <div onClick={() => setIsProjectModalOpen(true)} className="cursor-pointer bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 p-4 rounded-2xl hover:-translate-y-1 transition-transform">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-xl text-blue-600 dark:text-blue-400">
+                  <Search size={18} />
+                </div>
+                <h3 className="font-bold text-slate-900 dark:text-white text-sm">Deep Search</h3>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-gray-400">Pencarian informasi massal secara realtime dari berbagai sumber web.</p>
+           </div>
+
+           <div onClick={() => setIsProjectModalOpen(true)} className="cursor-pointer bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/30 p-4 rounded-2xl hover:-translate-y-1 transition-transform">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-green-100 dark:bg-green-900/50 rounded-xl text-green-600 dark:text-green-400">
+                  <BookOpen size={18} />
+                </div>
+                <h3 className="font-bold text-slate-900 dark:text-white text-sm">Profesor Riset</h3>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-gray-400">Analisis jurnal, metodologi, dan argumentasi karya ilmiah mendalam.</p>
+           </div>
+
+           <div onClick={() => setIsProjectModalOpen(true)} className="cursor-pointer bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 p-4 rounded-2xl hover:-translate-y-1 transition-transform">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-xl text-amber-600 dark:text-amber-400">
+                  <Edit3 size={18} />
+                </div>
+                <h3 className="font-bold text-slate-900 dark:text-white text-sm">Editor Akademik</h3>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-gray-400">Penyempurnaan tata bahasa, PUEBI, dan format sitasi akademik.</p>
+           </div>
         </div>
 
         {/* Filters & Search */}
@@ -110,7 +143,7 @@ export default function WorkspacePage() {
                 onClick={() => setActiveTab('projects')}
                 className={`flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'projects' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
               >
-                <FolderKanban size={16} /> Proyek ({projects.length})
+                <Briefcase size={16} /> Sesi Aktif ({projects.length})
               </button>
               <button
                 onClick={() => setActiveTab('documents')}
@@ -124,7 +157,7 @@ export default function WorkspacePage() {
               <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder={`Cari ${activeTab === 'projects' ? 'proyek' : 'dokumen'}...`}
+                placeholder={`Cari ${activeTab === 'projects' ? 'sesi agent' : 'dokumen'}...`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-white dark:bg-[#151515] border border-slate-200 dark:border-white/5 rounded-2xl py-2.5 pl-12 pr-4 text-sm text-slate-900 dark:text-white outline-none focus:border-indigo-500/50 transition-all shadow-sm"
@@ -134,7 +167,7 @@ export default function WorkspacePage() {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-8 pb-8">
+      <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-8 pb-8 max-w-7xl mx-auto w-full">
         <AnimatePresence mode="wait">
           {loading ? (
              <motion.div
