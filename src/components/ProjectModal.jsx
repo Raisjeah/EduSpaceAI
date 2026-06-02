@@ -21,15 +21,17 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name.trim()) return;
 
     setIsLoading(true);
-    const result = await createProject(name, agentId);
+    // Use the selected agent's name as the default project name along with a timestamp
+    const selectedAgent = agents.find(a => a.id === agentId);
+    const defaultName = `${selectedAgent?.name || 'Agent'} Session`;
+
+    const result = await createProject(defaultName, agentId);
 
     if (result.success) {
       startTransition(() => {
         onClose();
-        setName('');
         setAgentId('default');
         setIsLoading(false);
         router.push(`/project/${result.project._id}`);
@@ -46,7 +48,7 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-white dark:bg-[#1A1A1A] w-full max-w-md rounded-3xl border border-slate-200 dark:border-[#333] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 transition-colors">
         <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-[#333]">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Buat Agent Baru</h2>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Pilih Agent</h2>
           <button onClick={onClose} className="text-slate-400 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors">
             <X size={20} />
           </button>
@@ -54,19 +56,7 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div>
-            <label className="block text-[11px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-2">Nama Agent Workspace</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Misal: Skripsi Bab 1 atau Riset AI"
-              className="w-full bg-slate-50 dark:bg-[#242424] border border-slate-200 dark:border-[#333] rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-gray-200 focus:outline-none focus:border-indigo-500 transition-all"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-3">Pilih Agent</label>
+            <label className="block text-[11px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-3">Daftar Agent</label>
             <div className="grid grid-cols-2 gap-3">
               {agents.map((agent) => (
                 <div
@@ -92,10 +82,10 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
 
           <button
             type="submit"
-            disabled={isLoading || !name.trim()}
+            disabled={isLoading}
             className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-900/20 transition-all"
           >
-            {isLoading ? 'Sedang Membuat...' : 'Create Agent Workspace'}
+            {isLoading ? 'Sedang Memulai...' : 'Mulai Sesi Agent'}
           </button>
         </form>
       </div>

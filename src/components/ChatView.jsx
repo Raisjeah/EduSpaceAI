@@ -72,7 +72,6 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
   const [thoughtTraces, setThoughtTraces] = useState([]);
-  const [dynamicStatus, setDynamicStatus] = useState("Dosen AI sedang berpikir...");
   const statusIntervalRef = useRef(null);
   const [upgradeModal, setUpgradeModal] = useState({ isOpen: false, feature: '' });
   const [isLoadingChat, setIsLoadingChat] = useState(false);
@@ -175,36 +174,6 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     const textToSend = overrideInput || input;
     if ((!textToSend.trim() && !selectedFile) || (isPending && !isAutoTrigger)) return;
 
-    const presets = {
-      academic: ["Membaca file referensi...", "Menganalisis bab terkait...", "Menyusun struktur penjelasan...", "Memfinalisasi materi akademik..."],
-      search: ["Membuka mesin pencari...", "Menjelajahi situs terkait...", "Menyaring informasi valid...", "Merangkum hasil penelusuran..."],
-      coding: ["Membaca baris kode...", "Menganalisis logika fungsi...", "Melacak potensi bug...", "Menyusun perbaikan kode..."],
-      default: ["Menerima pesan...", "Memikirkan jawaban terbaik...", "Menyusun respons..."]
-    };
-
-    let selectedPreset = presets.default;
-    const lowerInput = textToSend.toLowerCase();
-    if (/bab|skripsi|materi|kuliah|akademik|tugas/.test(lowerInput)) {
-      selectedPreset = presets.academic;
-    } else if (/cari|search|website|link|googling|internet/.test(lowerInput) || project?.agentId === 'deep-search') {
-      selectedPreset = presets.search;
-    } else if (/kode|code|bug|sql|error|function|script|coding/.test(lowerInput)) {
-      selectedPreset = presets.coding;
-    }
-
-    let statusIndex = 0;
-    setDynamicStatus(selectedPreset[0]);
-    if (statusIntervalRef.current) clearInterval(statusIntervalRef.current);
-
-    statusIntervalRef.current = setInterval(() => {
-      statusIndex++;
-      if (statusIndex < selectedPreset.length) {
-        setDynamicStatus(selectedPreset[statusIndex]);
-      } else {
-        clearInterval(statusIntervalRef.current);
-      }
-    }, 2000);
-
     if (!isAutoTrigger) {
       const userMessage = {
         role: 'user',
@@ -252,10 +221,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           router.replace(targetUrl, { scroll: false });
         }
 
-        if (statusIntervalRef.current) clearInterval(statusIntervalRef.current);
         runTypewriter(result.chatId, result.aiResponse);
       } else {
-        if (statusIntervalRef.current) clearInterval(statusIntervalRef.current);
         setIsThinking(false);
         if (result.error?.includes('Batas')) {
           setUpgradeModal({ isOpen: true, feature: 'Pesan Harian' });
@@ -470,7 +437,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
               )}
               {(isThinking || isUploading) && (
                 <div className="px-1 flex flex-col gap-1.5">
-                  <ThinkingIndicator status={dynamicStatus} />
+                  <ThinkingIndicator agentId={project?.agentId || 'default'} />
                   {isUploading && (
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800/30 rounded-lg w-fit animate-pulse">
                       <FileText size={12} className="text-indigo-500" />
