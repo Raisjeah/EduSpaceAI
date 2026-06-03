@@ -196,15 +196,17 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
         <div className="flex items-center gap-2 mt-4 ml-0.5 animate-in fade-in duration-500">
           <button
             onClick={() => { setLiked(!liked); if (!liked) setDisliked(false); }}
-            className={`p-1.5 rounded-lg transition-all ${liked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'}`}
+            className={`p-1.5 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${liked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'}`}
             title="Suka"
+            aria-label="Suka"
           >
             <ThumbsUp size={16} />
           </button>
           <button
             onClick={() => { setDisliked(!disliked); if (!disliked) setLiked(false); }}
-            className={`p-1.5 rounded-lg transition-all ${disliked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'}`}
+            className={`p-1.5 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${disliked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'}`}
             title="Tidak Suka"
+            aria-label="Tidak Suka"
           >
             <ThumbsDown size={16} />
           </button>
@@ -212,8 +214,9 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
             <div className="flex items-center gap-2">
               <button
                 onClick={handleCopy}
-                className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent transition-all flex items-center gap-1.5"
+                className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent transition-all flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                 title="Salin Pesan"
+                aria-label={copied ? "Tersalin!" : "Salin Pesan"}
               >
                 {copied ? (
                   <>
@@ -228,12 +231,13 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
               <button
                 onClick={handleReadAloud}
                 disabled={isLoadingAudio}
-                className={`p-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                className={`p-1.5 rounded-lg transition-all flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
                   isPlaying
                     ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30'
                     : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'
                 }`}
                 title={isPlaying ? "Berhenti" : "Dengarkan"}
+                aria-label={isPlaying ? "Berhenti" : "Dengarkan"}
               >
                 {isLoadingAudio ? (
                   <Loader2 size={16} className="animate-spin" />
