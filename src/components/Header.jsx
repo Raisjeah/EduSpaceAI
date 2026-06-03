@@ -70,7 +70,8 @@ export default function Header() {
         ) : (
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="w-10 h-10 flex items-center justify-center rounded-full text-slate-700 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all pointer-events-auto"
+            className="w-10 h-10 flex items-center justify-center rounded-full text-slate-700 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all pointer-events-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            aria-label={isSidebarOpen ? "Tutup menu samping" : "Buka menu samping"}
           >
             {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
@@ -93,16 +94,20 @@ export default function Header() {
           <>
             <Link
               href="/pricing"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-amber-500 dark:text-amber-400 text-xs font-bold hover:bg-black/10 dark:hover:bg-white/10 transition-all pointer-events-auto"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-amber-500 dark:text-amber-400 text-xs font-bold hover:bg-black/10 dark:hover:bg-white/10 transition-all pointer-events-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+              aria-label={user?.current_plan === 'FREE' ? 'Upgrade ke Pro' : `Paket ${user?.current_plan}`}
             >
               <Sparkles size={13} />
               {user?.current_plan === 'FREE' ? 'Upgrade' : user?.current_plan}
             </Link>
 
-            <Link href="/dashboard" title="Pengaturan" className="pointer-events-auto">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-slate-700 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all">
-                <Settings size={20} />
-              </div>
+            <Link
+              href="/dashboard"
+              title="Pengaturan"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-slate-700 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all pointer-events-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+              aria-label="Pengaturan"
+            >
+              <Settings size={20} />
             </Link>
           </>
         )}

@@ -490,15 +490,28 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           isSidebarOpen ? 'left-0 md:left-[280px]' : 'left-0'
         } bg-transparent pointer-events-none`}>
         <div className="max-w-4xl mx-auto flex flex-col gap-3 pointer-events-auto">
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-2">
             <AnimatePresence>
+              {isFooterScrolled && (
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  onClick={() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                  className="p-2 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-slate-600 dark:text-gray-300 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-lg pointer-events-auto ring-offset-white dark:ring-offset-[#0F0F0F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                  aria-label="Scroll ke bawah"
+                >
+                  <ChevronDown size={20} />
+                </motion.button>
+              )}
               {isTyping && (
                 <motion.button
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
                   onClick={() => stopTypewriter(currentId)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[11px] font-bold text-slate-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 hover:border-red-200 transition-all shadow-sm mb-2 pointer-events-auto"
+                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[11px] font-bold text-slate-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 hover:border-red-200 transition-all shadow-sm pointer-events-auto ring-offset-white dark:ring-offset-[#0F0F0F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                  aria-label="Berhenti menghasilkan"
                 >
                   <Square size={12} fill="currentColor" /> Berhenti Menghasilkan
                 </motion.button>
@@ -677,11 +690,12 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               setIsActionSheetOpen(!isActionSheetOpen);
               setShowNudge(false);
             }}
-            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
+            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
               isActionSheetOpen
               ? 'bg-indigo-600 text-white rotate-45'
               : 'text-slate-400 dark:text-gray-500 hover:text-indigo-400'
             } ${showNudge && !isActionSheetOpen ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-[#0F0F0F] animate-pulse' : ''}`}
+            aria-label="Tambah file atau media"
           >
             <Plus size={20} />
           </button>
@@ -722,8 +736,9 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
             {modelSelector}
             <Link
               href="/chat/live"
-              className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/5 dark:bg-white/5 text-slate-900 dark:text-white hover:scale-105 transition-all shadow-sm border border-slate-200 dark:border-white/10"
+              className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/5 dark:bg-white/5 text-slate-900 dark:text-white hover:scale-105 transition-all shadow-sm border border-slate-200 dark:border-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
               title="Voice Call (Live)"
+              aria-label="Panggilan suara langsung"
             >
               <div className="flex items-center gap-0.5">
                 <div className="w-0.5 h-2.5 bg-current rounded-full" />
@@ -734,9 +749,10 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
             <button
               onClick={(e) => { e.preventDefault(); handleSend(); }}
               disabled={disabled || (!input.trim() && !selectedFile)}
-              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
                 (input.trim() || selectedFile) && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40 hover:scale-105' : 'bg-white/5 text-slate-400 dark:text-gray-600'
               }`}
+              aria-label="Kirim pesan"
             >
               <ArrowUp size={16} />
             </button>
