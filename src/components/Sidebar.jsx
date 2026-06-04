@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3, Mic, Trash2, LayoutDashboard, FolderKanban } from 'lucide-react';
+import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3, Mic, Trash2, LayoutDashboard, FolderKanban, X } from 'lucide-react';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useLayout } from '@/context/LayoutContext';
 import { getChatHistory, deleteChatHistory } from '@/app/actions/chatActions';
@@ -8,6 +8,7 @@ import { logout } from '@/app/actions/authActions';
 import { getProjects } from '@/app/actions/projectActions';
 import { getProjectDocumentCounts } from '@/app/actions/documentActions';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import useAuth from '@/hooks/useAuth';
 
@@ -16,6 +17,7 @@ export default function Sidebar({
 }) {
   const { isSidebarOpen, setIsSidebarOpen, isProjectModalOpen, setIsProjectModalOpen } = useLayout();
   const [chatGroups, setChatGroups] = useState([]);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [projects, setProjects] = useState([]);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -152,20 +154,23 @@ export default function Sidebar({
   const handleDeleteChat = async (e, chatId) => {
     e.preventDefault();
     e.stopPropagation();
+    setConfirmDeleteId(chatId);
+  };
 
-    if (confirm('Hapus percakapan ini secara permanen?')) {
-      try {
-        const result = await deleteChatHistory(chatId);
-        if (result.success) {
-          setChatGroups(prev => prev.filter(chat => chat._id !== chatId));
-          showNotification('Percakapan dihapus');
-          if (pathname.includes(`/chat/${chatId}`)) {
-            router.push('/');
-          }
+  const confirmDelete = async (chatId) => {
+    try {
+      const result = await deleteChatHistory(chatId);
+      if (result.success) {
+        setChatGroups(prev => prev.filter(chat => chat._id !== chatId));
+        showNotification('Percakapan dihapus');
+        if (pathname.includes(`/chat/${chatId}`)) {
+          router.push('/');
         }
-      } catch (err) {
-        console.error("Gagal menghapus:", err);
       }
+    } catch (err) {
+      console.error('Gagal menghapus:', err);
+    } finally {
+      setConfirmDeleteId(null);
     }
   };
 
@@ -213,7 +218,7 @@ export default function Sidebar({
       `}>
         <div className="flex flex-col h-full p-4">
           {/* Spacer for floating header button area */}
-          <div className="h-10 md:hidden" />
+          <div className="h-12 md:hidden" />
 
           {/* ── PERUBAHAN 1: Tambah label + sederhanakan warna agent card ── */}
           <div className="mb-4 px-1">
@@ -279,14 +284,23 @@ export default function Sidebar({
 
             {/* Search Input In Sidebar */}
             <div className="relative mt-2">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari history..."
-                className="w-full liquid-glass rounded-xl py-2 pl-8 pr-3 sm:pr-4 text-[11px] sm:text-[12px] text-slate-900 dark:text-white outline-none focus:border-indigo-500/50 transition-all"
+                className="w-full liquid-glass rounded-xl py-2 pl-8 pr-8 text-[11px] sm:text-[12px] text-slate-900 dark:text-white outline-none focus:border-indigo-500/50 transition-all"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
+                  aria-label="Hapus pencarian"
+                >
+                  <X size={13} />
+                </button>
+              )}
             </div>
           </div>
 
@@ -339,7 +353,7 @@ export default function Sidebar({
                           key={chat._id}
                           href={href}
                           onClick={closeSidebar}
-                          className={`group relative flex items-center gap-3 px-3 py-2 text-[13px] cursor-pointer transition-all ${
+                          className={`group relative flex items-center gap-3 px-3 py-3 text-[13px] cursor-pointer transition-all ${
                             isActive
                             ? 'text-slate-900 dark:text-white font-semibold'
                             : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200'
@@ -347,13 +361,31 @@ export default function Sidebar({
                         >
                           <MessageSquare size={14} className={isActive ? 'text-indigo-500' : 'text-gray-400 group-hover:text-indigo-400/50'} />
                           <span className="truncate flex-1">{chat.text}</span>
-                          <button
-                            onClick={(e) => handleDeleteChat(e, chat._id)}
-                            className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-500/10 hover:text-red-500 rounded-md transition-all shrink-0"
-                            title="Hapus chat"
-                          >
-                            <Trash2 size={12} />
-                          </button>
+                          {confirmDeleteId === chat._id ? (
+                            <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                              <button
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); confirmDelete(chat._id); }}
+                                className="p-1 text-[10px] font-bold text-red-500 hover:bg-red-500/10 rounded px-1.5 transition-all"
+                              >
+                                Hapus
+                              </button>
+                              <button
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setConfirmDeleteId(null); }}
+                                className="p-1 text-[10px] font-bold text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded px-1.5 transition-all"
+                              >
+                                Batal
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={(e) => handleDeleteChat(e, chat._id)}
+                              className="opacity-0 group-hover:opacity-100 p-2 md:p-1.5 hover:bg-red-500/10 hover:text-red-500 rounded-md transition-all shrink-0"
+                              title="Hapus chat"
+                              aria-label="Hapus percakapan"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          )}
                         </Link>
                       );
                     })}
@@ -371,7 +403,7 @@ export default function Sidebar({
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg overflow-hidden border border-white/20">
                       {user?.image ? (
-                        <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+                        <Image src={user.image} alt={user.name} width={32} height={32} className="w-full h-full object-cover" />
                       ) : (
                         <User size={14} className="text-white" />
                       )}

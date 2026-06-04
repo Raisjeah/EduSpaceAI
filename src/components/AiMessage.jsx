@@ -4,11 +4,11 @@ import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import { ThumbsUp, ThumbsDown, Copy, Check, Volume2, Loader2, StopCircle } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Copy, Check, Volume2, Loader2, StopCircle, RefreshCw } from 'lucide-react';
 import Mermaid from './Mermaid';
 import 'katex/dist/katex.min.css';
 
-export default function AiMessage({ content, isUser = false, isTyping = false, onApply }) {
+export default function AiMessage({ content, isUser = false, isTyping = false, onApply, onRegenerate, isLast = false }) {
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
@@ -121,15 +121,42 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
                 remarkPlugins={[remarkMath]}
                 rehypePlugins={[rehypeKatex]}
                 components={{
+                  a({ node, href, children, ...props }) {
+                    let domain = '';
+                    try {
+                      if (href) domain = new URL(href).hostname;
+                    } catch(e) {}
+                    return (
+                      <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 hover:underline bg-indigo-500/10 px-2 py-0.5 rounded-md font-semibold transition-colors" {...props}>
+                        {domain && (
+                          <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=16`} alt={domain} className="w-3.5 h-3.5 rounded-[2px]" />
+                        )}
+                        {children}
+                      </a>
+                    );
+                  },
                   code({ node, inline, className, children, ...props }) {
                     const match = /language-(\w+)/.exec(className || '');
-                    return !inline && match && match[1] === 'mermaid' ? (
-                      <Mermaid chart={String(children).replace(/\n$/, '')} />
-                    ) : (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
-                    );
+                    if (!inline && match) {
+                      if (match[1] === 'mermaid') {
+                        return <Mermaid chart={String(children).replace(/\n$/, '')} />;
+                      }
+                      return (
+                        <div className="relative group/code">
+                          <button
+                            onClick={() => navigator.clipboard.writeText(String(children))}
+                            className="absolute top-2 right-2 px-2 py-1 rounded-md text-[10px] font-bold bg-white/10 text-gray-300 hover:bg-white/20 transition-all opacity-0 group-hover/code:opacity-100 z-10"
+                            aria-label="Salin kode"
+                          >
+                            Salin
+                          </button>
+                          <code className={className} {...props}>
+                            {children}
+                          </code>
+                        </div>
+                      );
+                    }
+                    return <code className={className} {...props}>{children}</code>;
                   }
                 }}
               >
@@ -173,15 +200,42 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
                 remarkPlugins={[remarkMath]}
                 rehypePlugins={[rehypeKatex]}
                 components={{
+                  a({ node, href, children, ...props }) {
+                    let domain = '';
+                    try {
+                      if (href) domain = new URL(href).hostname;
+                    } catch(e) {}
+                    return (
+                      <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 hover:underline bg-indigo-500/10 px-2 py-0.5 rounded-md font-semibold transition-colors" {...props}>
+                        {domain && (
+                          <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=16`} alt={domain} className="w-3.5 h-3.5 rounded-[2px]" />
+                        )}
+                        {children}
+                      </a>
+                    );
+                  },
                   code({ node, inline, className, children, ...props }) {
                     const match = /language-(\w+)/.exec(className || '');
-                    return !inline && match && match[1] === 'mermaid' ? (
-                      <Mermaid chart={String(children).replace(/\n$/, '')} />
-                    ) : (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
-                    );
+                    if (!inline && match) {
+                      if (match[1] === 'mermaid') {
+                        return <Mermaid chart={String(children).replace(/\n$/, '')} />;
+                      }
+                      return (
+                        <div className="relative group/code">
+                          <button
+                            onClick={() => navigator.clipboard.writeText(String(children))}
+                            className="absolute top-2 right-2 px-2 py-1 rounded-md text-[10px] font-bold bg-white/10 text-gray-300 hover:bg-white/20 transition-all opacity-0 group-hover/code:opacity-100 z-10"
+                            aria-label="Salin kode"
+                          >
+                            Salin
+                          </button>
+                          <code className={className} {...props}>
+                            {children}
+                          </code>
+                        </div>
+                      );
+                    }
+                    return <code className={className} {...props}>{children}</code>;
                   }
                 }}
               >
@@ -193,18 +247,20 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
 
         {/* Action Bar - Only show when not typing */}
         {!isTyping && (
-        <div className="flex items-center gap-2 mt-4 ml-0.5 animate-in fade-in duration-500">
+        <div className="flex items-center gap-1.5 mt-2 ml-0.5 animate-in fade-in duration-500">
           <button
             onClick={() => { setLiked(!liked); if (!liked) setDisliked(false); }}
-            className={`p-1.5 rounded-lg transition-all ${liked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'}`}
+            className={`p-1.5 rounded-lg transition-all ${liked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-white/10 border border-transparent'}`}
             title="Suka"
+            aria-label="Suka jawaban ini"
           >
             <ThumbsUp size={16} />
           </button>
           <button
             onClick={() => { setDisliked(!disliked); if (!disliked) setLiked(false); }}
-            className={`p-1.5 rounded-lg transition-all ${disliked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'}`}
+            className={`p-1.5 rounded-lg transition-all ${disliked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-white/10 border border-transparent'}`}
             title="Tidak Suka"
+            aria-label="Tidak suka jawaban ini"
           >
             <ThumbsDown size={16} />
           </button>
@@ -212,7 +268,8 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
             <div className="flex items-center gap-2">
               <button
                 onClick={handleCopy}
-                className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent transition-all flex items-center gap-1.5"
+                className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-white/10 border border-transparent transition-all flex items-center gap-1.5"
+                aria-label="Salin pesan"
                 title="Salin Pesan"
               >
                 {copied ? (
@@ -231,8 +288,9 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
                 className={`p-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                   isPlaying
                     ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30'
-                    : 'text-slate-500 hover:text-indigo-500 hover:bg-white/10 border border-transparent'
+                    : 'text-slate-400 dark:text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-white/10 border border-transparent'
                 }`}
+                aria-label={isPlaying ? 'Berhenti membaca' : 'Dengarkan jawaban'}
                 title={isPlaying ? "Berhenti" : "Dengarkan"}
               >
                 {isLoadingAudio ? (
@@ -244,6 +302,16 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
                 )}
               </button>
             </div>
+          )}
+          {isLast && onRegenerate && (
+            <button
+              onClick={onRegenerate}
+              className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-white/10 border border-transparent transition-all flex items-center gap-1.5"
+              aria-label="Hasilkan ulang jawaban"
+              title="Hasilkan Ulang"
+            >
+              <RefreshCw size={16} />
+            </button>
           )}
         </div>
         )}

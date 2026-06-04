@@ -499,6 +499,7 @@ const LiveCallDashboard = () => {
           <button
             onClick={() => setIsVideoOn(!isVideoOn)}
             title={isVideoOn ? 'Matikan Kamera' : 'Nyalakan Kamera'}
+            aria-label={isVideoOn ? 'Matikan Kamera' : 'Nyalakan Kamera'}
             className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all ${
               isVideoOn ? 'bg-blue-500/20 text-blue-400' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
             }`}
@@ -511,6 +512,7 @@ const LiveCallDashboard = () => {
           <button
             onClick={() => setIsTextInputOpen(!isTextInputOpen)}
             title="Ketik Pesan"
+            aria-label={isTextInputOpen ? 'Tutup input teks' : 'Buka input teks'}
             className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all ${
               isTextInputOpen ? 'bg-blue-500/20 text-blue-400' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
             }`}
@@ -523,6 +525,7 @@ const LiveCallDashboard = () => {
           <button
             onClick={() => setIsMuted(!isMuted)}
             title={isMuted ? 'Unmute Mic' : 'Mute Mic'}
+            aria-label={isMuted ? 'Nyalakan Mikrofon' : 'Matikan Mikrofon'}
             className={`flex flex-col items-center gap-1 px-5 py-3 rounded-2xl transition-all shadow-lg ${
               !isMuted
                 ? 'bg-indigo-500 text-white shadow-indigo-500/30'
@@ -537,6 +540,7 @@ const LiveCallDashboard = () => {
           <button
             onClick={handleEndCall}
             title="Akhiri Panggilan"
+            aria-label="Akhiri Panggilan"
             className="flex flex-col items-center gap-1 px-3 py-2 rounded-2xl bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30 transition-all active:scale-95"
           >
             <X className="w-5 h-5 stroke-[2.5px]" />

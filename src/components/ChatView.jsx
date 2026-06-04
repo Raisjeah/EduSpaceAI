@@ -5,17 +5,20 @@ import { useChat } from '@/context/ChatContext';
 import { useLayout } from '@/context/LayoutContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import TextareaAutosize from 'react-textarea-autosize';
-import { ChevronDown, Plus, ArrowUp, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File, Square, Code, GraduationCap, Microscope, ArrowLeft, Mic } from 'lucide-react';
+import { ChevronDown, Plus, ArrowUp, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File, Square, Code, GraduationCap, Microscope, ArrowLeft, Mic, Menu } from 'lucide-react';
 import { sendMessage, getChatDetails } from '@/app/actions/chatActions';
 import { getProjectDetails } from '@/app/actions/projectActions';
+import { runDeepSearchAnalyzer, runDeepSearchExtractor, runDeepSearchAnalyst, runDeepSearchWriter } from '@/app/actions/deepSearchActions';
 import AiMessage from './AiMessage';
 import ThinkingIndicator from './ThinkingIndicator';
 import ModelSelector from './ModelSelector';
 import FloatingOrbs from './FloatingOrbs';
+import Image from 'next/image';
 import useAuth from '@/hooks/useAuth';
 import UpgradeModal from './UpgradeModal';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import useThinkingState from '@/hooks/useThinkingState';
 
 // ── PERUBAHAN 1: Suggested prompts untuk home screen ──
 const SUGGESTED_PROMPTS = [
@@ -28,7 +31,7 @@ const SUGGESTED_PROMPTS = [
 
 export default function ChatView({ userId, activeChatId, projectId }) {
   const { user } = useAuth();
-  const { isSidebarOpen } = useLayout();
+  const { isSidebarOpen, setIsSidebarOpen } = useLayout();
   const [greeting, setGreeting] = useState('');
 
   useEffect(() => {
@@ -71,9 +74,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
-  const [thoughtTraces, setThoughtTraces] = useState([]);
-  const [dynamicStatus, setDynamicStatus] = useState("Dosen AI sedang berpikir...");
-  const statusIntervalRef = useRef(null);
+  const [activeStates, setActiveStates] = useState(null);
+  const { status: dynamicStatus } = useThinkingState(isThinking || isUploading, activeStates);
   const [upgradeModal, setUpgradeModal] = useState({ isOpen: false, feature: '' });
   const [isLoadingChat, setIsLoadingChat] = useState(false);
   const chatEndRef = useRef(null);
@@ -105,31 +107,6 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     }
   };
 
-  useEffect(() => {
-    if (isPending && project?.agentId === 'deep-search') {
-      const traces = [
-        '🔍 Menganalisis pertanyaan...',
-        '📋 Membuat rencana riset...',
-        '🌐 Mencari informasi di web...',
-        '📄 Membaca konten website...',
-        '🧠 Menganalisis sumber data...',
-        '✍️ Menyusun jawaban final...'
-      ];
-      let i = 0;
-      setThoughtTraces([traces[0]]);
-      const interval = setInterval(() => {
-        i++;
-        if (i < traces.length) {
-          setThoughtTraces(prev => [...prev, traces[i]]);
-        } else {
-          clearInterval(interval);
-        }
-      }, 3000);
-      return () => clearInterval(interval);
-    } else {
-      setThoughtTraces([]);
-    }
-  }, [isPending, project]);
 
   useEffect(() => {
     if (activeChatId && userId) {
@@ -175,35 +152,17 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     const textToSend = overrideInput || input;
     if ((!textToSend.trim() && !selectedFile) || (isPending && !isAutoTrigger)) return;
 
-    const presets = {
-      academic: ["Membaca file referensi...", "Menganalisis bab terkait...", "Menyusun struktur penjelasan...", "Memfinalisasi materi akademik..."],
-      search: ["Membuka mesin pencari...", "Menjelajahi situs terkait...", "Menyaring informasi valid...", "Merangkum hasil penelusuran..."],
-      coding: ["Membaca baris kode...", "Menganalisis logika fungsi...", "Melacak potensi bug...", "Menyusun perbaikan kode..."],
-      default: ["Menerima pesan...", "Memikirkan jawaban terbaik...", "Menyusun respons..."]
-    };
+    const defaultStates = [
+      "Understanding question",
+      "Retrieving context",
+      "Analyzing information",
+      "Building response",
+      "Finalizing answer"
+    ];
 
-    let selectedPreset = presets.default;
-    const lowerInput = textToSend.toLowerCase();
-    if (/bab|skripsi|materi|kuliah|akademik|tugas/.test(lowerInput)) {
-      selectedPreset = presets.academic;
-    } else if (/cari|search|website|link|googling|internet/.test(lowerInput) || project?.agentId === 'deep-search') {
-      selectedPreset = presets.search;
-    } else if (/kode|code|bug|sql|error|function|script|coding/.test(lowerInput)) {
-      selectedPreset = presets.coding;
-    }
+    let selectedPreset = defaultStates;
 
-    let statusIndex = 0;
-    setDynamicStatus(selectedPreset[0]);
-    if (statusIntervalRef.current) clearInterval(statusIntervalRef.current);
-
-    statusIntervalRef.current = setInterval(() => {
-      statusIndex++;
-      if (statusIndex < selectedPreset.length) {
-        setDynamicStatus(selectedPreset[statusIndex]);
-      } else {
-        clearInterval(statusIntervalRef.current);
-      }
-    }, 2000);
+    setActiveStates(selectedPreset);
 
     if (!isAutoTrigger) {
       const userMessage = {
@@ -229,6 +188,40 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     }
 
     startTransition(async () => {
+      let preGeneratedResponse = null;
+
+      // ✅ Custom orchestration for Real-time Deep Search
+      if (project?.agentId === 'deep-search') {
+        try {
+          setActiveStates(['Agent Search Engine: Menganalisis pertanyaan...']);
+          const { subQueries, historyContext } = await runDeepSearchAnalyzer(textToSend, currentId, user?._id?.toString());
+          
+          setActiveStates(['Agent Search Engine: Mencari informasi di internet via Tavily AI...']);
+          const { structuredContext, verifiedSources, citationList } = await runDeepSearchExtractor(subQueries, textToSend);
+          
+          setActiveStates(['Agent Analyst: Memvalidasi & menganalisis informasi dari sumber web...']);
+          const factualContext = await runDeepSearchAnalyst(textToSend, historyContext, structuredContext, [], selectedModel);
+          
+          setActiveStates(['Agent Editor: Menulis hasil akhir & merapikan struktur...']);
+          let finalAnswer = await runDeepSearchWriter(textToSend, historyContext, factualContext, verifiedSources, [], selectedModel);
+          
+          if (citationList && citationList.length > 0) {
+            finalAnswer += "\n\n---\n\n**Sumber Referensi:**\n\n";
+            citationList.forEach((cit) => {
+              finalAnswer += `- [${cit.title}](${cit.url})\n`;
+            });
+          }
+          
+          preGeneratedResponse = finalAnswer;
+        } catch (error) {
+          console.error(error);
+          setIsThinking(false);
+          runTypewriter(currentId, "Maaf, terjadi kesalahan saat melakukan riset mendalam.");
+          return;
+        }
+      }
+
+      // ── SEND TO DB & GET RESULT ──
       const formData = new FormData();
       formData.append('prompt', textToSend);
       formData.append('modelId', selectedModel);
@@ -236,7 +229,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       if (projectId) formData.append('projectId', projectId);
       if (isAutoTrigger) formData.append('skipSave', 'true');
       if (fileToUpload) formData.append('file', fileToUpload);
-
+      if (preGeneratedResponse) formData.append('preGeneratedResponse', preGeneratedResponse);
+      
       const result = await sendMessage(formData);
       setIsUploading(false);
 
@@ -252,10 +246,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           router.replace(targetUrl, { scroll: false });
         }
 
-        if (statusIntervalRef.current) clearInterval(statusIntervalRef.current);
         runTypewriter(result.chatId, result.aiResponse);
       } else {
-        if (statusIntervalRef.current) clearInterval(statusIntervalRef.current);
         setIsThinking(false);
         if (result.error?.includes('Batas')) {
           setUpgradeModal({ isOpen: true, feature: 'Pesan Harian' });
@@ -348,7 +340,14 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       {/* Project Header */}
       {project && (
         <div className={`px-4 md:px-6 py-3 border-b ${agentTheme.border} bg-white/10 dark:bg-black/20 backdrop-blur-xl flex items-center justify-between z-10 flex-none transition-all`}>
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-1 md:gap-4">
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className={`md:hidden p-2 rounded-lg hover:bg-white/50 dark:hover:bg-black/20 ${agentTheme.text} transition-all pointer-events-auto`}
+              aria-label={isSidebarOpen ? 'Tutup sidebar' : 'Buka sidebar'}
+            >
+              {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
             <Link
               href="/"
               className={`p-2 rounded-lg hover:bg-white/50 dark:hover:bg-black/20 ${agentTheme.text} transition-all`}
@@ -405,10 +404,12 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             {/* Logo + Greeting */}
             <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 bg-white dark:bg-[#151515] rounded-2xl flex items-center justify-center mb-3 shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-slate-100 dark:border-white/5 overflow-hidden">
-                <img
+                <Image
                   src="/logo.png"
                   alt="EduSpaceAI Logo"
-                  className="w-10 h-10 object-contain invert dark:invert-0"
+                  width={40}
+                  height={40}
+                  className="object-contain invert dark:invert-0"
                 />
               </div>
               <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white mb-1">
@@ -423,7 +424,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
             {/* Suggested Prompts */}
             {!project && (
-              <div className="grid grid-cols-2 gap-2 w-full max-w-sm">
+              <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 w-full max-w-sm">
                 {SUGGESTED_PROMPTS.map((prompt, i) => (
                   <button
                     key={i}
@@ -452,22 +453,18 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             {/* ── PERUBAHAN 3: space-y-4 → space-y-3, pb sedikit dikurangi ── */}
             <div className="max-w-4xl mx-auto w-full pt-4 md:pt-8 pb-[150px] md:pb-[160px] px-4 sm:px-6 space-y-3 flex-1">
               {messages.map((msg, idx) => (
-                <AiMessage
-                  key={msg._id || idx}
-                  content={msg.text}
-                  isUser={msg.role === 'user'}
-                  isTyping={msg.role === 'model' && idx === messages.length - 1 && isTyping}
+                <AiMessage 
+                  key={msg._id || idx} 
+                  content={msg.text} 
+                  isUser={msg.role === 'user'} 
+                  isTyping={idx === messages.length - 1 && isTyping} 
+                  isLast={idx === messages.length - 1}
+                  onRegenerate={idx === messages.length - 1 && msg.role === 'model' ? () => {
+                    const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+                    if (lastUserMsg) handleSend(lastUserMsg.text, false);
+                  } : undefined}
                 />
               ))}
-              {thoughtTraces.length > 0 && (
-                <div className="space-y-1.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  {thoughtTraces.map((trace, idx) => (
-                    <div key={idx} className={`flex items-center gap-2 px-3 py-1.5 ${agentTheme.bg} border ${agentTheme.border} rounded-lg w-fit`}>
-                       <span className={`text-[11px] ${agentTheme.text} font-medium`}>{trace}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
               {(isThinking || isUploading) && (
                 <div className="px-1 flex flex-col gap-1.5">
                   <ThinkingIndicator status={dynamicStatus} />
@@ -486,7 +483,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         )}
       </div>
       <div
-        className={`fixed bottom-0 right-0 p-4 md:p-6 transition-all duration-300 z-30 ${
+        className={`fixed bottom-0 right-0 p-3 sm:p-4 md:p-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-[max(1.5rem,env(safe-area-inset-bottom))] transition-all duration-300 z-30 ${
           isSidebarOpen ? 'left-0 md:left-[280px]' : 'left-0'
         } bg-transparent pointer-events-none`}>
         <div className="max-w-4xl mx-auto flex flex-col gap-3 pointer-events-auto">
@@ -499,6 +496,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                   exit={{ opacity: 0, y: 10 }}
                   onClick={() => stopTypewriter(currentId)}
                   className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[11px] font-bold text-slate-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 hover:border-red-200 transition-all shadow-sm mb-2 pointer-events-auto"
+                  aria-label="Berhenti menghasilkan jawaban"
                 >
                   <Square size={12} fill="currentColor" /> Berhenti Menghasilkan
                 </motion.button>
@@ -513,6 +511,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}
             isNewChat={messages.length === 0}
+            placeholder={project ? `Tanya apa saja ke ${getAgentName(project.agentId)}...` : "Tanya apa saja ke Dosen AI-mu..."}
             modelSelector={
               <ModelSelector
                 currentPlan={user?.current_plan || 'FREE'}
@@ -544,7 +543,7 @@ function SuggestionChip({ label, icon, onClick, isLink, theme }) {
   );
 }
 
-function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile, isNewChat, modelSelector }) {
+function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile, isNewChat, modelSelector, placeholder }) {
   const { setIsProjectModalOpen } = useLayout();
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [showNudge, setShowNudge] = useState(false);
@@ -704,18 +703,25 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
           minRows={1}
           maxRows={8}
           disabled={disabled}
-          placeholder="Tanya apa saja ke Dosen AI-mu..."
+          placeholder={placeholder || "Tanya apa saja ke Dosen AI-mu..."}
           className="flex-1 w-full min-w-0 bg-transparent border-none outline-none py-2.5 px-3 text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
         />
-        <div className="flex flex-col items-end gap-2">
-          <div className="flex items-center gap-1.5 px-2 mb-0.5">
-            <Link href="/tools" className="text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-indigo-500 transition-colors tracking-widest uppercase">TOOLS</Link>
-            <div className="w-[1px] h-2.5 bg-slate-200 dark:bg-white/10" />
+        <div className="flex flex-col items-end gap-1.5">
+          <div className="flex items-center gap-0.5 px-1">
+            <Link
+              href="/tools"
+              className="inline-flex items-center justify-center min-h-[36px] px-3 py-1.5 text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-indigo-500 hover:bg-indigo-500/5 rounded-lg transition-all tracking-widest uppercase"
+              aria-label="Buka halaman Tools"
+            >
+              Tools
+            </Link>
+            <div className="w-[1px] h-3 bg-slate-200 dark:bg-white/10 mx-0.5" />
             <button
               onClick={() => setIsProjectModalOpen(true)}
-              className="text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-indigo-500 transition-colors tracking-widest uppercase"
+              className="inline-flex items-center justify-center min-h-[36px] px-3 py-1.5 text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-indigo-500 hover:bg-indigo-500/5 rounded-lg transition-all tracking-widest uppercase"
+              aria-label="Buat Agent Workspace baru"
             >
-              AGENT
+              Agent
             </button>
           </div>
           <div className="flex items-center gap-1">
@@ -724,6 +730,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               href="/chat/live"
               className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/5 dark:bg-white/5 text-slate-900 dark:text-white hover:scale-105 transition-all shadow-sm border border-slate-200 dark:border-white/10"
               title="Voice Call (Live)"
+              aria-label="Buka Voice Call Live"
             >
               <div className="flex items-center gap-0.5">
                 <div className="w-0.5 h-2.5 bg-current rounded-full" />
@@ -735,8 +742,9 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               onClick={(e) => { e.preventDefault(); handleSend(); }}
               disabled={disabled || (!input.trim() && !selectedFile)}
               className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
-                (input.trim() || selectedFile) && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40 hover:scale-105' : 'bg-white/5 text-slate-400 dark:text-gray-600'
+                (input.trim() || selectedFile) && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40 hover:scale-105 active:scale-95' : 'bg-white/5 text-slate-400 dark:text-gray-600'
               }`}
+              aria-label="Kirim pesan"
             >
               <ArrowUp size={16} />
             </button>

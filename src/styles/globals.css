@@ -3,12 +3,72 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     @apply bg-gradient-to-br from-slate-50 via-white to-indigo-50/30
            dark:from-[#0a0a0a] dark:via-[#0f0f0f] dark:to-indigo-950/20
            text-slate-900 dark:text-gray-200
            transition-colors duration-500;
   }
+
+  /* Better focus-visible for keyboard navigation */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-indigo-500 rounded-sm;
+  }
+
+  /* Remove default focus outline for mouse users */
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+/* ─── Markdown Code Block Styling ─── */
+.markdown-content pre {
+  @apply bg-slate-100 dark:bg-[#1C1C1C] rounded-xl px-4 py-4 overflow-x-auto
+         border border-slate-200 dark:border-[#2A2A2A] my-3;
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+.markdown-content pre code {
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  color: inherit;
+  font-size: inherit;
+}
+
+/* Inline code */
+.markdown-content :not(pre) > code {
+  @apply bg-slate-100 dark:bg-[#1C1C1C] text-indigo-600 dark:text-indigo-400
+         px-1.5 py-0.5 rounded-md font-mono border border-slate-200 dark:border-[#2A2A2A];
+  font-size: 0.82em;
+}
+
+/* Tables */
+.markdown-content table {
+  @apply w-full border-collapse my-3 text-sm;
+}
+.markdown-content th {
+  @apply bg-slate-100 dark:bg-[#1C1C1C] text-slate-700 dark:text-gray-300
+         font-semibold px-3 py-2 border border-slate-200 dark:border-[#333] text-left;
+}
+.markdown-content td {
+  @apply px-3 py-2 border border-slate-200 dark:border-[#333]
+         text-slate-700 dark:text-gray-300;
+}
+.markdown-content tr:nth-child(even) td {
+  @apply bg-slate-50 dark:bg-[#161616];
+}
+
+/* Blockquotes */
+.markdown-content blockquote {
+  @apply border-l-4 border-indigo-400 dark:border-indigo-600 pl-4 my-3
+         text-slate-600 dark:text-gray-400 italic;
 }
 
 .liquid-glass {

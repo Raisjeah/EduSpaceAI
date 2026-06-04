@@ -1,5 +1,6 @@
 import '@/styles/globals.css'
 import { Inter } from 'next/font/google'
+import { Suspense } from 'react'
 import MainLayout from '@/components/MainLayout'
 import { AuthProvider } from '@/context/AuthContext'
 import { ChatProvider } from '@/context/ChatContext'
@@ -10,11 +11,29 @@ import Script from 'next/script'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'EduSpaceAI',
-  description: 'Platform belajar dengan AI',
-  icons: {
-    icon: '/favicon.png',
+  title: 'EduSpaceAI — Asisten Riset Akademik Berbasis AI',
+  description:
+    'Platform riset akademik bertenaga AI untuk mahasiswa Indonesia. Bantu skripsi, temukan referensi Scopus, koreksi PUEBI, dan visualisasi data penelitian.',
+  keywords: ['skripsi', 'riset akademik', 'AI penelitian', 'jurnal Scopus', 'PUEBI', 'asisten AI mahasiswa'],
+  authors: [{ name: 'EduSpaceAI Team' }],
+  openGraph: {
+    title: 'EduSpaceAI — Asisten Riset Akademik Berbasis AI',
+    description:
+      'Platform riset akademik bertenaga AI untuk mahasiswa Indonesia. Bantu skripsi, referensi, dan penulisan.',
+    url: 'https://eduspaceai.com',
+    siteName: 'EduSpaceAI',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'EduSpaceAI' }],
+    locale: 'id_ID',
+    type: 'website',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'EduSpaceAI — Asisten Riset Akademik Berbasis AI',
+    description: 'Platform riset akademik bertenaga AI untuk mahasiswa Indonesia.',
+    images: ['/og-image.png'],
+  },
+  robots: { index: true, follow: true },
+  icons: { icon: '/favicon.png' },
 }
 
 export const viewport = {
@@ -32,7 +51,9 @@ export default function RootLayout({ children }) {
           <AuthProvider>
             <ChatProvider>
               <LayoutProvider>
-                <MainLayout>{children}</MainLayout>
+                <Suspense fallback={null}>
+                  <MainLayout>{children}</MainLayout>
+                </Suspense>
               </LayoutProvider>
             </ChatProvider>
           </AuthProvider>

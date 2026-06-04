@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLayout } from '@/context/LayoutContext';
 import Sidebar from '@/components/Sidebar';
@@ -17,6 +17,7 @@ export default function MainLayout({ children }) {
 
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Ambil data auth
   const { userId, isLoading, notification, setNotification } = useAuth();
@@ -58,6 +59,8 @@ export default function MainLayout({ children }) {
   // Key untuk AnimatePresence agar transisi dari "/", "/chat/:id", atau "/project/:id" tidak re-render layout
   const layoutKey = (isHomePage || isChatPage || isProjectPage) ? 'chat-view' : pathname;
 
+  const isAgentMode = isProjectPage || searchParams.has('projectId');
+
   // Loading state - Hanya tampilkan loading screen jika belum ada userId dan sedang loading (initial auth check)
   // Jika sudah ada userId, biarkan layout tetap render agar tidak ada "flicker" saat re-fetching user data
   if (isLoading && !userId) {
@@ -98,7 +101,7 @@ export default function MainLayout({ children }) {
         )}
       </AnimatePresence>
 
-      <main className="flex-1 flex flex-col h-[100dvh] min-w-0 relative overflow-hidden">
+      <main className="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden">
         <ProjectModal
           isOpen={isProjectModalOpen}
           onClose={() => setIsProjectModalOpen(false)}
@@ -106,7 +109,7 @@ export default function MainLayout({ children }) {
         />
 
         <div className={`flex-1 flex flex-col min-h-0 overflow-hidden relative transition-all duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-[280px] md:translate-x-0 md:ml-[280px]' : 'translate-x-0 ml-0'}`}>
-          <Header />
+          {!isAgentMode && <Header />}
 
           <AnimatePresence mode="wait">
             <motion.div

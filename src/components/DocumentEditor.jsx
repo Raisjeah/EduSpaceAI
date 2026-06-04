@@ -141,6 +141,7 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
   const textareaRef = useRef(null);
   const router = useRouter();
   const autoSaveTimeoutRef = useRef(null);
+  const [isDownloadOpen, setIsDownloadOpen] = useState(false);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -407,8 +408,8 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
   return (
     <EditorErrorBoundary>
     <div className="h-full flex bg-white dark:bg-[#0F0F0F] overflow-hidden transition-colors duration-200">
-      {/* Main Editor Area */}
-      <div className={`flex-1 flex flex-col p-3 md:p-6 transition-all duration-300 ${isChatOpen ? 'md:mr-0' : ''}`}>
+      {/* Main Editor Area - hidden on mobile when chat is open */}
+      <div className={`flex-1 flex flex-col p-3 md:p-6 transition-all duration-300 ${isChatOpen ? 'hidden md:flex md:mr-[400px]' : ''}`}>
         <div className="flex justify-between items-center mb-4">
           <div>
             <h2 className="text-base md:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 uppercase tracking-wider">
@@ -428,7 +429,7 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 mb-4 bg-slate-100 dark:bg-[#1A1A1A] p-2 rounded-xl border border-slate-200 dark:border-[#333]">
+        <div className="flex flex-col sm:flex-row gap-2 mb-4 bg-slate-100 dark:bg-[#1A1A1A] p-2 rounded-xl border border-slate-200 dark:border-[#333] overflow-x-auto">
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <label className="flex items-center gap-2 bg-slate-200 dark:bg-[#242424] hover:bg-slate-300 dark:hover:bg-[#2A2A2A] px-3 md:px-4 py-2 rounded-lg cursor-pointer transition-colors text-[11px] font-bold text-slate-600 dark:text-gray-300 shrink-0">
               <FolderOpen size={14} /> Buka File
@@ -436,7 +437,7 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
             </label>
             <span className="text-[11px] text-slate-500 dark:text-gray-500 px-1 truncate font-medium">{fileName}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto">
             {/* Save Status Indicator */}
             <div className="flex items-center gap-1.5 mr-2 px-3 py-1.5 bg-slate-50 dark:bg-black/20 rounded-lg border border-slate-200 dark:border-white/5 transition-all">
                {saveStatus === 'saving' ? (
@@ -465,38 +466,49 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
               <Save size={18} />
             </button>
 
-            <div className="relative group">
+            <div className="relative">
               <button
+                onClick={() => setIsDownloadOpen(!isDownloadOpen)}
                 className="flex items-center justify-center gap-2 bg-slate-200 dark:bg-[#242424] hover:bg-slate-300 dark:hover:bg-[#2A2A2A] text-slate-700 dark:text-gray-300 px-3 py-2 rounded-lg transition-colors text-[11px] font-bold"
+                aria-expanded={isDownloadOpen}
               >
                 <Download size={14} /> Unduh
               </button>
-              <div className="absolute right-0 top-full mt-1 w-32 bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-lg shadow-xl py-1 hidden group-hover:block z-50">
-                <button
-                  onClick={handleDownloadPDF}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-[11px] text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-[#222]"
-                >
-                  <FileIcon size={12} className="text-red-500" /> PDF (.pdf)
-                </button>
-                <button
-                  onClick={handleDownloadDocx}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-[11px] text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-[#222]"
-                >
-                  <FileIcon size={12} className="text-blue-500" /> Word (.docx)
-                </button>
-              </div>
+              <AnimatePresence>
+                {isDownloadOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 5 }}
+                    className="absolute right-0 top-full mt-1 w-32 bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-lg shadow-xl py-1 z-50"
+                  >
+                    <button
+                      onClick={() => { handleDownloadPDF(); setIsDownloadOpen(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left text-[11px] text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-[#222]"
+                    >
+                      <FileIcon size={12} className="text-red-500" /> PDF (.pdf)
+                    </button>
+                    <button
+                      onClick={() => { handleDownloadDocx(); setIsDownloadOpen(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left text-[11px] text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-[#222]"
+                    >
+                      <FileIcon size={12} className="text-blue-500" /> Word (.docx)
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
             <button
               onClick={handleAnalyze}
               disabled={!content || isPending}
-              className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors text-[11px] font-bold disabled:opacity-50 shadow-lg shadow-indigo-900/20"
+              className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors text-[11px] font-bold disabled:opacity-50 shadow-lg shadow-indigo-900/20 shrink-0"
             >
-              <Sparkles size={14} /> <span>{isChatOpen ? 'Analisis Ulang' : 'Analisis dengan AI'}</span>
+              <Sparkles size={14} /> <span className="hidden sm:inline">{isChatOpen ? 'Analisis Ulang' : 'Analisis dengan AI'}</span><span className="sm:hidden">Analisis</span>
             </button>
           </div>
         </div>
 
-        <div className="flex-1 relative flex flex-col min-h-[100dvh] h-full bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-[1.5rem] shadow-inner transition-colors">
+        <div className="flex-1 relative flex flex-col min-h-0 h-full bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-[1.5rem] shadow-inner transition-colors">
           {isLoading && (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 dark:bg-[#0F0F0F]/80 backdrop-blur-sm rounded-[1.5rem] border border-indigo-500/20">
               <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-2xl shadow-xl border border-slate-200 dark:border-[#333] flex flex-col items-center w-[280px]">

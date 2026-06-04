@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Lock, Zap, Search, PenTool, Sparkles } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const MODELS_DATA = [
   {
@@ -22,9 +23,9 @@ const MODELS_DATA = [
     provider: 'Google'
   },
   {
-    id: 'gemini-3.1-pro',
-    name: 'Gemini 3.1 pro',
-    description: 'Model paling cerdas untuk riset kompleks',
+    id: 'gemini-2.5-pro-preview',
+    name: 'Gemini 2.5 Pro',
+    description: 'Model paling canggih untuk riset kompleks',
     label: 'Best for Research',
     tier: 'PRO',
     icon: <Sparkles size={14} className="text-indigo-400" />,
@@ -32,8 +33,8 @@ const MODELS_DATA = [
   },
   {
     id: 'claude-sonnet-4-6',
-    name: 'Claude Sonnet 4.6',
-    description: 'Untuk penulisan kreatif & koding',
+    name: 'Claude Sonnet 4.5',
+    description: 'Penulisan kreatif & analisis mendalam',
     tier: 'ULTRA',
     icon: <PenTool size={14} className="text-orange-400" />,
     provider: 'Anthropic'
@@ -73,9 +74,11 @@ export default function ModelSelector({ currentPlan, selectedModel, onSelect }) 
   const userRank = TIER_RANK[currentPlan] || 0;
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative" ref={dropdownRef} onKeyDown={(e) => { if (e.key === 'Escape') setIsOpen(false); }}>
       <button
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-label="Pilih model AI"
         className="flex items-center gap-2 px-2 py-1.5 bg-neutral-900/5 dark:bg-white/5 hover:bg-neutral-900/10 dark:hover:bg-white/10 border border-transparent rounded-lg transition-all text-[11px] font-bold text-slate-600 dark:text-gray-400"
       >
         <span className="flex items-center gap-1.5 shrink-0">
@@ -85,66 +88,77 @@ export default function ModelSelector({ currentPlan, selectedModel, onSelect }) 
         <ChevronDown size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {isOpen && (
-        <div className="absolute bottom-full right-0 mb-4 w-[280px] sm:w-[320px] max-w-[85vw] bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <div className="p-2 space-y-1">
-            {MODELS_DATA.map((model) => {
-              const isLocked = TIER_RANK[model.tier] > userRank;
-              const isSelected = selectedModel === model.id;
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            role="listbox"
+            className="absolute bottom-full right-0 mb-4 w-[280px] sm:w-[320px] max-w-[85vw] bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] rounded-2xl shadow-2xl overflow-hidden z-50"
+          >
+            <div className="p-2 space-y-1">
+              {MODELS_DATA.map((model) => {
+                const isLocked = TIER_RANK[model.tier] > userRank;
+                const isSelected = selectedModel === model.id;
 
-              return (
-                <button
-                  key={model.id}
-                  disabled={isLocked}
-                  onClick={() => {
-                    onSelect(model.id);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full flex flex-col p-2.5 rounded-lg transition-all text-left group ${
-                    isSelected
-                      ? 'bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30'
-                      : 'hover:bg-slate-50 dark:hover:bg-[#252525] border border-transparent'
-                  } ${isLocked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
-                >
-                  <div className="flex items-center justify-between mb-0.5">
-                    <div className="flex items-center gap-2">
-                      <div className={`p-1 rounded ${isSelected ? 'bg-indigo-100 dark:bg-indigo-500/20' : 'bg-slate-100 dark:bg-[#333]'}`}>
-                        {model.icon}
+                return (
+                  <button
+                    key={model.id}
+                    role="option"
+                    aria-selected={isSelected}
+                    disabled={isLocked}
+                    onClick={() => {
+                      onSelect(model.id);
+                      setIsOpen(false);
+                    }}
+                    className={`w-full flex flex-col p-2.5 rounded-lg transition-all text-left group ${
+                      isSelected
+                        ? 'bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30'
+                        : 'hover:bg-slate-50 dark:hover:bg-[#252525] border border-transparent'
+                    } ${isLocked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    <div className="flex items-center justify-between mb-0.5">
+                      <div className="flex items-center gap-2">
+                        <div className={`p-1 rounded ${isSelected ? 'bg-indigo-100 dark:bg-indigo-500/20' : 'bg-slate-100 dark:bg-[#333]'}`}>
+                          {model.icon}
+                        </div>
+                        <span className={`text-[13px] font-semibold ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-900 dark:text-gray-200'}`}>
+                          {model.name}
+                        </span>
                       </div>
-                      <span className={`text-[13px] font-semibold ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-900 dark:text-gray-200'}`}>
-                        {model.name}
+                      <div className="flex items-center gap-2">
+                        {model.label && (
+                          <span className="text-[9px] px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full font-bold uppercase tracking-wider">
+                            {model.label}
+                          </span>
+                        )}
+                        {isLocked && <Lock size={12} className="text-slate-400 dark:text-gray-500" />}
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-gray-400 ml-7 line-clamp-1">
+                      {model.description}
+                    </p>
+                    <div className="flex items-center gap-1.5 ml-7 mt-1">
+                      <span className="text-[9px] text-slate-400 dark:text-gray-500 uppercase tracking-tight">{model.provider}</span>
+                      <span className="text-[9px] text-slate-300 dark:text-gray-600">•</span>
+                      <span className={`text-[9px] font-bold ${isLocked ? 'text-amber-500' : 'text-green-500'}`}>
+                        {model.tier === 'FREE' ? 'Gratis' : `${model.tier} Plan`}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {model.label && (
-                        <span className="text-[9px] px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full font-bold uppercase tracking-wider">
-                          {model.label}
-                        </span>
-                      )}
-                      {isLocked && <Lock size={12} className="text-slate-400 dark:text-gray-500" />}
-                    </div>
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-gray-400 ml-7 line-clamp-1">
-                    {model.description}
-                  </p>
-                  <div className="flex items-center gap-1.5 ml-7 mt-1">
-                    <span className="text-[9px] text-slate-400 dark:text-gray-500 uppercase tracking-tight">{model.provider}</span>
-                    <span className="text-[9px] text-slate-300 dark:text-gray-600">•</span>
-                    <span className={`text-[9px] font-bold ${isLocked ? 'text-amber-500' : 'text-green-500'}`}>
-                      {model.tier === 'FREE' ? 'Gratis' : `${model.tier} Plan`}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-          <div className="p-2 border-t border-slate-100 dark:border-[#333] bg-slate-50/50 dark:bg-[#151515]">
-             <p className="text-[10px] text-center text-slate-400 dark:text-gray-500 italic">
-               Model switching mempertahankan konteks percakapan.
-             </p>
-          </div>
-        </div>
-      )}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="p-2 border-t border-slate-100 dark:border-[#333] bg-slate-50/50 dark:bg-[#151515]">
+               <p className="text-[10px] text-center text-slate-400 dark:text-gray-500 italic">
+                 Model switching mempertahankan konteks percakapan.
+               </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

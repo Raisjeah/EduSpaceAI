@@ -3,6 +3,7 @@
 import { Menu, Sparkles, ArrowRight, X, Settings } from 'lucide-react';
 import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useChat } from '@/context/ChatContext';
 import { useLayout } from '@/context/LayoutContext';
 import { useEffect, useState } from 'react';
@@ -61,7 +62,7 @@ export default function Header() {
         {!userId ? (
           <Link href="/" className="flex items-center gap-2 pointer-events-auto">
             <div className="w-8 h-8 flex items-center justify-center">
-              <img src="/logo.png" alt="EduSpaceAI Logo" className="w-full h-full object-contain invert dark:invert-0" />
+              <Image src="/logo.png" alt="EduSpaceAI Logo" width={32} height={32} className="object-contain invert dark:invert-0" />
             </div>
             <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white hidden sm:block">
               EduSpaceAI
@@ -71,6 +72,7 @@ export default function Header() {
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="w-10 h-10 flex items-center justify-center rounded-full text-slate-700 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all pointer-events-auto"
+            aria-label={isSidebarOpen ? 'Tutup sidebar' : 'Buka sidebar'}
           >
             {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
@@ -99,10 +101,8 @@ export default function Header() {
               {user?.current_plan === 'FREE' ? 'Upgrade' : user?.current_plan}
             </Link>
 
-            <Link href="/dashboard" title="Pengaturan" className="pointer-events-auto">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-slate-700 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all">
-                <Settings size={20} />
-              </div>
+            <Link href="/dashboard" title="Pengaturan" aria-label="Buka pengaturan" className="w-10 h-10 rounded-full flex items-center justify-center text-slate-700 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all pointer-events-auto">
+              <Settings size={20} />
             </Link>
           </>
         )}

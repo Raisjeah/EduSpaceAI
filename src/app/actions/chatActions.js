@@ -165,13 +165,18 @@ export async function sendMessage(formData) {
     }
 
     // F. Get AI Response
-    const aiResponse = await getGeminiResponse(prompt, historyForGemini, fileParts, agentId, modelName, {
-      userId,
-      chatId,
-      projectId,
-    });
+    let aiResponse = formData.get('preGeneratedResponse');
+    if (!aiResponse) {
+      aiResponse = await getGeminiResponse(prompt, historyForGemini, fileParts, agentId, modelName, {
+        userId,
+        chatId,
+        projectId,
+      });
+    }
 
-    await saveChat('model', aiResponse, chatId, projectId);
+    if (!skipSave) {
+      await saveChat('model', aiResponse, chatId, projectId);
+    }
 
     return { 
       success: true, 

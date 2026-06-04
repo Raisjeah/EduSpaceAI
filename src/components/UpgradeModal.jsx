@@ -7,13 +7,14 @@ export default function UpgradeModal({ isOpen, onClose, featureName, limit }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-white dark:bg-[#1A1A1A] rounded-3xl border border-slate-200 dark:border-gray-800 shadow-2xl overflow-hidden transition-all animate-in fade-in zoom-in duration-300">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-md bg-white dark:bg-[#1A1A1A] rounded-3xl border border-slate-200 dark:border-gray-800 shadow-2xl overflow-hidden transition-all animate-in fade-in zoom-in duration-300" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="relative p-6 text-center">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+            className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10"
+            aria-label="Tutup modal"
           >
             <X size={20} />
           </button>
@@ -53,7 +54,7 @@ export default function UpgradeModal({ isOpen, onClose, featureName, limit }) {
           <Link
             href="/pricing"
             onClick={onClose}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-2xl text-center shadow-lg shadow-indigo-600/20 transition-all"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-bold py-3 rounded-2xl text-center shadow-lg shadow-indigo-600/20 transition-all"
           >
             Lihat Paket Premium
           </Link>
