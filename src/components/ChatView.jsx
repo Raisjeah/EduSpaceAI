@@ -497,7 +497,23 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         className={`fixed bottom-0 right-0 p-3 sm:p-4 md:p-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-[max(1.5rem,env(safe-area-inset-bottom))] transition-all duration-300 z-30 ${
           isSidebarOpen ? 'left-0 md:left-[280px]' : 'left-0'
         } bg-transparent pointer-events-none`}>
-        <div className="max-w-4xl mx-auto flex flex-col gap-3 pointer-events-auto">
+        <div className="max-w-4xl mx-auto flex flex-col gap-3 pointer-events-auto relative">
+          <div className="absolute bottom-full right-4 sm:right-0 mb-4">
+            <AnimatePresence>
+              {isFooterScrolled && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8, y: 5 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.8, y: 5 }}
+                  onClick={() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                  className="w-10 h-10 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full flex items-center justify-center text-slate-600 dark:text-gray-300 shadow-xl hover:bg-slate-50 dark:hover:bg-[#252525] transition-all"
+                  aria-label="Scroll ke bawah"
+                >
+                  <ChevronDown size={20} />
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
           <div className="flex justify-center">
             <AnimatePresence>
               {isTyping && (
