@@ -1,0 +1,3 @@
+## 2025-05-14 - Implementing "Scroll to Bottom" in Chat Interface
+**Learning:** In long-scrolling chat interfaces, users often lose context of where they are relative to the latest message. A floating "Scroll to Bottom" button provides an immediate way to return to the active conversation, especially useful on mobile devices where manual scrolling can be tedious. Using Indonesian for accessibility labels (`aria-label`) is consistent with the rest of the app's user-facing strings.
+**Action:** Always implement a scroll-to-bottom nudge or button when a container has significant vertical overflow and the primary interaction happens at the bottom.
