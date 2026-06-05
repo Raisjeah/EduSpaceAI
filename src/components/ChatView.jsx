@@ -231,29 +231,40 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       if (fileToUpload) formData.append('file', fileToUpload);
       if (preGeneratedResponse) formData.append('preGeneratedResponse', preGeneratedResponse);
       
-      const result = await sendMessage(formData);
-      setIsUploading(false);
+      try {
+        const result = await sendMessage(formData);
+        
+        if (result.success) {
+          if (!activeChatId && currentId === 'new') {
+            migrateNewChatToId(result.chatId);
+            setInternalId(result.chatId);
 
-      if (result.success) {
-        if (!activeChatId && currentId === 'new') {
-          migrateNewChatToId(result.chatId);
-          setInternalId(result.chatId);
+            const targetUrl = projectId
+              ? `/chat/${result.chatId}?projectId=${projectId}`
+              : `/chat/${result.chatId}`;
 
-          const targetUrl = projectId
-            ? `/chat/${result.chatId}?projectId=${projectId}`
-            : `/chat/${result.chatId}`;
+            router.replace(targetUrl, { scroll: false });
+          }
 
-          router.replace(targetUrl, { scroll: false });
+          runTypewriter(result.chatId, result.aiResponse);
+        } else {
+          setIsThinking(false);
+          if (result.error?.includes('Batas')) {
+            setUpgradeModal({ isOpen: true, feature: 'Pesan Harian' });
+          } else if (result.error?.includes('Premium')) {
+            setUpgradeModal({ isOpen: true, feature: 'Upload File' });
+          } else {
+            setChatStatus(currentId, { isThinking: false });
+            runTypewriter(currentId, `⚠️ ${result.error || 'Gagal merespon.'}`);
+          }
         }
-
-        runTypewriter(result.chatId, result.aiResponse);
-      } else {
+      } catch (error) {
+        console.error("sendMessage error:", error);
         setIsThinking(false);
-        if (result.error?.includes('Batas')) {
-          setUpgradeModal({ isOpen: true, feature: 'Pesan Harian' });
-        } else if (result.error?.includes('Premium')) {
-          setUpgradeModal({ isOpen: true, feature: 'Upload File' });
-        }
+        setChatStatus(currentId, { isThinking: false });
+        runTypewriter(currentId, "⚠️ Terjadi kesalahan jaringan. Gagal menghubungi server.");
+      } finally {
+        setIsUploading(false);
       }
     });
   };

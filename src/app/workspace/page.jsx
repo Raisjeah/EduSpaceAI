@@ -94,6 +94,7 @@ export default function WorkspacePage() {
             <p className="text-sm text-slate-500 dark:text-gray-400">Kelola semua proyek riset dan dokumen akademik Anda di sini.</p>
           </div>
           <div className="flex items-center gap-3">
+
              <button
                onClick={() => setIsProjectModalOpen(true)}
                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-900/20"

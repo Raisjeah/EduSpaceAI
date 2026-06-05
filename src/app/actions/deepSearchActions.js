@@ -12,8 +12,10 @@ import Chat from '@/models/Chat';
 import dbConnect from '@/lib/mongodb';
 
 export async function runDeepSearchAnalyzer(userQuery, chatId, userId) {
+  const user = await getSessionUser();
+  if (!user) throw new Error('Unauthorized');
   await dbConnect();
-  const previousMessages = await Chat.find({ userId, chatId }).sort({ createdAt: -1 }).limit(10).lean();
+  const previousMessages = await Chat.find({ userId: user._id.toString(), chatId }).sort({ createdAt: -1 }).limit(10).lean();
   previousMessages.reverse();
   const historyContext = previousMessages.length > 0
     ? previousMessages.map(h => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.text}`).join('\n')
@@ -24,13 +26,19 @@ export async function runDeepSearchAnalyzer(userQuery, chatId, userId) {
 }
 
 export async function runDeepSearchExtractor(subQueries, userQuery) {
+  const user = await getSessionUser();
+  if (!user) throw new Error('Unauthorized');
   return await deepSearchStep2_SearchAndExtract(subQueries, userQuery);
 }
 
 export async function runDeepSearchAnalyst(userQuery, historyContext, structuredContext, fileParts = [], modelName = "gemini-2.5-flash") {
+  const user = await getSessionUser();
+  if (!user) throw new Error('Unauthorized');
   return await deepSearchStep3_AnalyzeContext(userQuery, historyContext, "", structuredContext, modelName, fileParts);
 }
 
 export async function runDeepSearchWriter(userQuery, historyContext, factualContext, verifiedSources, fileParts = [], modelName = "gemini-2.5-flash") {
+  const user = await getSessionUser();
+  if (!user) throw new Error('Unauthorized');
   return await deepSearchStep4_Write(userQuery, historyContext, "", factualContext, verifiedSources, modelName, fileParts);
 }

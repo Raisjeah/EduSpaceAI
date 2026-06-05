@@ -114,6 +114,12 @@ export async function register(formData) {
     return { success: false, error: 'Format email tidak valid' };
   }
 
+  const rateLimit = await checkLoginRateLimit(email);
+  if (!rateLimit.allowed) {
+    const minutes = Math.ceil(rateLimit.retryAfterMs / 60000);
+    return { success: false, error: `Terlalu banyak percobaan. Coba lagi dalam ${minutes} menit.` };
+  }
+
   const passwordError = validatePassword(password);
   if (passwordError) {
     return { success: false, error: passwordError };

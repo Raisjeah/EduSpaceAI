@@ -109,7 +109,14 @@ export async function getGeminiResponse(
 ) {
   const { provider, sdkModel } = resolveModel(modelName);
   const normalizedAgentId = agentId === 'profesor' ? 'researcher' : agentId === 'visual' ? 'visualizer' : agentId;
-  const config = AGENT_CONFIGS[normalizedAgentId] || AGENT_CONFIGS.default;
+  const baseConfig = AGENT_CONFIGS[normalizedAgentId] || AGENT_CONFIGS.default;
+  const config = { ...baseConfig };
+
+  if (requestContext?.userProfile) {
+    const { userProfile, userName } = requestContext;
+    const profileContext = `\n\n--- KONTEKS PENGGUNA ---\nNama: ${userName || 'Pengguna'}\nPendidikan: ${userProfile.education_level || '-'}\nFakultas/Jurusan: ${userProfile.faculty || '-'} / ${userProfile.major || '-'}\nSkill/Fokus: ${userProfile.skills_to_learn?.join(', ') || '-'}\nTujuan: ${userProfile.learning_goal || '-'}\n\nAturan Tambahan:\n1. Sesuaikan analogi, gaya bahasa, dan kedalaman materi dengan tingkat pendidikan dan jurusan pengguna.\n2. Sapa pengguna dengan namanya sesekali.\n`;
+    config.instruction += profileContext;
+  }
 
   try {
     // Keep image generation single-agent so binary response handling remains unchanged.

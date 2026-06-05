@@ -161,11 +161,22 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
     }
   }, [currentDocId, editor]);
 
+  const isSavingRef = useRef(false);
+  const extractIntervalRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (extractIntervalRef.current) clearInterval(extractIntervalRef.current);
+    };
+  }, []);
+
   const handleSave = useCallback(async (manual = false) => {
+    if (isSavingRef.current && !manual) return;
     const currentContent = editor ? editor.getHTML() : content;
     if (!currentContent || currentContent.length < 10) return;
 
     setSaveStatus('saving');
+    isSavingRef.current = true;
     try {
       let result;
       if (currentDocId) {
@@ -185,6 +196,8 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
     } catch (err) {
       console.error("Save error:", err);
       setSaveStatus('unsaved');
+    } finally {
+      isSavingRef.current = false;
     }
   }, [editor, content, currentDocId, fileName, fileType, projectId]);
 
@@ -217,10 +230,10 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
     formData.append('file', file);
 
     // Simulate progress for better UX feedback
-    const progressInterval = setInterval(() => {
+    extractIntervalRef.current = setInterval(() => {
       setExtractProgress(prev => {
         if (prev >= 90) {
-          clearInterval(progressInterval);
+          clearInterval(extractIntervalRef.current);
           return 90;
         }
         return prev + 10;
@@ -229,7 +242,7 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
 
     try {
       const result = await extractFileContent(formData);
-      clearInterval(progressInterval);
+      clearInterval(extractIntervalRef.current);
       setExtractProgress(100);
 
       if (result.success) {
@@ -245,7 +258,7 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
         }
       }
     } catch (err) {
-      clearInterval(progressInterval);
+      clearInterval(extractIntervalRef.current);
       const errorMsg = `Terjadi kesalahan saat mengunggah file.`;
       setContent(errorMsg);
       if (editor) {
@@ -318,14 +331,19 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
     setChatStatus(chatId, { isThinking: true });
 
     startTransition(async () => {
-      const formData = new FormData();
-      formData.append('prompt', initialPrompt);
-      formData.append('chatId', chatId);
+      try {
+        const formData = new FormData();
+        formData.append('prompt', initialPrompt);
+        formData.append('chatId', chatId);
 
-      const result = await sendMessage(formData);
-      if (result.success) {
-        runTypewriter(chatId, result.aiResponse);
-      } else {
+        const result = await sendMessage(formData);
+        if (result.success) {
+          runTypewriter(chatId, result.aiResponse);
+        } else {
+          setChatStatus(chatId, { isThinking: false });
+        }
+      } catch (error) {
+        console.error("Gagal mengirim prompt:", error);
         setChatStatus(chatId, { isThinking: false });
       }
     });
@@ -375,16 +393,21 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
     setChatStatus(chatId, { isThinking: true });
 
     startTransition(async () => {
-      const formData = new FormData();
-      formData.append('chatId', chatId);
-      // Sertakan konten editor sebagai konteks digabung dengan prompt
-      const currentContent = editor ? editor.getHTML() : content;
-      formData.append('prompt', `[Konteks Editor]:\n${currentContent}\n\nPertanyaan: ${textToSend}`);
+      try {
+        const formData = new FormData();
+        formData.append('chatId', chatId);
+        // Sertakan konten editor sebagai konteks digabung dengan prompt
+        const currentContent = editor ? editor.getHTML() : content;
+        formData.append('prompt', `[Konteks Editor]:\n${currentContent}\n\nPertanyaan: ${textToSend}`);
 
-      const result = await sendMessage(formData);
-      if (result.success) {
-        runTypewriter(chatId, result.aiResponse);
-      } else {
+        const result = await sendMessage(formData);
+        if (result.success) {
+          runTypewriter(chatId, result.aiResponse);
+        } else {
+          setChatStatus(chatId, { isThinking: false });
+        }
+      } catch (error) {
+        console.error("Gagal mengirim prompt:", error);
         setChatStatus(chatId, { isThinking: false });
       }
     });

@@ -16,6 +16,13 @@ const UserSchema = new mongoose.Schema({
   current_plan: { type: String, default: 'FREE', index: true },
   plan_expired_at: { type: Date },
   is_active: { type: Boolean, default: true },
+  profile: {
+    faculty: { type: String, default: '' },
+    major: { type: String, default: '' },
+    skills_to_learn: [{ type: String }],
+    education_level: { type: String, default: '' },
+    learning_goal: { type: String, default: '' }
+  },
   createdAt: { type: Date, default: Date.now },
 });
 

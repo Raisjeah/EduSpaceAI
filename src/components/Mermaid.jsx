@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
 import { useTheme } from 'next-themes';
+import DOMPurify from 'dompurify';
 
 const Mermaid = ({ chart }) => {
   const chartRef = useRef(null);
@@ -27,7 +28,7 @@ const Mermaid = ({ chart }) => {
           setError(null);
           const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
           const { svg } = await mermaid.render(id, chart);
-          setSvg(svg);
+          setSvg(DOMPurify.sanitize(svg));
         } catch (err) {
           console.error('Mermaid render error:', err);
           setError(err.message);

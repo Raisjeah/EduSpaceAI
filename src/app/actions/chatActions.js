@@ -171,6 +171,8 @@ export async function sendMessage(formData) {
         userId,
         chatId,
         projectId,
+        userProfile: user.profile,
+        userName: user.name,
       });
     }
 
