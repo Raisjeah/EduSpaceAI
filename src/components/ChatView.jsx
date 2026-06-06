@@ -363,6 +363,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
               href="/"
               className={`p-2 rounded-lg hover:bg-white/50 dark:hover:bg-black/20 ${agentTheme.text} transition-all`}
               title="Keluar dari Workspace"
+              aria-label="Keluar dari Workspace"
             >
               <ArrowLeft size={18} />
             </Link>
@@ -497,8 +498,23 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         className={`fixed bottom-0 right-0 p-3 sm:p-4 md:p-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-[max(1.5rem,env(safe-area-inset-bottom))] transition-all duration-300 z-30 ${
           isSidebarOpen ? 'left-0 md:left-[280px]' : 'left-0'
         } bg-transparent pointer-events-none`}>
-        <div className="max-w-4xl mx-auto flex flex-col gap-3 pointer-events-auto">
-          <div className="flex justify-center">
+        <div className="max-w-4xl mx-auto flex flex-col items-center gap-2 pointer-events-auto">
+          <AnimatePresence>
+            {isFooterScrolled && (
+              <motion.button
+                initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                onClick={() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                className="p-2 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-white/10 rounded-full text-slate-600 dark:text-gray-300 shadow-xl hover:bg-slate-50 dark:hover:bg-[#252525] transition-all mb-1"
+                aria-label="Scroll ke bawah"
+              >
+                <ChevronDown size={20} />
+              </motion.button>
+            )}
+          </AnimatePresence>
+
+          <div className="flex justify-center w-full">
             <AnimatePresence>
               {isTyping && (
                 <motion.button
@@ -660,6 +676,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
             <button
               onClick={() => setSelectedFile(null)}
               className="w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 dark:bg-[#2A2A2A] text-slate-500 dark:text-gray-400 hover:bg-red-500 hover:text-white transition-all shadow-sm"
+              aria-label="Hapus lampiran"
             >
               <X size={12} />
             </button>
@@ -692,6 +709,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               ? 'bg-indigo-600 text-white rotate-45'
               : 'text-slate-400 dark:text-gray-500 hover:text-indigo-400'
             } ${showNudge && !isActionSheetOpen ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-[#0F0F0F] animate-pulse' : ''}`}
+            aria-label={isActionSheetOpen ? 'Tutup menu lampiran' : 'Buka menu lampiran'}
           >
             <Plus size={20} />
           </button>
