@@ -498,15 +498,27 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           isSidebarOpen ? 'left-0 md:left-[280px]' : 'left-0'
         } bg-transparent pointer-events-none`}>
         <div className="max-w-4xl mx-auto flex flex-col gap-3 pointer-events-auto">
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-2">
             <AnimatePresence>
+              {isFooterScrolled && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                  onClick={() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                  className="w-9 h-9 flex items-center justify-center bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-slate-600 dark:text-gray-300 shadow-lg hover:bg-slate-50 dark:hover:bg-[#252525] transition-all mb-1"
+                  aria-label="Scroll ke bawah"
+                >
+                  <ChevronDown size={18} />
+                </motion.button>
+              )}
               {isTyping && (
                 <motion.button
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
                   onClick={() => stopTypewriter(currentId)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[11px] font-bold text-slate-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 hover:border-red-200 transition-all shadow-sm mb-2 pointer-events-auto"
+                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[11px] font-bold text-slate-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 hover:border-red-200 transition-all shadow-sm pointer-events-auto"
                   aria-label="Berhenti menghasilkan jawaban"
                 >
                   <Square size={12} fill="currentColor" /> Berhenti Menghasilkan
