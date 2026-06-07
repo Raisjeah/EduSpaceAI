@@ -498,7 +498,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           isSidebarOpen ? 'left-0 md:left-[280px]' : 'left-0'
         } bg-transparent pointer-events-none`}>
         <div className="max-w-4xl mx-auto flex flex-col gap-3 pointer-events-auto">
-          <div className="flex justify-center">
+          <div className="flex justify-center gap-2">
             <AnimatePresence>
               {isTyping && (
                 <motion.button
@@ -510,6 +510,18 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                   aria-label="Berhenti menghasilkan jawaban"
                 >
                   <Square size={12} fill="currentColor" /> Berhenti Menghasilkan
+                </motion.button>
+              )}
+              {isFooterScrolled && (
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  onClick={() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                  aria-label="Scroll ke bawah"
+                  className="flex items-center justify-center w-10 h-10 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-all shadow-sm mb-2 pointer-events-auto"
+                >
+                  <ChevronDown size={20} />
                 </motion.button>
               )}
             </AnimatePresence>
