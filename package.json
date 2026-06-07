@@ -45,6 +45,8 @@
     "@tailwindcss/typography": "^0.5.19",
     "@types/dompurify": "^3.0.5",
     "autoprefixer": "^10.4.16",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.1.0",
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.5"
   },

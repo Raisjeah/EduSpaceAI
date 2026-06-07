@@ -46,6 +46,7 @@ function resolveModel(modelName) {
 
 const AGENT_CONFIGS = {
   default: {
+    id: "default",
     name: "EduSpaceAI",
     instruction: `Nama kamu adalah EduSpaceAI, seorang Dosen Pribadi yang cerdas, suportif, dan ramah.
     GAYA BAHASA:
@@ -59,14 +60,17 @@ const AGENT_CONFIGS = {
     - Kamu membantu mahasiswa agar mereka benar-benar paham materi, bukan sekadar menyalin tugas.`
   },
   researcher: {
+    id: "researcher",
     name: "Profesor Riset",
     instruction: researcherInstruction
   },
   editor: {
+    id: "editor",
     name: "Editor Akademik",
     instruction: editorInstruction
   },
   "deep-search": {
+    id: "deep-search",
     name: "Deep Search Agent",
     instruction: deepSearchInstruction,
     tools: [
@@ -76,14 +80,17 @@ const AGENT_CONFIGS = {
     ],
   },
   visualizer: {
+    id: "visualizer",
     name: "Visual Concept Mapper",
     instruction: visualizerInstruction
   },
   citation: {
+    id: "citation",
     name: "Citation Generator",
     instruction: citationInstruction
   },
   "image-generator": {
+    id: "image-generator",
     name: "Nano Banana (Image Gen)",
     instruction: `Kamu adalah Nano Banana, asisten generasi gambar canggih dari Google yang terintegrasi di EduSpaceAI.
     Tugasmu:
@@ -126,11 +133,13 @@ export async function getGeminiResponse(
 
     const modelRunner = (agentPrompt, context = {}) => {
       const baseConfig = AGENT_CONFIGS[context.agentId] || {
+        id: context.agentId || config.id,
         name: context.agentId || config.name,
         instruction: config.instruction,
       };
       const agentConfig = {
         ...baseConfig,
+        id: context.agentId || baseConfig.id,
         instruction: context.instruction || baseConfig.instruction,
       };
 
@@ -153,13 +162,22 @@ export async function getGeminiResponse(
       }),
     });
 
-    return await orchestrator.execute(prompt, {
+    const orchestratorResponse = await orchestrator.execute(prompt, {
       ...requestContext,
       history,
       fileParts,
       agentId: normalizedAgentId,
       modelName: sdkModel,
     });
+
+    if (typeof orchestratorResponse !== 'string') {
+      if (orchestratorResponse && orchestratorResponse.output && typeof orchestratorResponse.output === 'string') {
+        return orchestratorResponse.output;
+      }
+      return typeof orchestratorResponse === 'object' ? JSON.stringify(orchestratorResponse) : String(orchestratorResponse || '');
+    }
+
+    return orchestratorResponse;
   } catch (error) {
     console.error("AI SDK Error:", error);
     if (typeof error?.message === 'string' && error.message.toLowerCase().includes('quota')) {
@@ -170,7 +188,7 @@ export async function getGeminiResponse(
 }
 
 async function generateDirectResponse(prompt, history, fileParts, config, provider, sdkModel) {
-  if (config.name === 'Deep Search Agent') {
+  if (config.id === 'deep-search' || config.name === 'Deep Search Agent') {
     return deepSearchEngine(prompt, history, fileParts, sdkModel);
   }
 

@@ -52,22 +52,13 @@ export function ChatProvider({ children }) {
     setChatStatus(id, { isThinking: false, isTyping: true });
 
     // Initialize AI message
-    let safeResponse = fullResponse;
-    if (typeof fullResponse !== 'string') {
-      if (fullResponse && fullResponse.output && typeof fullResponse.output === 'string') {
-        safeResponse = fullResponse.output;
-      } else {
-        safeResponse = typeof fullResponse === 'object' ? JSON.stringify(fullResponse) : String(fullResponse || '');
-      }
-    }
-
     setChatMessages(id, prev => [...prev, {
       role: 'model',
       text: '',
       _id: aiMessageId
     }]);
 
-    const words = safeResponse.split(' ');
+    const words = fullResponse.split(' ');
     let currentText = '';
     let wordIndex = 0;
     const batchSize = 5; // Update 5 words at a time to reduce re-renders
