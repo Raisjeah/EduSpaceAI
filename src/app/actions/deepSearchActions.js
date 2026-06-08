@@ -6,10 +6,10 @@ import {
   deepSearchStep3_AnalyzeContext, 
   deepSearchStep4_Write 
 } from '@/lib/agents/deepSearch/workflow';
-import { getSessionUser } from '@/lib/session';
-import { checkUsageLimit } from '@/lib/subscription';
+import { getSessionUser } from '@/lib/core/session';
+import { checkUsageLimit } from '@/lib/core/subscription';
 import Chat from '@/models/Chat';
-import dbConnect from '@/lib/mongodb';
+import dbConnect from '@/lib/db/mongodb';
 
 export async function runDeepSearchAnalyzer(userQuery, chatId, userId) {
   const user = await getSessionUser();

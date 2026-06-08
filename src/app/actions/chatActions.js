@@ -1,12 +1,12 @@
 'use server';
-import dbConnect from '@/lib/mongodb';
+import dbConnect from '@/lib/db/mongodb';
 import Chat from '@/models/Chat';
 import Project from '@/models/Project';
 import UserMemory from '@/models/UserMemory';
-import { getGeminiResponse } from '@/lib/gemini';
+import { getGeminiResponse } from '@/lib/providers';
 import { extractFileContent } from './fileActions';
-import { checkUsageLimit, getModelByPlan, TIERS, checkFeatureAccess, isModelAllowed } from '@/lib/subscription';
-import { getSessionUser } from '@/lib/session';
+import { checkUsageLimit, getModelByPlan, TIERS, checkFeatureAccess, isModelAllowed } from '@/lib/core/subscription';
+import { getSessionUser } from '@/lib/core/session';
 
 // Sanitization function for user content to prevent prompt injection
 function sanitizeUserContent(text) {

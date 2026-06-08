@@ -1,5 +1,5 @@
 import BaseAgent from '../baseAgent';
-import { deepSearchEngine } from './workflow';
+import { deepSearch } from './workflow';
 
 export const deepSearchInstruction = `Kamu adalah Deep Search Agent di EduSpaceAI. Kamu memiliki kemampuan untuk mencari informasi terbaru secara real-time.
 Tugasmu:
@@ -19,15 +19,15 @@ export default class DeepSearchAgent extends BaseAgent {
   }
 
   async execute(task, context = {}) {
-    const output = await deepSearchEngine(
+    const output = await deepSearch(
       task,
       context.history || [],
       context.fileParts || [],
       context.modelName
     );
 
-    this.updateMemory('lastTask', task);
-    this.updateMemory('lastOutput', output);
+    this.updateMemory('lastTask', task, context);
+    this.updateMemory('lastOutput', output, context);
 
     return {
       agentId: this.id,

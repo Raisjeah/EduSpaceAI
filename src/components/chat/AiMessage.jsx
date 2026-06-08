@@ -4,11 +4,11 @@ import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import { ThumbsUp, ThumbsDown, Copy, Check, Volume2, Loader2, StopCircle, RefreshCw } from 'lucide-react';
-import Mermaid from './Mermaid';
+import { ThumbsUp, ThumbsDown, Copy, Check, Volume2, Loader2, StopCircle, RefreshCw, Sparkles, Search, BookOpen, Edit3, Code as CodeIcon, FileText } from 'lucide-react';
+import Mermaid from '../editor/Mermaid';
 import 'katex/dist/katex.min.css';
 
-export default function AiMessage({ content, isUser = false, isTyping = false, onApply, onRegenerate, isLast = false }) {
+export default function AiMessage({ content, isUser = false, isTyping = false, onRegenerate, isLast = false, agentId }) {
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
@@ -170,11 +170,10 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
   }
 
   return (
-    <div className="w-full flex justify-start">
-      <div className="w-full max-w-none flex flex-col">
-        <div className="py-3 w-full leading-relaxed transition-all">
+    <div className="w-full flex justify-start mb-2 group/msg">
+      <div className="w-full max-w-none flex flex-col pt-1">
           {imageData ? (
-            <div className="relative group rounded-2xl overflow-hidden liquid-glass shadow-2xl max-w-2xl">
+            <div className="relative group rounded-2xl overflow-hidden liquid-glass shadow-2xl max-w-2xl mb-3">
               <img
                 src={`data:${imageData.mimeType};base64,${imageData.base64Data}`}
                 alt="AI Generated"
@@ -243,11 +242,10 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
               </ReactMarkdown>
             </div>
           )}
-        </div>
 
-        {/* Action Bar - Only show when not typing */}
-        {!isTyping && (
-        <div className="flex items-center gap-1.5 mt-2 ml-0.5 animate-in fade-in duration-500">
+          {/* Action Bar - Only show when not typing */}
+          {!isTyping && (
+          <div className="flex items-center gap-1.5 mt-2 animate-in fade-in duration-500">
           <button
             onClick={() => { setLiked(!liked); if (!liked) setDisliked(false); }}
             className={`p-1.5 rounded-lg transition-all ${liked ? 'text-indigo-500 bg-indigo-500/20 border border-indigo-500/30' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-white/10 border border-transparent'}`}
@@ -313,9 +311,10 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
               <RefreshCw size={16} />
             </button>
           )}
+          </div>
+          )}
         </div>
-        )}
-      </div>
+        {/* End of Message Content */}
     </div>
   );
 }

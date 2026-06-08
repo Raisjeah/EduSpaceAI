@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3, Mic, Trash2, LayoutDashboard, FolderKanban, X } from 'lucide-react';
+import { Plus, Wrench, User, Menu, MessageSquare, LogOut, Briefcase, Rocket, Search, BookOpen, Edit3, Mic, Trash2, LayoutDashboard, FolderKanban, X, Code, FileText } from 'lucide-react';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useLayout } from '@/context/LayoutContext';
 import { getChatHistory, deleteChatHistory } from '@/app/actions/chatActions';
@@ -179,6 +179,8 @@ export default function Sidebar({
       case 'deep-search': return <Search size={14} className="text-blue-400" />;
       case 'researcher': return <BookOpen size={14} className="text-green-400" />;
       case 'editor': return <Edit3 size={14} className="text-amber-400" />;
+      case 'visualizer': return <Code size={14} className="text-purple-400" />;
+      case 'citation': return <FileText size={14} className="text-rose-400" />;
       default: return <Rocket size={14} className="text-indigo-400" />;
     }
   };
@@ -197,6 +199,14 @@ export default function Sidebar({
         active: 'bg-amber-600/10 text-amber-600 dark:text-amber-400 border-amber-500',
         hover: 'hover:bg-amber-50 dark:hover:bg-amber-900/10'
       };
+      case 'visualizer': return {
+        active: 'bg-purple-600/10 text-purple-600 dark:text-purple-400 border-purple-500',
+        hover: 'hover:bg-purple-50 dark:hover:bg-purple-900/10'
+      };
+      case 'citation': return {
+        active: 'bg-rose-600/10 text-rose-600 dark:text-rose-400 border-rose-500',
+        hover: 'hover:bg-rose-50 dark:hover:bg-rose-900/10'
+      };
       default: return {
         active: 'bg-indigo-600/10 text-indigo-600 dark:text-white border-indigo-500',
         hover: 'hover:bg-indigo-50 dark:hover:bg-indigo-900/10'
@@ -208,49 +218,25 @@ export default function Sidebar({
 
   return (
     <>
+      {/* Mobile Backdrop Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/40 dark:bg-black/60 z-40 md:hidden backdrop-blur-sm transition-opacity"
+          onClick={closeSidebar}
+        />
+      )}
+
       <aside className={`
         fixed top-0 left-0 h-full z-50
         bg-white dark:bg-[#0F0F0F]
         border-r border-neutral-200/50 dark:border-neutral-800/50
         transform transition-transform duration-300 ease-in-out flex-shrink-0
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
         w-[85vw] max-w-[280px] sm:w-[280px] transition-colors duration-200
       `}>
         <div className="flex flex-col h-full p-4">
           {/* Spacer for floating header button area */}
           <div className="h-12 md:hidden" />
-
-          {/* ── PERUBAHAN 1: Tambah label + sederhanakan warna agent card ── */}
-          <div className="mb-4 px-1">
-            <p className="text-[9px] font-bold text-slate-400 dark:text-gray-600 uppercase tracking-[0.12em] mb-2 px-1">
-              Agen Tersedia
-            </p>
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.06] space-y-2">
-              <div className="flex items-start gap-2">
-                <Search size={11} className="text-slate-400 dark:text-gray-500 mt-0.5 shrink-0" />
-                <p className="text-[10px] text-slate-600 dark:text-gray-400 leading-snug">
-                  <span className="font-semibold text-slate-700 dark:text-gray-300">Deep Search</span>
-                  {' — '}Riset mendalam dengan akses web real-time.
-                </p>
-              </div>
-              <div className="flex items-start gap-2">
-                <BookOpen size={11} className="text-slate-400 dark:text-gray-500 mt-0.5 shrink-0" />
-                <p className="text-[10px] text-slate-600 dark:text-gray-400 leading-snug">
-                  <span className="font-semibold text-slate-700 dark:text-gray-300">Profesor Riset</span>
-                  {' — '}Ahli metodologi dan analisis data.
-                </p>
-              </div>
-              <div className="flex items-start gap-2">
-                <Edit3 size={11} className="text-slate-400 dark:text-gray-500 mt-0.5 shrink-0" />
-                <p className="text-[10px] text-slate-600 dark:text-gray-400 leading-snug">
-                  <span className="font-semibold text-slate-700 dark:text-gray-300">Editor Akademik</span>
-                  {' — '}Tata bahasa dan karya ilmiah.
-                </p>
-              </div>
-            </div>
-          </div>
-          {/* ── END PERUBAHAN 1 ── */}
-
           {/* Main Navigation */}
           <div className="flex flex-col gap-0.5 mb-4">
             <Link
@@ -395,8 +381,15 @@ export default function Sidebar({
             </div>
           </nav>
 
-          {/* User Profile or Login Button */}
-          <div className="mt-auto pt-4 border-t border-white/10">
+          {/* Feedback & User Profile */}
+          <div className="mt-auto pt-3 border-t border-white/10 flex flex-col gap-2">
+            <a 
+              href="mailto:support@eduspaceai.com?subject=Feedback%20EduSpaceAI"
+              className="flex items-center gap-3 px-3 py-2 text-[11px] font-medium text-slate-500 dark:text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-xl transition-all"
+            >
+              <MessageSquare size={14} />
+              <span>Beri Masukan / Lapor Bug</span>
+            </a>
             {userId ? (
               <div className="space-y-4 px-2 py-3 bg-white/5 dark:bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10">
                 <div className="flex items-center justify-between px-1">

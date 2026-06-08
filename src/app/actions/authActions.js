@@ -1,13 +1,13 @@
 'use server';
 
-import dbConnect from '@/lib/mongodb';
+import dbConnect from '@/lib/db/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { OAuth2Client } from 'google-auth-library';
 import crypto from 'crypto';
-import { getSessionUser } from '@/lib/session';
+import { getSessionUser } from '@/lib/core/session';
 import LoginAttempt from '@/models/LoginAttempt';
 
 const JWT_SECRET = process.env.JWT_SECRET;

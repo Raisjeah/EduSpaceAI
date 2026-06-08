@@ -1,7 +1,7 @@
 # 🛠️ REFACTOR TASK: EduSpaceAI Project Structure
 
 ## Konteks
-Ini adalah proyek Next.js 14 App Router dengan JavaScript (bukan TypeScript).
+Ini adalah proyek Next.js 16 App Router dengan JavaScript (bukan TypeScript).
 Lokasi root proyek: `Raisjeah/EduSpaceAI/`
 Jangan ubah logika bisnis, hanya pindahkan dan reorganisasi file.
 

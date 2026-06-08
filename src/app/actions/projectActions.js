@@ -1,9 +1,9 @@
 'use server';
 
-import dbConnect from '@/lib/mongodb';
+import dbConnect from '@/lib/db/mongodb';
 import Project from '@/models/Project';
 import { revalidatePath } from 'next/cache';
-import { getSessionUser } from '@/lib/session';
+import { getSessionUser } from '@/lib/core/session';
 
 export async function createProject(name, agentId) {
   try {

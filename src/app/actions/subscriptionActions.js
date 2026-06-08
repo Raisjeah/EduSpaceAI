@@ -1,12 +1,12 @@
 'use server';
 
 import midtransClient from 'midtrans-client';
-import dbConnect from '@/lib/mongodb';
+import dbConnect from '@/lib/db/mongodb';
 import Plan from '@/models/Plan';
 import Subscription from '@/models/Subscription';
 import UsageCounter from '@/models/UsageCounter';
 import Document from '@/models/Document';
-import { getSessionUser } from '@/lib/session';
+import { getSessionUser } from '@/lib/core/session';
 import crypto from 'crypto';
 
 const snap = new midtransClient.Snap({

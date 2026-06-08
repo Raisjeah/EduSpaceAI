@@ -1,7 +1,7 @@
 import Plan from '@/models/Plan';
 import User from '@/models/User';
 import UsageCounter from '@/models/UsageCounter';
-import dbConnect from '@/lib/mongodb';
+import dbConnect from '@/lib/db/mongodb';
 
 // Simple in-memory cache for plans
 const planCache = {

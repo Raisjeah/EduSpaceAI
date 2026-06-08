@@ -1,6 +1,6 @@
 'use client';
 
-import DocumentEditor from '@/components/DocumentEditor';
+import DocumentEditor from '@/components/editor/DocumentEditor';
 import useAuth from '@/hooks/useAuth';
 import { useParams, useSearchParams } from 'next/navigation';
 

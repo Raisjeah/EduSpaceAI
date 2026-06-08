@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/session";
-import { checkUsageLimit } from "@/lib/subscription";
+import { getSessionUser } from '@/lib/core/session';
+import { checkUsageLimit } from '@/lib/core/subscription';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY_2 });
 

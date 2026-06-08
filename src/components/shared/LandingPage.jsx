@@ -15,9 +15,9 @@ import {
   Plus,
   Minus,
 } from 'lucide-react';
-import Footer from '@/components/Footer';
-import FloatingOrbs from './FloatingOrbs';
-import NavbarLanding from '@/components/NavbarLanding';
+import Footer from '@/components/layout/Footer';
+import FloatingOrbs from '../ui/FloatingOrbs';
+import NavbarLanding from '@/components/layout/NavbarLanding';
 
 const fadeUp = {
   initial: { opacity: 0, y: 16 },

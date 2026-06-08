@@ -1,21 +1,21 @@
 'use client';
 
-import { useState, useEffect, useRef, useTransition } from 'react';
+import { useState, useEffect, useRef, useTransition, useCallback } from 'react';
 import { useChat } from '@/context/ChatContext';
 import { useLayout } from '@/context/LayoutContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import TextareaAutosize from 'react-textarea-autosize';
-import { ChevronDown, Plus, ArrowUp, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File, Square, Code, GraduationCap, Microscope, ArrowLeft, Mic, Menu } from 'lucide-react';
+import { ChevronDown, Plus, ArrowUp, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File, Square, Code, GraduationCap, Microscope, ArrowLeft, Mic, Menu, Terminal, Bot, Settings2, Trash2 } from 'lucide-react';
 import { sendMessage, getChatDetails } from '@/app/actions/chatActions';
 import { getProjectDetails } from '@/app/actions/projectActions';
 import { runDeepSearchAnalyzer, runDeepSearchExtractor, runDeepSearchAnalyst, runDeepSearchWriter } from '@/app/actions/deepSearchActions';
 import AiMessage from './AiMessage';
-import ThinkingIndicator from './ThinkingIndicator';
-import ModelSelector from './ModelSelector';
-import FloatingOrbs from './FloatingOrbs';
+import ModernThinking from './ModernThinking';
+import ModelSelector from '../shared/ModelSelector';
+import FloatingOrbs from '../ui/FloatingOrbs';
 import Image from 'next/image';
 import useAuth from '@/hooks/useAuth';
-import UpgradeModal from './UpgradeModal';
+import UpgradeModal from '../modals/UpgradeModal';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import useThinkingState from '@/hooks/useThinkingState';
@@ -29,21 +29,54 @@ const SUGGESTED_PROMPTS = [
 ];
 // ── END PERUBAHAN 1 ──
 
+const AGENT_SUGGESTED_PROMPTS = {
+  'deep-search': [
+    { icon: <Search size={14} />, label: 'Carikan referensi terbaru tentang topik ini' },
+    { icon: <Search size={14} />, label: 'Apa perkembangan terkini di bidang ini?' },
+    { icon: <Search size={14} />, label: 'Cari jurnal akademik tentang AI pendidikan' },
+    { icon: <Search size={14} />, label: 'Temukan data statistik terbaru' },
+  ],
+  researcher: [
+    { icon: <BookOpen size={14} />, label: 'Bantu saya menyusun Bab 1 skripsi' },
+    { icon: <BookOpen size={14} />, label: 'Jelaskan metode penelitian kualitatif' },
+    { icon: <BookOpen size={14} />, label: 'Bantu buat kerangka tinjauan pustaka' },
+    { icon: <BookOpen size={14} />, label: 'Apa perbedaan penelitian kualitatif vs kuantitatif?' },
+  ],
+  editor: [
+    { icon: <Edit3 size={14} />, label: 'Koreksi paragraf ini sesuai PUEBI' },
+    { icon: <Edit3 size={14} />, label: 'Parafrase kalimat ini agar lebih akademik' },
+    { icon: <Edit3 size={14} />, label: 'Perbaiki struktur abstrak saya' },
+    { icon: <Edit3 size={14} />, label: 'Cek konsistensi gaya penulisan' },
+  ],
+  visualizer: [
+    { icon: <Code size={14} />, label: 'Buat diagram alur metodologi penelitian' },
+    { icon: <Code size={14} />, label: 'Visualisasikan konsep machine learning' },
+    { icon: <Code size={14} />, label: 'Buat diagram ER untuk database' },
+    { icon: <Code size={14} />, label: 'Gambarkan alur sistem informasi' },
+  ],
+  citation: [
+    { icon: <FileText size={14} />, label: 'Buat sitasi APA dari URL ini' },
+    { icon: <FileText size={14} />, label: 'Format daftar pustaka saya' },
+    { icon: <FileText size={14} />, label: 'Konversi sitasi MLA ke APA' },
+    { icon: <FileText size={14} />, label: 'Buat sitasi dari DOI ini' },
+  ],
+};
+
 export default function ChatView({ userId, activeChatId, projectId }) {
   const { user } = useAuth();
   const { isSidebarOpen, setIsSidebarOpen } = useLayout();
-  const [greeting, setGreeting] = useState('');
+  const [greetingTime, setGreetingTime] = useState('Selamat pagi');
 
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour >= 4 && hour < 11) {
-      setGreeting('Selamat pagi ☀️ Ada yang bisa EduSpaceAI bantu hari ini?');
+      setGreetingTime('Selamat pagi');
     } else if (hour >= 11 && hour < 15) {
-      setGreeting('Selamat siang 🌤️ Ada yang bisa EduSpaceAI bantu hari ini?');
+      setGreetingTime('Selamat siang');
     } else if (hour >= 15 && hour < 18) {
-      setGreeting('Selamat sore 🌅 Ada yang bisa EduSpaceAI bantu hari ini?');
+      setGreetingTime('Selamat sore');
     } else {
-      setGreeting('Selamat malam 🌙 Ada yang bisa EduSpaceAI bantu hari ini?');
+      setGreetingTime('Selamat malam');
     }
   }, []);
   const {
@@ -75,10 +108,14 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
   const [activeStates, setActiveStates] = useState(null);
-  const { status: dynamicStatus } = useThinkingState(isThinking || isUploading, activeStates);
+  const [activeStateIndex, setActiveStateIndex] = useState(0);
+  const [hitlData, setHitlData] = useState(null);
+  const [isSimpleChat, setIsSimpleChat] = useState(false);
+  const { status: dynamicStatus, states: hookStates, currentIndex: hookCurrentIndex } = useThinkingState(isThinking || isUploading, project?.agentId || 'default', activeStates);
   const [upgradeModal, setUpgradeModal] = useState({ isOpen: false, feature: '' });
   const [isLoadingChat, setIsLoadingChat] = useState(false);
   const chatEndRef = useRef(null);
+  const handleSendRef = useRef(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const isAnalyzing = searchParams.get('analyze') === 'true';
@@ -112,7 +149,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     if (activeChatId && userId) {
       setInternalId(null);
 
-      if (messages.length === 0 && internalId !== activeChatId) {
+      if (messages.length === 0) {
         setIsLoadingChat(true);
       }
 
@@ -131,7 +168,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         }
 
         if (isAnalyzing && res.length > 0 && res[res.length - 1].role === 'user') {
-          handleSend(res[res.length - 1].text, true);
+          if (handleSendRef.current) handleSendRef.current(res[res.length - 1].text, true);
         }
       });
     } else if (!activeChatId) {
@@ -152,17 +189,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
     const textToSend = overrideInput || input;
     if ((!textToSend.trim() && !selectedFile) || (isPending && !isAutoTrigger)) return;
 
-    const defaultStates = [
-      "Understanding question",
-      "Retrieving context",
-      "Analyzing information",
-      "Building response",
-      "Finalizing answer"
-    ];
-
-    let selectedPreset = defaultStates;
-
-    setActiveStates(selectedPreset);
+    // Hapus default states yang membuat semua chat terlihat seperti mode agent
+    setActiveStates(null);
 
     if (!isAutoTrigger) {
       const userMessage = {
@@ -189,33 +217,76 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
     startTransition(async () => {
       let preGeneratedResponse = null;
+      
+      const COMPLEXITY_MARKERS = ['sekaligus', 'lengkap dengan', 'mendalam', 'bandingkan', 'analisis mendalam', 'buatkan lengkap', 'sertakan sumber', 'dengan diagram', 'dengan sitasi', 'riset lengkap', 'cari tahu', 'terbaru', 'carikan', 'informasi tentang', 'jelaskan detail'];
+      const textToAnalyze = textToSend.toLowerCase();
+      const isComplex = COMPLEXITY_MARKERS.some(m => textToAnalyze.includes(m)) || textToSend.split(' ').length > 30;
+      
+      const isSimpleGreeting = /^(halo|hi|hai|hello|pagi|siang|sore|malam|test|tes|oy|hei|halo\s*dosen|woy)(?:\s|$)/i.test(textToAnalyze) && textToSend.length < 30 && !isComplex;
+      setIsSimpleChat(isSimpleGreeting);
 
-      // ✅ Custom orchestration for Real-time Deep Search
-      if (project?.agentId === 'deep-search') {
+      const needsDeepSearch = project?.agentId === 'deep-search' || isComplex;
+
+      // ✅ Custom orchestration for Real-time Deep Search & HITL
+      if (needsDeepSearch) {
+        const DEEP_SEARCH_STEPS = [
+          'Agent Search Engine: Menganalisis pertanyaan...',
+          'Agent Search Engine: Mencari informasi di internet...',
+          'Agent Analyst: Memvalidasi & menganalisis sumber web...',
+          'Agent Editor: Menulis hasil akhir & merapikan struktur...',
+        ];
+
         try {
-          setActiveStates(['Agent Search Engine: Menganalisis pertanyaan...']);
+          setActiveStates(DEEP_SEARCH_STEPS);
+          setActiveStateIndex(0);
+
           const { subQueries, historyContext } = await runDeepSearchAnalyzer(textToSend, currentId, user?._id?.toString());
-          
-          setActiveStates(['Agent Search Engine: Mencari informasi di internet via Tavily AI...']);
+          setActiveStateIndex(1);
+
           const { structuredContext, verifiedSources, citationList } = await runDeepSearchExtractor(subQueries, textToSend);
           
-          setActiveStates(['Agent Analyst: Memvalidasi & menganalisis informasi dari sumber web...']);
+          // --- HITL PAUSE ---
+          if (citationList && citationList.length > 0) {
+            const userDecision = await new Promise((resolve) => {
+              setHitlData({
+                sources: citationList,
+                resolve
+              });
+            });
+            setHitlData(null);
+
+            if (userDecision === 'stop') {
+              setIsThinking(false);
+              setIsUploading(false);
+              setActiveStates(null);
+              setActiveStateIndex(0);
+              runTypewriter(currentId, "Proses pencarian telah dihentikan oleh pengguna.");
+              return;
+            }
+          }
+          // ------------------
+
+          setActiveStateIndex(2);
           const factualContext = await runDeepSearchAnalyst(textToSend, historyContext, structuredContext, [], selectedModel);
           
-          setActiveStates(['Agent Editor: Menulis hasil akhir & merapikan struktur...']);
+          setActiveStateIndex(3);
           let finalAnswer = await runDeepSearchWriter(textToSend, historyContext, factualContext, verifiedSources, [], selectedModel);
-          
+
           if (citationList && citationList.length > 0) {
             finalAnswer += "\n\n---\n\n**Sumber Referensi:**\n\n";
             citationList.forEach((cit) => {
               finalAnswer += `- [${cit.title}](${cit.url})\n`;
             });
           }
-          
+
           preGeneratedResponse = finalAnswer;
         } catch (error) {
           console.error(error);
           setIsThinking(false);
+          setIsUploading(false);
+          setActiveStates(null);
+          setActiveStateIndex(0);
+          setHitlData(null);
           runTypewriter(currentId, "Maaf, terjadi kesalahan saat melakukan riset mendalam.");
           return;
         }
@@ -231,49 +302,100 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       if (fileToUpload) formData.append('file', fileToUpload);
       if (preGeneratedResponse) formData.append('preGeneratedResponse', preGeneratedResponse);
       
+      let chatIdToUse = currentId;
+      if (currentId === 'new') {
+        chatIdToUse = `chat_${Date.now()}`;
+        formData.append('chatId', chatIdToUse);
+      }
+      
       try {
-        const result = await sendMessage(formData);
-        
-        if (result.success) {
-          if (!activeChatId && currentId === 'new') {
-            migrateNewChatToId(result.chatId);
-            setInternalId(result.chatId);
+        const response = await fetch('/api/chat/stream', {
+          method: 'POST',
+          body: formData
+        });
 
-            const targetUrl = projectId
-              ? `/chat/${result.chatId}?projectId=${projectId}`
-              : `/chat/${result.chatId}`;
-
-            router.replace(targetUrl, { scroll: false });
-          }
-
-          runTypewriter(result.chatId, result.aiResponse);
-        } else {
-          setIsThinking(false);
-          if (result.error?.includes('Batas')) {
-            setUpgradeModal({ isOpen: true, feature: 'Pesan Harian' });
-          } else if (result.error?.includes('Premium')) {
-            setUpgradeModal({ isOpen: true, feature: 'Upload File' });
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          setChatStatus(chatIdToUse, { isThinking: false });
+          
+          const errorMsg = errorData.error || "";
+          if (errorMsg.includes('Batas') || errorMsg.includes('Premium')) {
+            setUpgradeModal({ 
+              isOpen: true, 
+              feature: errorMsg.includes('Batas') ? 'Limit Pesan' : 'Fitur Premium' 
+            });
+            setMessages(prev => prev.slice(0, -1));
           } else {
-            setChatStatus(currentId, { isThinking: false });
-            runTypewriter(currentId, `⚠️ ${result.error || 'Gagal merespon.'}`);
+            runTypewriter(chatIdToUse, errorMsg || "Maaf, terjadi kesalahan.");
+          }
+          return;
+        }
+
+        if (!activeChatId && currentId === 'new') {
+          migrateNewChatToId(chatIdToUse);
+          setInternalId(chatIdToUse);
+          const targetUrl = projectId
+            ? `/chat/${chatIdToUse}?projectId=${projectId}`
+            : `/chat/${chatIdToUse}`;
+          router.replace(targetUrl, { scroll: false });
+        }
+
+        setChatStatus(chatIdToUse, { isThinking: false });
+        setIsUploading(false);
+        setActiveStates(null);
+        setActiveStateIndex(0);
+
+        setChatStatus(chatIdToUse, { isTyping: true });
+        const aiMessageId = (Date.now() + 1).toString();
+        
+        setChatMessages(chatIdToUse, prev => [...prev, {
+          role: 'model',
+          text: '',
+          _id: aiMessageId
+        }]);
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let done = false;
+        let fullText = '';
+
+        while (!done) {
+          const { value, done: doneReading } = await reader.read();
+          done = doneReading;
+          if (value) {
+            const chunkValue = decoder.decode(value, { stream: true });
+            fullText += chunkValue;
+            setChatMessages(chatIdToUse, prev => prev.map(m =>
+              m._id === aiMessageId ? { ...m, text: fullText } : m
+            ));
           }
         }
+        
+        setChatStatus(chatIdToUse, { isTyping: false });
+        
       } catch (error) {
         console.error("sendMessage error:", error);
-        setIsThinking(false);
-        setChatStatus(currentId, { isThinking: false });
-        runTypewriter(currentId, "⚠️ Terjadi kesalahan jaringan. Gagal menghubungi server.");
+        setChatStatus(chatIdToUse, { isThinking: false });
+        runTypewriter(chatIdToUse, "⚠️ Terjadi kesalahan jaringan. Gagal menghubungi server.");
       } finally {
         setIsUploading(false);
+        setActiveStates(null);
+        setActiveStateIndex(0);
       }
     });
   };
+
+  useEffect(() => {
+    handleSendRef.current = handleSend;
+  }, [handleSend]);
 
   const getAgentIcon = (agentId) => {
     switch (agentId) {
       case 'deep-search': return <Search size={16} className="text-blue-400" />;
       case 'researcher': return <BookOpen size={16} className="text-green-400" />;
       case 'editor': return <Edit3 size={16} className="text-amber-400" />;
+      case 'visualizer': return <Code size={16} className="text-purple-400" />;
+      case 'citation': return <FileText size={16} className="text-rose-400" />;
       default: return <Rocket size={16} className="text-indigo-400" />;
     }
   };
@@ -283,6 +405,8 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       case 'deep-search': return 'Deep Search Agent';
       case 'researcher': return 'Profesor Riset';
       case 'editor': return 'Editor Akademik';
+      case 'visualizer': return 'Visual Concept Mapper';
+      case 'citation': return 'Citation Generator';
       default: return 'EduSpaceAI';
     }
   };
@@ -307,6 +431,18 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         accent: 'bg-amber-500',
         text: 'text-amber-600 dark:text-amber-400'
       };
+      case 'visualizer': return {
+        bg: 'bg-purple-50 dark:bg-purple-900/10',
+        border: 'border-purple-200 dark:border-purple-800/30',
+        accent: 'bg-purple-500',
+        text: 'text-purple-600 dark:text-purple-400'
+      };
+      case 'citation': return {
+        bg: 'bg-rose-50 dark:bg-rose-900/10',
+        border: 'border-rose-200 dark:border-rose-800/30',
+        accent: 'bg-rose-500',
+        text: 'text-rose-600 dark:text-rose-400'
+      };
       default: return {
         bg: 'bg-indigo-50 dark:bg-indigo-900/10',
         border: 'border-indigo-200 dark:border-indigo-800/30',
@@ -319,7 +455,6 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const agentTheme = project ? getAgentTheme(project.agentId) : getAgentTheme('default');
 
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
-  const [isFooterScrolled, setIsFooterScrolled] = useState(false);
   const chatContainerRef = useRef(null);
 
   useEffect(() => {
@@ -328,18 +463,17 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
 
       setIsHeaderScrolled(scrollTop > 20);
-      setIsFooterScrolled(scrollTop + clientHeight < scrollHeight - 20);
     };
 
     const currentRef = chatContainerRef.current;
     if (currentRef) {
-      currentRef.addEventListener('scroll', handleScroll);
+      currentRef.addEventListener('scroll', handleScroll, { passive: true });
       handleScroll();
     }
     return () => {
       if (currentRef) currentRef.removeEventListener('scroll', handleScroll);
     };
-  }, [messages]);
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-[#0F0F0F] overflow-hidden transition-colors duration-200">
@@ -414,46 +548,54 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
             {/* Logo + Greeting */}
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-white dark:bg-[#151515] rounded-2xl flex items-center justify-center mb-3 shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-slate-100 dark:border-white/5 overflow-hidden">
-                <Image
-                  src="/logo.png"
-                  alt="EduSpaceAI Logo"
-                  width={40}
-                  height={40}
-                  className="object-contain invert dark:invert-0"
-                />
+              <div className={`w-16 h-16 bg-white dark:bg-[#151515] rounded-2xl flex items-center justify-center mb-3 shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-slate-100 dark:border-white/5 overflow-hidden ${project ? agentTheme.text : ''}`}>
+                {project ? (
+                  <div className="scale-150 opacity-80">{getAgentIcon(project.agentId)}</div>
+                ) : (
+                  <Image
+                    src="/logo.png"
+                    alt="EduSpaceAI Logo"
+                    width={40}
+                    height={40}
+                    className="object-contain invert dark:invert-0"
+                  />
+                )}
               </div>
               <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white mb-1">
                 {project ? project.name : 'EduSpaceAI'}
               </h1>
-              <p className="text-slate-500 dark:text-gray-500 text-sm max-w-xs font-medium">
-                {project
-                  ? `Menggunakan agen ${getAgentName(project.agentId)}`
-                  : greeting}
-              </p>
+              <div className="text-slate-500 dark:text-gray-500 text-sm max-w-sm font-medium h-10 px-2">
+                {project ? (
+                  <LoopingTypewriter 
+                    baseText={`Halo ${user?.name ? user.name.split(' ')[0] : 'Sobat'} 👋, saya ${getAgentName(project.agentId)},`} 
+                    dynamicTexts={["siap membantu proyek ini!", "apa yang ingin Anda teliti?", "mari kita kerjakan!"]} 
+                  />
+                ) : (
+                  <LoopingTypewriter 
+                    baseText={`${greetingTime} ${user?.name ? user.name.split(' ')[0] : 'Sobat'} 👋,`} 
+                    dynamicTexts={["ada yang bisa aku bantu?", "mari mulai risetmu!", "butuh referensi jurnal?", "yuk cek skripsimu!"]} 
+                  />
+                )}
+              </div>
             </div>
 
             {/* Suggested Prompts */}
-            {!project && (
-              <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 w-full max-w-sm">
-                {SUGGESTED_PROMPTS.map((prompt, i) => (
-                  <button
-                    key={i}
-                    onClick={() => {
-                      setInput(prompt.label);
-                    }}
-                    className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.07] hover:border-indigo-400/40 hover:bg-indigo-50/50 dark:hover:bg-indigo-500/5 transition-all text-left group"
-                  >
-                    <span className="text-slate-400 dark:text-gray-500 group-hover:text-indigo-500 transition-colors mt-0.5 shrink-0">
-                      {prompt.icon}
-                    </span>
-                    <span className="text-[11px] text-slate-600 dark:text-gray-400 group-hover:text-slate-800 dark:group-hover:text-gray-200 font-medium leading-snug transition-colors">
-                      {prompt.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 w-full max-w-sm">
+              {(project ? (AGENT_SUGGESTED_PROMPTS[project.agentId] || SUGGESTED_PROMPTS) : SUGGESTED_PROMPTS).map((prompt, i) => (
+                <button
+                  key={i}
+                  onClick={() => setInput(prompt.label)}
+                  className={`flex items-start gap-2 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.07] hover:border-indigo-400/40 hover:bg-indigo-50/50 dark:hover:bg-indigo-500/5 transition-all text-left group`}
+                >
+                  <span className="text-slate-400 dark:text-gray-500 group-hover:text-indigo-500 transition-colors mt-0.5 shrink-0">
+                    {prompt.icon}
+                  </span>
+                  <span className="text-[11px] text-slate-600 dark:text-gray-400 group-hover:text-slate-800 dark:group-hover:text-gray-200 font-medium leading-snug transition-colors">
+                    {prompt.label}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
           // ── END PERUBAHAN 2 ──
         ) : (
@@ -470,6 +612,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                   isUser={msg.role === 'user'} 
                   isTyping={idx === messages.length - 1 && isTyping} 
                   isLast={idx === messages.length - 1}
+                  agentId={project?.agentId}
                   onRegenerate={idx === messages.length - 1 && msg.role === 'model' ? () => {
                     const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
                     if (lastUserMsg) handleSend(lastUserMsg.text, false);
@@ -477,8 +620,21 @@ export default function ChatView({ userId, activeChatId, projectId }) {
                 />
               ))}
               {(isThinking || isUploading) && (
-                <div className="px-1 flex flex-col gap-1.5">
-                  <ThinkingIndicator status={dynamicStatus} />
+                <div className="px-1 flex flex-col gap-1.5 mt-2">
+                  <ModernThinking
+                    status={dynamicStatus}
+                    states={activeStates || hookStates}
+                    currentIndex={activeStates ? activeStateIndex : hookCurrentIndex}
+                    agentId={activeStates ? 'deep-search' : (project?.agentId || 'default')}
+                    isDone={false}
+                    mode={(!isSimpleChat && ((project?.agentId && project.agentId !== 'default') || activeStates || hitlData)) ? 'agent' : 'simple'}
+                    hitlData={hitlData}
+                    onHitlAction={(action) => {
+                       if (hitlData && hitlData.resolve) {
+                         hitlData.resolve(action);
+                       }
+                    }}
+                  />
                   {isUploading && (
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800/30 rounded-lg w-fit animate-pulse">
                       <FileText size={12} className="text-indigo-500" />
@@ -522,6 +678,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
             selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}
             isNewChat={messages.length === 0}
+            agentTheme={agentTheme}
             placeholder={project ? `Tanya apa saja ke ${getAgentName(project.agentId)}...` : "Tanya apa saja ke Dosen AI-mu..."}
             modelSelector={
               <ModelSelector
@@ -537,7 +694,42 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   );
 }
 
-// --- KOMPONEN PENDUKUNG --- (tidak diubah)
+// --- KOMPONEN PENDUKUNG --- 
+
+function LoopingTypewriter({ baseText, dynamicTexts }) {
+  const [textIndex, setTextIndex] = useState(0);
+  const [displayText, setDisplayText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    let timer;
+    const currentFullText = dynamicTexts[textIndex];
+    
+    if (isDeleting) {
+      if (displayText.length > 0) {
+        timer = setTimeout(() => setDisplayText(prev => prev.slice(0, -1)), 30);
+      } else {
+        setIsDeleting(false);
+        setTextIndex((prev) => (prev + 1) % dynamicTexts.length);
+      }
+    } else {
+      if (displayText.length < currentFullText.length) {
+        timer = setTimeout(() => setDisplayText(currentFullText.slice(0, displayText.length + 1)), 60);
+      } else {
+        timer = setTimeout(() => setIsDeleting(true), 2500);
+      }
+    }
+    return () => clearTimeout(timer);
+  }, [displayText, isDeleting, textIndex, dynamicTexts]);
+
+  return (
+    <span className="inline-flex min-h-[1.5em]">
+      <span>{baseText} </span>
+      <span className="font-semibold text-indigo-500 ml-1">{displayText}</span>
+      <span className="animate-pulse text-indigo-500 font-bold ml-[1px]">|</span>
+    </span>
+  );
+}
 
 function SuggestionChip({ label, icon, onClick, isLink, theme }) {
   const Component = isLink ? 'div' : 'button';
@@ -554,7 +746,7 @@ function SuggestionChip({ label, icon, onClick, isLink, theme }) {
   );
 }
 
-function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile, isNewChat, modelSelector, placeholder }) {
+function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSelectedFile, isNewChat, modelSelector, placeholder, agentTheme }) {
   const { setIsProjectModalOpen } = useLayout();
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [showNudge, setShowNudge] = useState(false);
@@ -667,7 +859,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
         )}
       </AnimatePresence>
 
-      <div className="relative bg-white dark:bg-[#151515] border border-slate-200 dark:border-white/10 rounded-[24px] p-1.5 flex items-end gap-1 focus-within:border-indigo-500/30 transition-all shadow-2xl pointer-events-auto">
+      <div className={`relative bg-white dark:bg-[#151515] border border-slate-200 dark:border-white/10 rounded-[24px] p-1.5 flex items-end gap-1 transition-all shadow-2xl pointer-events-auto group-focus-within:border-transparent ${agentTheme ? `focus-within:border-transparent focus-within:ring-2 focus-within:${agentTheme.border.replace('border-', 'ring-').split(' ')[0]}` : 'focus-within:ring-2 focus-within:ring-indigo-500/30'}`}>
         <div className="relative">
           <AnimatePresence>
             {showNudge && !isActionSheetOpen && (
@@ -750,12 +942,14 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               </div>
             </Link>
             <button
-              onClick={(e) => { e.preventDefault(); handleSend(); }}
-              disabled={disabled || (!input.trim() && !selectedFile)}
-              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
-                (input.trim() || selectedFile) && !disabled ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40 hover:scale-105 active:scale-95' : 'bg-white/5 text-slate-400 dark:text-gray-600'
-              }`}
-              aria-label="Kirim pesan"
+            onClick={input.trim() || selectedFile ? handleSend : undefined}
+            disabled={disabled || (!input.trim() && !selectedFile)}
+            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
+              input.trim() || selectedFile
+                ? (agentTheme ? `${agentTheme.accent.replace('bg-', 'bg-').split(' ')[0]} text-white` : 'bg-indigo-600 text-white shadow-md hover:bg-indigo-700 hover:scale-105')
+                : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-gray-600'
+            }`}
+            aria-label="Kirim pesan"
             >
               <ArrowUp size={16} />
             </button>

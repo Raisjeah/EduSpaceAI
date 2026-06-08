@@ -28,19 +28,16 @@ const AGENT_TASKS = {
 };
 
 const COMPLEXITY_MARKERS = [
-  'dan',
-  'lalu',
-  'kemudian',
   'sekaligus',
-  'lengkap',
+  'lengkap dengan',
   'mendalam',
   'bandingkan',
-  'analisis',
-  'buatkan',
-  'sertakan',
-  'dengan sumber',
-  'diagram',
-  'sitasi',
+  'analisis mendalam',
+  'buatkan lengkap',
+  'sertakan sumber',
+  'dengan diagram',
+  'dengan sitasi',
+  'riset lengkap',
 ];
 
 export default class OrchestratorAgent {
@@ -82,7 +79,7 @@ export default class OrchestratorAgent {
     }
 
     const markerCount = COMPLEXITY_MARKERS.filter((marker) => normalizedPrompt.includes(marker)).length;
-    const isLongPrompt = normalizedPrompt.split(/\s+/).length > 28;
+    const isLongPrompt = normalizedPrompt.split(/\s+/).length > 50;
     const isComplex = selectedAgents.size > 1 || markerCount >= 2 || isLongPrompt;
 
     if (!isComplex && selectedAgents.size === 0) {
@@ -124,37 +121,86 @@ export default class OrchestratorAgent {
       startedAt: new Date().toISOString(),
     }, context);
 
-    const settledResults = await Promise.allSettled(
-      analysis.agents.map((agentId) => {
+    // Stage 1: agent independen dijalankan paralel
+    const SEQUENTIAL_AGENTS = ['deep-search', 'citation'];
+    const independentAgents = analysis.agents.filter(id => !SEQUENTIAL_AGENTS.includes(id));
+
+    const stage1Settled = await Promise.allSettled(
+      independentAgents.map(agentId => {
         const delegatedTask = `${AGENT_TASKS[agentId]}\n\nPermintaan pengguna:\n${prompt}`;
-        return this.executeAgent(agentId, delegatedTask, {
-          ...context,
-          originalPrompt: prompt,
-        });
+        return this.executeAgent(agentId, delegatedTask, { ...context, originalPrompt: prompt });
       })
     );
 
-    const results = settledResults.map((result, index) => {
-      if (result.status === 'fulfilled') {
-        return result.value;
-      }
-
-      const agentId = analysis.agents[index];
+    const stage1Results = stage1Settled.map((result, index) => {
+      if (result.status === 'fulfilled') return result.value;
+      const agentId = independentAgents[index];
       return {
         agentId,
         agentName: this.agents.get(agentId)?.name || agentId,
         task: AGENT_TASKS[agentId],
-        output: `Agent ini gagal menyelesaikan subtugas: ${result.reason?.message || result.reason}`,
+        output: `Agent gagal: ${result.reason?.message || result.reason}`,
       };
     });
 
+    // Stage 2: deep-search dulu, lalu citation dengan sumber dari deep-search
+    const stage2Results = [];
+
+    if (analysis.agents.includes('deep-search')) {
+      const deepSearchTask = `${AGENT_TASKS['deep-search']}\n\nPermintaan pengguna:\n${prompt}`;
+      let deepSearchResult;
+      try {
+        deepSearchResult = await this.executeAgent('deep-search', deepSearchTask, { ...context, originalPrompt: prompt });
+      } catch (err) {
+        deepSearchResult = {
+          agentId: 'deep-search',
+          agentName: 'Deep Search Agent',
+          task: deepSearchTask,
+          output: `Agent gagal: ${err?.message || err}`,
+        };
+      }
+      stage2Results.push(deepSearchResult);
+
+      if (analysis.agents.includes('citation')) {
+        const citationTask = `${AGENT_TASKS['citation']}\n\nPermintaan pengguna:\n${prompt}\n\nSumber dari Deep Search:\n${deepSearchResult.output}`;
+        let citationResult;
+        try {
+          citationResult = await this.executeAgent('citation', citationTask, { ...context, originalPrompt: prompt });
+        } catch (err) {
+          citationResult = {
+            agentId: 'citation',
+            agentName: 'Citation Generator',
+            task: citationTask,
+            output: `Agent gagal: ${err?.message || err}`,
+          };
+        }
+        stage2Results.push(citationResult);
+      }
+    } else if (analysis.agents.includes('citation')) {
+      const citationTask = `${AGENT_TASKS['citation']}\n\nPermintaan pengguna:\n${prompt}`;
+      let citationResult;
+      try {
+        citationResult = await this.executeAgent('citation', citationTask, { ...context, originalPrompt: prompt });
+      } catch (err) {
+        citationResult = {
+          agentId: 'citation',
+          agentName: 'Citation Generator',
+          task: citationTask,
+          output: `Agent gagal: ${err?.message || err}`,
+        };
+      }
+      stage2Results.push(citationResult);
+    }
+
+    const allResults = [...stage1Results, ...stage2Results];
+
     updateSharedMemory(
       'lastWorkflowResults',
-      results.map(({ agentId, agentName, task }) => ({ agentId, agentName, task })),
+      allResults.map(({ agentId, agentName, task }) => ({ agentId, agentName, task })),
       context
     );
 
-    return this.synthesizeResults(prompt, results, context, analysis);
+    return this.synthesizeResults(prompt, allResults, context, analysis);
   }
 
   async executeAgent(agentId, task, context = {}) {

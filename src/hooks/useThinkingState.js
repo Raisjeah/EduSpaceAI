@@ -1,16 +1,48 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-const DEFAULT_STATES = [
-  "Understanding question",
-  "Retrieving context",
-  "Analyzing information",
-  "Building response",
-  "Finalizing answer"
-];
+const AGENT_STATES = {
+  'deep-search': [
+    'Menganalisis pertanyaan...',
+    'Membuat rencana riset...',
+    'Mencari informasi di web...',
+    'Membaca konten sumber...',
+    'Memvalidasi & menganalisis data...',
+    'Menyusun jawaban final...',
+  ],
+  researcher: [
+    'Menganalisis konteks akademik...',
+    'Meninjau metodologi penelitian...',
+    'Menyusun argumen ilmiah...',
+    'Memvalidasi struktur penelitian...',
+  ],
+  editor: [
+    'Membaca teks...',
+    'Mengoreksi tata bahasa (PUEBI)...',
+    'Memeriksa struktur kalimat...',
+    'Finalisasi editing...',
+  ],
+  visualizer: [
+    'Memetakan konsep...',
+    'Menyusun alur visual...',
+    'Membuat struktur diagram Mermaid...',
+  ],
+  citation: [
+    'Membaca data sumber...',
+    'Memformat referensi...',
+    'Memvalidasi kelengkapan sitasi...',
+  ],
+  default: [
+    'Memahami pertanyaan...',
+    'Mengambil konteks...',
+    'Menganalisis informasi...',
+    'Menyusun jawaban...',
+    'Finalisasi...',
+  ],
+};
 
-export default function useThinkingState(isThinking, customStates = null) {
-  const states = customStates || DEFAULT_STATES;
+export default function useThinkingState(isThinking, agentId = 'default', customStates = null) {
+  const states = customStates || AGENT_STATES[agentId] || AGENT_STATES.default;
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -19,16 +51,14 @@ export default function useThinkingState(isThinking, customStates = null) {
       return;
     }
 
-    // 60fps performance optimization: use standard timing but avoid heavy operations
     const interval = setInterval(() => {
       setCurrentIndex((prev) => {
-        // Stop automatically at the last state
         if (prev < states.length - 1) {
           return prev + 1;
         }
         return prev;
       });
-    }, 1800); // Rotate every 1.8 seconds
+    }, 1800);
 
     return () => clearInterval(interval);
   }, [isThinking, states]);
@@ -36,6 +66,6 @@ export default function useThinkingState(isThinking, customStates = null) {
   return {
     status: states[currentIndex],
     currentIndex,
-    states
+    states,
   };
 }

@@ -8,8 +8,8 @@ import { saveChat, sendMessage } from '@/app/actions/chatActions';
 import { extractFileContent } from '@/app/actions/fileActions'; // server action
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import AiMessage from './AiMessage';
-import ThinkingIndicator from './ThinkingIndicator';
+import AiMessage from '../chat/AiMessage';
+import ModernThinking from '../chat/ModernThinking';
 import { useChat } from '@/context/ChatContext';
 import TextareaAutosize from 'react-textarea-autosize';
 
@@ -535,7 +535,7 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
           {isLoading && (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 dark:bg-[#0F0F0F]/80 backdrop-blur-sm rounded-[1.5rem] border border-indigo-500/20">
               <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-2xl shadow-xl border border-slate-200 dark:border-[#333] flex flex-col items-center w-[280px]">
-                <ThinkingIndicator />
+                <ModernThinking status="Memproses file..." />
                 <p className="text-xs font-bold text-slate-600 dark:text-gray-300 mt-2">
                   {extractProgress < 100 ? 'Mengekstrak Konten File...' : 'Berhasil Diekstrak!'}
                 </p>
@@ -649,7 +649,7 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
             </div>
           )}
           {isThinking && (
-            <ThinkingIndicator />
+            <ModernThinking status="Berpikir..." />
           )}
           <div ref={chatEndRef} />
         </div>

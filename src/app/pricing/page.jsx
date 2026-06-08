@@ -6,7 +6,7 @@ import useAuth from '@/hooks/useAuth';
 import { createTransaction } from '@/app/actions/subscriptionActions';
 import { Check, Sparkles, Zap, Crown, ShieldCheck, PartyPopper } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import FloatingOrbs from '@/components/FloatingOrbs';
+import FloatingOrbs from '@/components/ui/FloatingOrbs';
 
 const plans = [
   {

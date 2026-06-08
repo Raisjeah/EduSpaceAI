@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
-import { search } from "../../tavily";
-import { fetchPageContent } from "../../jina";
+import { search } from "../../providers/tavily";
+import { fetchPageContent } from "../../providers/jina";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -25,6 +25,27 @@ function withTimeout(promise, timeoutMs, label = 'Operation') {
   ]);
 }
 
+async function generateContentWithRetry(config, maxRetries = 3) {
+  let retries = maxRetries;
+  let delay = 2000;
+  
+  while (retries > 0) {
+    try {
+      return await ai.models.generateContent(config);
+    } catch (error) {
+      if ((error.status === 429 || error.status === 503 || error?.message?.includes("503")) && retries > 1) {
+        retries--;
+        const jitter = Math.floor(Math.random() * 1000);
+        console.warn(`[API] 503/429 Error, retrying in ${delay + jitter}ms... (${retries} retries left)`);
+        await new Promise(res => setTimeout(res, delay + jitter));
+        delay *= 2;
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+
 // ─── STEP 1: Query Analyzer ─────────────────────────────────────────────────
 export async function deepSearchStep1_Analyze(userQuery, historyContext) {
   const analyzerPrompt = `
@@ -40,12 +61,12 @@ export async function deepSearchStep1_Analyze(userQuery, historyContext) {
   `;
 
   const analyzerResult = await withTimeout(
-    ai.models.generateContent({
+    generateContentWithRetry({
       model: "gemini-2.5-flash",
       contents: analyzerPrompt,
       config: { responseMimeType: "application/json" }
     }),
-    10000,
+    30000,
     'Query Analyzer'
   );
 
@@ -73,7 +94,7 @@ export async function deepSearchStep1_Analyze(userQuery, historyContext) {
 // ─── STEP 2 & 3: Tavily Search + Jina Extract ───────────────────────────────
 export async function deepSearchStep2_SearchAndExtract(subQueries, userQuery) {
   const searchResultsSettled = await Promise.allSettled(
-    subQueries.map(q => withTimeout(search(q), 8000, `Search: ${q}`))
+    subQueries.map(q => withTimeout(search(q), 15000, `Search: ${q}`))
   );
 
   const searchResultsArrays = searchResultsSettled
@@ -111,7 +132,7 @@ export async function deepSearchStep2_SearchAndExtract(subQueries, userQuery) {
     .slice(0, 5);
 
   const extractionResultsSettled = await Promise.allSettled(
-    rerankedResults.map(res => withTimeout(fetchPageContent(res.url), 7000, `Fetch: ${res.url}`))
+    rerankedResults.map(res => withTimeout(fetchPageContent(res.url), 20000, `Fetch: ${res.url}`))
   );
 
   const extractedContexts = extractionResultsSettled
@@ -190,11 +211,11 @@ export async function deepSearchStep3_AnalyzeContext(userQuery, historyContext, 
   `;
 
   const analystResult = await withTimeout(
-    ai.models.generateContent({
+    generateContentWithRetry({
       model: selectedModelName,
       contents: [analystPrompt, ...fileParts],
     }),
-    20000,
+    90000,
     'Analyst Agent'
   );
 
@@ -248,11 +269,11 @@ export async function deepSearchStep4_Write(userQuery, historyContext, fileConte
   `;
 
   const finalResult = await withTimeout(
-    ai.models.generateContent({
+    generateContentWithRetry({
       model: selectedModelName,
       contents: [writerPrompt, ...fileParts],
     }),
-    20000,
+    90000,
     'Writer Agent'
   );
 
@@ -260,7 +281,7 @@ export async function deepSearchStep4_Write(userQuery, historyContext, fileConte
 }
 
 // ─── Full Pipeline ───────────────────────────────────────────────────────────
-export async function deepSearchEngine(userQuery, history = [], fileParts = [], modelName = "gemini-2.5-flash") {
+export async function deepSearch(userQuery, history = [], fileParts = [], modelName = "gemini-2.5-flash") {
   try {
     const selectedModelName = getValidModelName(modelName);
 
