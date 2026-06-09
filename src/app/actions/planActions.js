@@ -97,7 +97,7 @@ export async function seedPlans() {
   try {
     await dbConnect();
     for (const plan of plans) {
-      await Plan.findOneAndUpdate({ name: plan.name }, plan, { upsert: true, new: true });
+      await Plan.findOneAndUpdate({ name: plan.name }, { $set: plan }, { upsert: true, new: true });
     }
     return { success: true, message: 'Plans seeded successfully' };
   } catch (error) {

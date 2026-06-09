@@ -83,7 +83,7 @@ export default function PricingPage() {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
     } else if (showSuccessModal && countdown === 0) {
-      router.push('/');
+      router.push('/pricing');
     }
   }, [showSuccessModal, countdown, router]);
 
@@ -181,14 +181,14 @@ export default function PricingPage() {
               </p>
 
               <div className="mb-6 text-xs text-slate-400 dark:text-gray-500">
-                Mengalihkan ke dashboard dalam {countdown} detik...
+                Mengalihkan ke halaman paket dalam {countdown} detik...
               </div>
 
               <button
-                onClick={() => router.push('/')}
+                onClick={() => router.push('/pricing')}
                 className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
               >
-                Mulai Chat Sekarang
+                Lihat Status Paket Saya
                 <Check size={20} />
               </button>
             </motion.div>

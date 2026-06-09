@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { GoogleGenAI } from '@google/genai';
 import SiriWave from 'siriwave';
 
@@ -28,6 +29,7 @@ const LiveCallDashboard = () => {
   const [transcriptions, setTranscriptions] = useState([]);
   const [isTextInputOpen, setIsTextInputOpen] = useState(false);
   const [remainingMinutes, setRemainingMinutes] = useState(null);
+  const [accessError, setAccessError] = useState(null);
   const startTimeRef = useRef(null);
 
   useEffect(() => {
@@ -156,6 +158,11 @@ const LiveCallDashboard = () => {
       const response = await fetch('/api/live');
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
+        if (response.status === 403 || response.status === 401) {
+          setAccessError(err.error || 'Fitur ini tidak tersedia di paket Anda.');
+          setIsConnecting(false);
+          return;
+        }
         throw new Error(err.error || `Live token request failed (${response.status})`);
       }
       const { token, remainingMinutes: rMin } = await response.json();
@@ -378,9 +385,25 @@ const LiveCallDashboard = () => {
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[400px] h-[300px] bg-blue-700/6 rounded-full blur-[100px]" />
       </div>
 
-      {/* ══════════════════════════════════════
-          HEADER
-      ══════════════════════════════════════ */}
+      {accessError ? (
+        <div className="relative z-20 flex-1 flex flex-col items-center justify-center gap-4 p-8 text-center">
+          <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center">
+            <Sparkles size={32} className="text-red-500" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Akses Terbatas</h2>
+          <p className="text-slate-500 dark:text-gray-400 max-w-sm">{accessError}</p>
+          <Link href="/pricing" className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all">
+            Upgrade Paket
+          </Link>
+          <button onClick={() => router.back()} className="text-sm text-slate-400 hover:text-slate-600 mt-2">
+            Kembali
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* ══════════════════════════════════════
+              HEADER
+          ══════════════════════════════════════ */}
       <header className="relative z-20 shrink-0 flex items-center justify-between px-5 pt-5 pb-3">
         {/* Left — Avatar + Name */}
         <div className="flex items-center gap-3">
@@ -593,6 +616,8 @@ const LiveCallDashboard = () => {
           </button>
         </div>
       </footer>
+      </>
+      )}
     </div>
   );
 };

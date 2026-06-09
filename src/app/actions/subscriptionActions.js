@@ -149,7 +149,8 @@ export async function verifyPayment(orderId) {
     await subscription.save();
 
     if (transaction_status === 'settlement' || transaction_status === 'capture') {
-      return { success: true, plan: user.current_plan };
+      const updatedUser = await User.findById(user._id).lean();
+      return { success: true, plan: updatedUser?.current_plan };
     } else {
       return { success: false, error: 'Payment not successful yet' };
     }
