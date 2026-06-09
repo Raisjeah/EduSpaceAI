@@ -110,3 +110,9 @@ export function snapshotMemory(agentId, context = {}) {
     shared: Object.fromEntries(getSharedStore(context) || []),
   };
 }
+
+// Test-only utility to clear module-level state
+export function clearMemoryStores() {
+  agentMemoryStore.clear();
+  sharedMemoryStore.clear();
+}
