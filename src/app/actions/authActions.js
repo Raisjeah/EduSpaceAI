@@ -9,6 +9,7 @@ import { OAuth2Client } from 'google-auth-library';
 import crypto from 'crypto';
 import { getSessionUser } from '@/lib/core/session';
 import LoginAttempt from '@/models/LoginAttempt';
+import { getEffectivePlan } from '@/lib/core/subscription';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -288,12 +289,15 @@ export async function getUser() {
 
     if (!user) return null;
 
+    const currentPlan = await getEffectivePlan(user);
+
     return {
       uid: user._id.toString(),
       name: user.name,
       email: user.email,
       image: user.image,
-      current_plan: user.current_plan,
+      current_plan: currentPlan,
+      plan_expired_at: currentPlan === 'FREE' ? null : user.plan_expired_at,
     };
   } catch (error) {
     return null;

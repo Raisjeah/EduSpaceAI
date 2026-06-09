@@ -8,7 +8,8 @@ import UsageCounter from '@/models/UsageCounter';
 import Document from '@/models/Document';
 import User from '@/models/User';
 import { getSessionUser } from '@/lib/core/session';
-import { getWindowUsage } from '@/lib/core/subscription';
+import { getCachedPlan, getEffectivePlan, getWindowUsage } from '@/lib/core/subscription';
+import { PLAN_NAMES, getPlanDefinition, normalizePlanName, toPlanSeed } from '@/lib/plans';
 import crypto from 'crypto';
 
 const snap = new midtransClient.Snap({
@@ -19,8 +20,9 @@ const snap = new midtransClient.Snap({
 
 export async function createTransaction(planName) {
   try {
-    const validPlans = ['CLASSIC', 'PRO', 'ULTRA'];
-    if (!validPlans.includes(planName)) {
+    const normalizedPlanName = normalizePlanName(planName);
+    const validPlans = PLAN_NAMES.filter((name) => name !== 'FREE');
+    if (!validPlans.includes(normalizedPlanName)) {
       throw new Error('Paket tidak valid.');
     }
 
@@ -31,19 +33,19 @@ export async function createTransaction(planName) {
       throw new Error('Sesi berakhir. Silakan login kembali.');
     }
 
-    const userId = user._id.toString();
-    const plan = await Plan.findOne({ name: planName }).lean();
-
-    if (!plan) {
-      throw new Error('Data paket tidak ditemukan di database.');
-    }
+    const planSeed = toPlanSeed(getPlanDefinition(normalizedPlanName));
+    const plan = await Plan.findOneAndUpdate(
+      { name: normalizedPlanName },
+      { $set: planSeed },
+      { upsert: true, new: true, runValidators: true }
+    ).lean();
 
     const randomStr = crypto.randomBytes(4).toString('hex').toUpperCase();
     const orderId = `SUBS-${Date.now()}-${randomStr}`;
 
     // Apply 70% discount for ULTRA for new users
     let finalPrice = plan.price;
-    if (planName === 'ULTRA') {
+    if (normalizedPlanName === 'ULTRA') {
        // Check if user has previous successful subscriptions
        const prevSub = await Subscription.findOne({
          user_id: user._id,
@@ -113,10 +115,14 @@ export async function verifyPayment(orderId) {
 
     const subscription = await Subscription.findOne({ midtrans_order_id: orderId });
     if (!subscription) return { success: false, error: 'Subscription not found' };
+    if (subscription.user_id.toString() !== user._id.toString()) {
+      return { success: false, error: 'Forbidden' };
+    }
 
     // Idempotency
     if (subscription.payment_status === 'settlement' || subscription.payment_status === 'capture') {
-      return { success: true, plan: user.current_plan };
+      const subscriptionUser = await User.findById(subscription.user_id).lean();
+      return { success: true, plan: subscriptionUser?.current_plan || user.current_plan };
     }
 
     subscription.transaction_id = statusResponse.transaction_id;
@@ -148,12 +154,12 @@ export async function verifyPayment(orderId) {
 
     await subscription.save();
 
-    if (transaction_status === 'settlement' || transaction_status === 'capture') {
+    if (subscription.payment_status === 'settlement') {
       const updatedUser = await User.findById(user._id).lean();
       return { success: true, plan: updatedUser?.current_plan };
-    } else {
-      return { success: false, error: 'Payment not successful yet' };
     }
+
+    return { success: false, error: 'Payment not successful yet' };
   } catch (error) {
     console.error('verifyPayment error:', error);
     return { success: false, error: error.message };
@@ -163,9 +169,10 @@ export async function verifyPayment(orderId) {
 export async function getSubscriptionStatus() {
   try {
     const user = await getSessionUser();
+    const currentPlan = await getEffectivePlan(user);
     return {
-      currentPlan: user?.current_plan || 'FREE',
-      planExpiredAt: user?.plan_expired_at,
+      currentPlan,
+      planExpiredAt: currentPlan === 'FREE' ? null : user?.plan_expired_at,
     };
   } catch (error) {
     return { currentPlan: 'FREE' };
@@ -178,7 +185,8 @@ export async function getUserUsageStats() {
     if (!user) return null;
 
     await dbConnect();
-    const plan = await Plan.findOne({ name: user.current_plan || 'FREE' }).lean();
+    const effectivePlan = await getEffectivePlan(user);
+    const plan = await getCachedPlan(effectivePlan);
 
     // Get daily messages
     const today = new Date().toISOString().split('T')[0];
@@ -207,13 +215,13 @@ export async function getUserUsageStats() {
     ]);
 
     return {
-      planName: user.current_plan || 'FREE',
+      planName: effectivePlan,
       messageLimit: plan?.message_limit || 20,
       messagesUsed: usage?.count || 0,
       fileQuota: plan?.file_upload ? 'Unlimited' : 'Limited (Free)', // Simplified for now
       fileCount: fileCount,
       daysRemaining: daysRemaining > 0 ? daysRemaining : 0,
-      planExpiry: user.plan_expired_at,
+      planExpiry: effectivePlan === 'FREE' ? null : user.plan_expired_at,
       imageUpload: plan?.image_upload || false,
       fileUpload: plan?.file_upload || false,
       liveCall: {

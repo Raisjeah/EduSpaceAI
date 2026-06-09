@@ -158,12 +158,9 @@ const LiveCallDashboard = () => {
       const response = await fetch('/api/live');
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
-        if (response.status === 403 || response.status === 401) {
-          setAccessError(err.error || 'Fitur ini tidak tersedia di paket Anda.');
-          setIsConnecting(false);
-          return;
-        }
-        throw new Error(err.error || `Live token request failed (${response.status})`);
+        setAccessError(err.error || 'Fitur Live Call belum bisa dimulai. Silakan cek paket atau konfigurasi server.');
+        setIsConnecting(false);
+        return;
       }
       const { token, remainingMinutes: rMin } = await response.json();
       if (!token) { setStatusMessage("Sesi gagal dimulai. Coba lagi."); return; }
@@ -390,8 +387,8 @@ const LiveCallDashboard = () => {
           <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center">
             <Sparkles size={32} className="text-red-500" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Akses Terbatas</h2>
-          <p className="text-slate-500 dark:text-gray-400 max-w-sm">{accessError}</p>
+          <h2 className="text-xl font-bold text-white">Akses Terbatas</h2>
+          <p className="text-gray-400 max-w-sm">{accessError}</p>
           <Link href="/pricing" className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all">
             Upgrade Paket
           </Link>
