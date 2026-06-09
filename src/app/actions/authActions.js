@@ -244,7 +244,7 @@ export async function loginWithGoogle(idToken) {
 
     if (!user) {
       // Use a random password since the user authenticates via Google.
-      const randomPassword = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
+      const randomPassword = await bcrypt.hash(crypto.randomBytes(32).toString('base64'), 10);
       user = new User({
         name,
         email,
