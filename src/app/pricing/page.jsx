@@ -5,70 +5,22 @@ import { useRouter } from 'next/navigation';
 import useAuth from '@/hooks/useAuth';
 import { createTransaction, verifyPayment } from '@/app/actions/subscriptionActions';
 import { Check, Sparkles, Zap, Crown, ShieldCheck, PartyPopper } from 'lucide-react';
+import { PLAN_DEFINITIONS } from '@/lib/plans';
 import { motion, AnimatePresence } from 'framer-motion';
 import FloatingOrbs from '@/components/ui/FloatingOrbs';
 
-const plans = [
-  {
-    id: 'free',
-    name: 'FREE',
-    price: '0',
-    icon: <ShieldCheck className="text-slate-400" />,
-    features: [
-      '20 pesan / hari',
-      'Live Call Prof Kore: 5 mnt/hari',
-      'Tanpa upload file',
-      'Tanpa AI Agent',
-    ],
-    buttonText: 'Paket Saat Ini',
-    disabled: true,
-  },
-  {
-    id: 'classic',
-    name: 'CLASSIC',
-    price: '50.000',
-    icon: <Zap className="text-blue-500" />,
-    features: [
-      '150 pesan / hari',
-      'Upload File & Gambar: 3 file / 4 jam',
-      'Live Call Prof Kore: 5 mnt / 3 jam',
-      'AI Agent: 10 req / 4 jam',
-    ],
-    buttonText: 'Pilih Classic',
-    recommended: false,
-  },
-  {
-    id: 'pro',
-    name: 'PRO',
-    price: '100.000',
-    icon: <Sparkles className="text-purple-500" />,
-    features: [
-      '500 pesan / hari',
-      'Upload File & Gambar: 10 file / 4 jam',
-      'Live Call Prof Kore: 30 mnt / hari',
-      'AI Agent: 50 req / 4 jam',
-      'Project Memory',
-    ],
-    buttonText: 'Pilih Pro',
-    recommended: true,
-  },
-  {
-    id: 'ultra',
-    name: 'ULTRA',
-    price: '200.000',
-    promo: 'DISKON 70% Bulan Pertama',
-    icon: <Crown className="text-amber-500" />,
-    features: [
-      '2000 pesan / hari',
-      'Upload File Unlimited (100MB)',
-      'Live Call Prof Kore: 120 mnt / hari',
-      'AI Agent Unlimited',
-      'Long-term Memory + Priority Access',
-    ],
-    buttonText: 'Pilih Ultra',
-    recommended: false,
-  },
-];
+const planIcons = {
+  FREE: <ShieldCheck className="text-slate-400" />,
+  CLASSIC: <Zap className="text-blue-500" />,
+  PRO: <Sparkles className="text-purple-500" />,
+  ULTRA: <Crown className="text-amber-500" />,
+};
+
+const plans = PLAN_DEFINITIONS.map((plan) => ({
+  ...plan,
+  price: plan.displayPrice,
+  icon: planIcons[plan.name],
+}));
 
 export default function PricingPage() {
   const router = useRouter();

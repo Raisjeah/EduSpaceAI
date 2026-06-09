@@ -3,6 +3,7 @@ import User from '@/models/User';
 import UsageCounter from '@/models/UsageCounter';
 import dbConnect from '@/lib/db/mongodb';
 import WindowUsageCounter from '@/models/WindowUsageCounter';
+import { PLAN_IDS, getPlanDefinition, normalizePlanName, toPlanSeed } from '@/lib/plans';
 
 // Simple in-memory cache for plans
 const planCache = {
@@ -11,26 +12,39 @@ const planCache = {
   ttl: 1000 * 60 * 5, // 5 minutes cache
 };
 
+export function mergePlanWithDefinition(planName, planDoc = null) {
+  const normalized = normalizePlanName(planName);
+  const fallback = toPlanSeed(getPlanDefinition(normalized));
+  return { ...(planDoc || {}), ...fallback, _id: planDoc?._id, createdAt: planDoc?.createdAt, name: normalized };
+}
+
+export function clearPlanCache(planName) {
+  if (planName) {
+    delete planCache.data[normalizePlanName(planName)];
+    return;
+  }
+  planCache.data = {};
+  planCache.lastFetch = 0;
+}
+
 export async function getCachedPlan(planName) {
+  const normalized = normalizePlanName(planName);
   const now = Date.now();
-  if (planCache.data[planName] && now - planCache.lastFetch < planCache.ttl) {
-    return planCache.data[planName];
+  if (planCache.data[normalized] && now - planCache.lastFetch < planCache.ttl) {
+    return planCache.data[normalized];
   }
 
   await dbConnect();
-  const planDoc = await Plan.findOne({ name: planName }).lean();
-  if (planDoc) {
-    planCache.data[planName] = planDoc;
-    planCache.lastFetch = now;
-  }
-  return planDoc;
+  const planDoc = await Plan.findOne({ name: normalized }).lean();
+  const mergedPlan = mergePlanWithDefinition(normalized, planDoc);
+
+  planCache.data[normalized] = mergedPlan;
+  planCache.lastFetch = now;
+  return mergedPlan;
 }
 
 export const TIERS = {
-  FREE: 'FREE',
-  CLASSIC: 'CLASSIC',
-  PRO: 'PRO',
-  ULTRA: 'ULTRA',
+  ...PLAN_IDS,
 };
 
 // Map plan -> guaranteed-real SDK model slug. IDs are stable for DB / UI selectors
@@ -45,7 +59,7 @@ export const MODELS = {
 export const MODEL_PERMISSIONS = {
   'gemini-2.5-flash': TIERS.FREE,
   'gemini-2.5-pro': TIERS.CLASSIC,
-  'claude-4-6-sonnet': TIERS.ULTRA,
+  'claude-sonnet-4-6': TIERS.ULTRA,
   'gemini-2.5-flash-image': TIERS.ULTRA,
 };
 
@@ -82,7 +96,7 @@ export async function getEffectivePlan(user) {
     }
     return 'FREE';
   }
-  return user.current_plan || 'FREE';
+  return normalizePlanName(user.current_plan);
 }
 
 export async function checkFeatureAccess(user, feature) {
