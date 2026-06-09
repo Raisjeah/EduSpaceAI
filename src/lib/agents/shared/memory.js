@@ -10,7 +10,8 @@ function normalizeScopePart(value) {
   return normalized || null;
 }
 
-export function createMemoryScope(context = {}) {
+export function createMemoryScope(context) {
+  context = context || {};
   const explicitScope = normalizeScopePart(context.memoryScopeId);
   if (explicitScope) {
     return explicitScope;
