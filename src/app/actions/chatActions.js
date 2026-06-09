@@ -201,24 +201,33 @@ export async function sendMessage(formData) {
       parts: [{ text: msg.text }]
     }));
 
-    if (!skipSave) {
-      await saveChat('user', prompt, chatId, projectId);
-    }
-
-    // F. Get AI Response
+    const promises = [];
     let aiResponse = formData.get('preGeneratedResponse');
-    if (!aiResponse) {
-      aiResponse = await getGeminiResponse(prompt, historyForGemini, fileParts, agentId, modelName, {
-        userId,
-        chatId,
-        projectId,
-        userProfile: user.profile,
-        userName: user.name,
-      });
+
+    // F. Get AI Response Promise
+    const aiPromise = aiResponse
+      ? Promise.resolve(aiResponse)
+      : getGeminiResponse(prompt, historyForGemini, fileParts, agentId, modelName, {
+          userId,
+          chatId,
+          projectId,
+          userProfile: user.profile,
+          userName: user.name,
+        }).then(res => { aiResponse = res; return res; });
+
+    promises.push(aiPromise);
+
+    // Prepare User Save promise
+    if (!skipSave) {
+      promises.push(saveChat('user', prompt, chatId, projectId));
     }
 
+    // Await both simultaneously
+    await Promise.all(promises);
+
+    // Fire-and-forget the final save to reduce latency, but MUST include a catch
     if (!skipSave) {
-      await saveChat('model', aiResponse, chatId, projectId);
+      saveChat('model', aiResponse, chatId, projectId).catch(console.error);
     }
 
     return { 
