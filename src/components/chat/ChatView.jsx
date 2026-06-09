@@ -456,7 +456,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
   const agentTheme = project ? getAgentTheme(project.agentId) : getAgentTheme('default');
 
-  const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
+  const [isFooterScrolled, setIsFooterScrolled] = useState(false);
   const chatContainerRef = useRef(null);
 
   useEffect(() => {
@@ -464,7 +464,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       if (!chatContainerRef.current) return;
       const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
 
-      setIsHeaderScrolled(scrollTop > 20);
+      setIsFooterScrolled(scrollTop + clientHeight < scrollHeight - 20);
     };
 
     const currentRef = chatContainerRef.current;
@@ -647,7 +647,22 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           isSidebarOpen ? 'left-0 md:left-[280px]' : 'left-0'
         } bg-transparent pointer-events-none`}>
         <div className="max-w-4xl mx-auto flex flex-col gap-3 pointer-events-auto">
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center">
+            <AnimatePresence>
+              {isFooterScrolled && (
+                <motion.button
+                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                  onClick={() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                  className="mb-3 p-2.5 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-indigo-600 dark:text-indigo-400 shadow-elevation-1 hover:bg-slate-50 dark:hover:bg-white/5 transition-all pointer-events-auto"
+                  aria-label="Scroll ke bawah"
+                >
+                  <ChevronDown size={20} />
+                </motion.button>
+              )}
+            </AnimatePresence>
+
             <AnimatePresence>
               {isTyping && (
                 <motion.button
@@ -845,6 +860,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
             <button
               onClick={() => setSelectedFile(null)}
               className="w-6 h-6 flex items-center justify-center rounded-full bg-slate-200 dark:bg-[#2A2A2A] text-slate-500 dark:text-gray-400 hover:bg-red-500 hover:text-white transition-all shadow-sm"
+              aria-label="Hapus lampiran"
             >
               <X size={12} />
             </button>
@@ -877,6 +893,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               ? 'bg-indigo-600 text-white rotate-45'
               : 'text-slate-400 dark:text-gray-500 hover:text-indigo-400'
             } ${showNudge && !isActionSheetOpen ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-[#0F0F0F] animate-pulse' : ''}`}
+            aria-label={isActionSheetOpen ? 'Tutup menu lampiran' : 'Buka menu lampiran'}
           >
             <Plus size={20} />
           </button>
