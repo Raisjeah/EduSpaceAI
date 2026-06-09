@@ -4,8 +4,8 @@ import Chat from '@/models/Chat';
 import Project from '@/models/Project';
 import UserMemory from '@/models/UserMemory';
 import { getGeminiResponse } from '@/lib/providers';
-import { extractFileContent } from './fileActions';
-import { checkUsageLimit, getModelByPlan, TIERS, checkFeatureAccess, isModelAllowed } from '@/lib/core/subscription';
+import { extractFileContentLogic } from '@/lib/core/fileParser';
+import { checkUsageLimit, getModelByPlan, TIERS, checkFeatureAccess, isModelAllowed, getCachedPlan, checkWindowUsage } from '@/lib/core/subscription';
 import { getSessionUser } from '@/lib/core/session';
 
 // Sanitization function for user content to prevent prompt injection
@@ -74,6 +74,29 @@ export async function sendMessage(formData) {
     let fileParts = [];
     let agentId = project?.agentId || 'default';
 
+    // Cek agent request limit jika menggunakan agent (bukan default)
+    if (agentId && agentId !== 'default') {
+      const planDoc = await getCachedPlan(user.current_plan);
+      if (!planDoc?.agent_enabled) {
+        return { success: false, error: 'Fitur AI Agent tidak tersedia di paket Anda.' };
+      }
+      if (planDoc.agent_requests_per_window !== -1) {
+        const agentCheck = await checkWindowUsage(
+          userId,
+          'agent_request',
+          planDoc.agent_window_hours,
+          planDoc.agent_requests_per_window,
+          1
+        );
+        if (!agentCheck.allowed) {
+          return {
+            success: false,
+            error: `Batas request Agent tercapai (${planDoc.agent_requests_per_window} req/${planDoc.agent_window_hours} jam). Reset pada ${new Date(agentCheck.windowResetAt).toLocaleTimeString('id-ID')}.`,
+          };
+        }
+      }
+    }
+
     // B. & C. Feature Access & Memory check in parallel
     const [hasMemoryAccess, hasImageAccess, hasFileAccess] = await Promise.all([
       checkFeatureAccess(user, 'long_memory'),
@@ -93,6 +116,24 @@ export async function sendMessage(formData) {
         };
       }
 
+      // Cek window limit untuk file upload
+      const planDoc = await getCachedPlan(user.current_plan);
+      if (planDoc.file_upload_per_window !== -1 && planDoc.file_upload_per_window > 0) {
+        const fileCheck = await checkWindowUsage(
+          userId,
+          'file_upload',
+          planDoc.file_upload_window_hours,
+          planDoc.file_upload_per_window,
+          1
+        );
+        if (!fileCheck.allowed) {
+          return {
+            success: false,
+            error: `Batas upload file tercapai (${planDoc.file_upload_per_window} file/${planDoc.file_upload_window_hours} jam). Reset pada ${new Date(fileCheck.windowResetAt).toLocaleTimeString('id-ID')}.`,
+          };
+        }
+      }
+
       if (isImage) {
         const bytes = await file.arrayBuffer();
         const base64Data = Buffer.from(bytes).toString('base64');
@@ -106,7 +147,7 @@ export async function sendMessage(formData) {
       } else {
         // fileActions will handle size check with getSessionUser internally or we can pass it
         formData.append('userId', userId);
-        const extractionResult = await extractFileContent(formData);
+        const extractionResult = await extractFileContentLogic(formData);
         if (extractionResult.success) {
           const sanitizedDocContent = sanitizeUserContent(extractionResult.content);
           prompt = `[Konteks Dokumen: ${extractionResult.fileName}]\n${sanitizedDocContent}\n\nPertanyaan: ${prompt || 'Tolong ringkas dokumen ini.'}`;

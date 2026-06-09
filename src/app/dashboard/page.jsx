@@ -6,6 +6,7 @@ import useAuth from '@/hooks/useAuth';
 import { getUserUsageStats } from '@/app/actions/subscriptionActions';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { SkeletonStatCard } from '@/components/ui/Skeleton';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -23,8 +24,38 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-8 bg-slate-50 dark:bg-[#0F0F0F]">
+        <div className="max-w-5xl mx-auto space-y-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-20 h-20 rounded-2xl bg-slate-200 dark:bg-[#222] animate-pulse"></div>
+              <div className="space-y-2">
+                <div className="h-6 w-32 bg-slate-200 dark:bg-[#222] rounded animate-pulse"></div>
+                <div className="h-4 w-48 bg-slate-200 dark:bg-[#222] rounded animate-pulse"></div>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <div className="h-10 w-32 bg-slate-200 dark:bg-[#222] rounded-xl animate-pulse"></div>
+              <div className="h-10 w-32 bg-slate-200 dark:bg-[#222] rounded-xl animate-pulse"></div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <SkeletonStatCard />
+            <SkeletonStatCard />
+            <SkeletonStatCard />
+            <SkeletonStatCard />
+            <SkeletonStatCard />
+          </div>
+          <div className="space-y-4">
+             <div className="h-6 w-32 bg-slate-200 dark:bg-[#222] rounded animate-pulse"></div>
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="h-32 bg-slate-200 dark:bg-[#222] rounded-3xl animate-pulse"></div>
+                <div className="h-32 bg-slate-200 dark:bg-[#222] rounded-3xl animate-pulse"></div>
+                <div className="h-32 bg-slate-200 dark:bg-[#222] rounded-3xl animate-pulse"></div>
+                <div className="h-32 bg-slate-200 dark:bg-[#222] rounded-3xl animate-pulse"></div>
+             </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -70,7 +101,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Daily Messages */}
           <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
@@ -92,36 +123,99 @@ export default function DashboardPage() {
                 />
               </div>
               <p className="text-[11px] text-slate-500 leading-relaxed">
-                Batas pesan diperbarui setiap hari pukul 00:00 UTC. Upgrade ke PRO untuk limit lebih besar.
+                Batas pesan diperbarui setiap hari pukul 00:00 UTC.
               </p>
             </div>
           </div>
 
-          {/* File Storage */}
+          {/* Live Call Usage */}
+          <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-red-500/10 rounded-2xl text-red-500">
+                <Sparkles size={20} />
+              </div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Live Call</span>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-end justify-between">
+                <span className="text-3xl font-bold text-slate-900 dark:text-white">
+                  {stats?.liveCall?.used || 0} <span className="text-sm font-normal text-slate-400">mnt</span>
+                </span>
+                <span className="text-sm text-slate-400 mb-1">/ {stats?.liveCall?.limit === -1 ? '∞' : stats?.liveCall?.limit} mnt</span>
+              </div>
+              <div className="w-full h-2 bg-slate-100 dark:bg-[#222] rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${stats?.liveCall?.limit > 0 ? Math.min(((stats?.liveCall?.used || 0) / stats?.liveCall?.limit) * 100, 100) : 0}%` }}
+                  className="h-full bg-red-500"
+                />
+              </div>
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                {stats?.liveCall?.limit > 0 && stats?.liveCall?.windowResetAt ? (
+                  <>Reset pada: <span className="font-bold text-slate-700 dark:text-gray-300">{new Date(stats.liveCall.windowResetAt).toLocaleTimeString('id-ID')}</span></>
+                ) : 'Akses Live Call tidak tersedia / Unlimited'}
+              </p>
+            </div>
+          </div>
+
+          {/* Agent Requests */}
+          <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-green-500/10 rounded-2xl text-green-500">
+                <User size={20} />
+              </div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">AI Agent Limit</span>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-end justify-between">
+                <span className="text-3xl font-bold text-slate-900 dark:text-white">{stats?.agentRequests?.used || 0}</span>
+                <span className="text-sm text-slate-400 mb-1">/ {stats?.agentRequests?.limit === -1 ? '∞' : stats?.agentRequests?.limit} req</span>
+              </div>
+              <div className="w-full h-2 bg-slate-100 dark:bg-[#222] rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${stats?.agentRequests?.limit > 0 ? Math.min(((stats?.agentRequests?.used || 0) / stats?.agentRequests?.limit) * 100, 100) : 0}%` }}
+                  className="h-full bg-green-500"
+                />
+              </div>
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                {stats?.agentRequests?.limit > 0 && stats?.agentRequests?.windowResetAt ? (
+                  <>Reset pada: <span className="font-bold text-slate-700 dark:text-gray-300">{new Date(stats.agentRequests.windowResetAt).toLocaleTimeString('id-ID')}</span></>
+                ) : 'Akses AI Agent tidak tersedia / Unlimited'}
+              </p>
+            </div>
+          </div>
+
+          {/* File Storage / Upload Window */}
           <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-amber-500/10 rounded-2xl text-amber-500">
                 <FileText size={20} />
               </div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Penyimpanan Dokumen</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Upload File</span>
             </div>
             <div className="space-y-4">
               <div className="flex items-end justify-between">
-                <span className="text-3xl font-bold text-slate-900 dark:text-white">{stats?.fileCount}</span>
-                <span className="text-sm text-slate-400 mb-1">File Tersimpan</span>
+                <span className="text-3xl font-bold text-slate-900 dark:text-white">{stats?.fileUploadWindow?.used || 0}</span>
+                <span className="text-sm text-slate-400 mb-1">/ {stats?.fileUploadWindow?.limit === -1 ? '∞' : stats?.fileUploadWindow?.limit} file</span>
+              </div>
+              <div className="w-full h-2 bg-slate-100 dark:bg-[#222] rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${stats?.fileUploadWindow?.limit > 0 ? Math.min(((stats?.fileUploadWindow?.used || 0) / stats?.fileUploadWindow?.limit) * 100, 100) : 0}%` }}
+                  className="h-full bg-amber-500"
+                />
               </div>
               <p className="text-[11px] text-slate-500 leading-relaxed">
-                Status Kuota: <span className="font-bold text-slate-700 dark:text-gray-300">{stats?.fileQuota}</span>.
-                Anda dapat mengelola semua file di menu Workspace.
+                {stats?.fileUploadWindow?.limit > 0 && stats?.fileUploadWindow?.windowResetAt ? (
+                  <>Reset pada: <span className="font-bold text-slate-700 dark:text-gray-300">{new Date(stats.fileUploadWindow.windowResetAt).toLocaleTimeString('id-ID')}</span></>
+                ) : 'Upload File Terbatas / Unlimited'}
               </p>
-              <Link href="/workspace" className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1">
-                Buka Workspace <ArrowRight size={12} />
-              </Link>
             </div>
           </div>
 
           {/* Plan Details */}
-          <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm">
+          <div className="bg-white dark:bg-[#151515] p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm lg:col-span-2">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-purple-500/10 rounded-2xl text-purple-500">
                 <CreditCard size={20} />
@@ -135,7 +229,7 @@ export default function DashboardPage() {
                   {stats?.planExpiry ? `Berakhir pada ${new Date(stats.planExpiry).toLocaleDateString('id-ID', { dateStyle: 'long' })}` : 'Berlaku selamanya'}
                 </span>
               </div>
-              <ul className="space-y-2">
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <li className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-gray-400">
                   <div className={`w-1.5 h-1.5 rounded-full ${stats?.imageUpload ? 'bg-green-500' : 'bg-slate-300'}`} />
                   Analisis Gambar: {stats?.imageUpload ? 'Aktif' : 'Tidak Aktif'}
@@ -143,6 +237,14 @@ export default function DashboardPage() {
                 <li className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-gray-400">
                   <div className={`w-1.5 h-1.5 rounded-full ${stats?.fileUpload ? 'bg-green-500' : 'bg-slate-300'}`} />
                   Upload Dokumen: {stats?.fileUpload ? 'Aktif' : 'Tidak Aktif'}
+                </li>
+                <li className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-gray-400">
+                  <div className={`w-1.5 h-1.5 rounded-full ${stats?.liveCall?.enabled ? 'bg-green-500' : 'bg-slate-300'}`} />
+                  Live Call (Prof. Kore): {stats?.liveCall?.enabled ? 'Aktif' : 'Tidak Aktif'}
+                </li>
+                <li className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-gray-400">
+                  <div className={`w-1.5 h-1.5 rounded-full ${stats?.agentRequests?.enabled ? 'bg-green-500' : 'bg-slate-300'}`} />
+                  AI Agent (Custom): {stats?.agentRequests?.enabled ? 'Aktif' : 'Tidak Aktif'}
                 </li>
               </ul>
             </div>

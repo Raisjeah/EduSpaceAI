@@ -6,7 +6,9 @@ import Plan from '@/models/Plan';
 import Subscription from '@/models/Subscription';
 import UsageCounter from '@/models/UsageCounter';
 import Document from '@/models/Document';
+import User from '@/models/User';
 import { getSessionUser } from '@/lib/core/session';
+import { getWindowUsage } from '@/lib/core/subscription';
 import crypto from 'crypto';
 
 const snap = new midtransClient.Snap({
@@ -96,6 +98,67 @@ export async function createTransaction(planName) {
   }
 }
 
+export async function verifyPayment(orderId) {
+  try {
+    await dbConnect();
+    const user = await getSessionUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const statusResponse = await snap.transaction.status(orderId);
+    if (!statusResponse || !statusResponse.transaction_status) {
+      return { success: false, error: 'Invalid response from Midtrans' };
+    }
+
+    const { transaction_status, fraud_status } = statusResponse;
+
+    const subscription = await Subscription.findOne({ midtrans_order_id: orderId });
+    if (!subscription) return { success: false, error: 'Subscription not found' };
+
+    // Idempotency
+    if (subscription.payment_status === 'settlement' || subscription.payment_status === 'capture') {
+      return { success: true, plan: user.current_plan };
+    }
+
+    subscription.transaction_id = statusResponse.transaction_id;
+
+    if (transaction_status === 'settlement' || transaction_status === 'capture') {
+      if (fraud_status === 'challenge') {
+        subscription.payment_status = 'challenge';
+      } else {
+        subscription.payment_status = 'settlement';
+        
+        const plan = await Plan.findById(subscription.plan_id);
+        if (plan) {
+          const expiredAt = new Date();
+          expiredAt.setDate(expiredAt.getDate() + (plan.duration || 30));
+
+          subscription.start_date = new Date();
+          subscription.expired_date = expiredAt;
+
+          await User.findByIdAndUpdate(subscription.user_id, {
+            current_plan: plan.name,
+            plan_expired_at: expiredAt,
+            is_active: true,
+          });
+        }
+      }
+    } else {
+      subscription.payment_status = transaction_status;
+    }
+
+    await subscription.save();
+
+    if (transaction_status === 'settlement' || transaction_status === 'capture') {
+      return { success: true, plan: user.current_plan };
+    } else {
+      return { success: false, error: 'Payment not successful yet' };
+    }
+  } catch (error) {
+    console.error('verifyPayment error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 export async function getSubscriptionStatus() {
   try {
     const user = await getSessionUser();
@@ -134,6 +197,14 @@ export async function getUserUsageStats() {
       daysRemaining = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
     }
 
+    // Ambil window usage untuk semua fitur
+    const userIdStr = user._id.toString();
+    const [liveCallUsage, fileUploadUsage, agentUsage] = await Promise.all([
+      getWindowUsage(userIdStr, 'live_call', plan?.live_call_window_hours || 24),
+      getWindowUsage(userIdStr, 'file_upload', plan?.file_upload_window_hours || 4),
+      getWindowUsage(userIdStr, 'agent_request', plan?.agent_window_hours || 4),
+    ]);
+
     return {
       planName: user.current_plan || 'FREE',
       messageLimit: plan?.message_limit || 20,
@@ -143,7 +214,24 @@ export async function getUserUsageStats() {
       daysRemaining: daysRemaining > 0 ? daysRemaining : 0,
       planExpiry: user.plan_expired_at,
       imageUpload: plan?.image_upload || false,
-      fileUpload: plan?.file_upload || false
+      fileUpload: plan?.file_upload || false,
+      liveCall: {
+        used: liveCallUsage.used,
+        limit: plan?.live_call_minutes_per_window || 0,
+        windowResetAt: liveCallUsage.windowResetAt,
+        enabled: plan?.live_call_enabled || false,
+      },
+      fileUploadWindow: {
+        used: fileUploadUsage.used,
+        limit: plan?.file_upload_per_window || 0,
+        windowResetAt: fileUploadUsage.windowResetAt,
+      },
+      agentRequests: {
+        used: agentUsage.used,
+        limit: plan?.agent_requests_per_window || 0,
+        windowResetAt: agentUsage.windowResetAt,
+        enabled: plan?.agent_enabled || false,
+      },
     };
   } catch (error) {
     console.error("Failed to get user usage stats:", error);

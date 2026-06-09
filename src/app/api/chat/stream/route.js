@@ -4,7 +4,7 @@ import Chat from '@/models/Chat';
 import Project from '@/models/Project';
 import UserMemory from '@/models/UserMemory';
 import { getGeminiResponseStream } from '@/lib/providers/gemini';
-import { extractFileContent } from '@/app/actions/fileActions';
+import { extractFileContentLogic } from '@/lib/core/fileParser';
 import { checkUsageLimit, getModelByPlan, checkFeatureAccess, isModelAllowed } from '@/lib/core/subscription';
 import { getSessionUser } from '@/lib/core/session';
 
@@ -98,7 +98,7 @@ export async function POST(req) {
         if (!prompt) prompt = "Tolong jelaskan gambar ini.";
       } else {
         formData.append('userId', userId);
-        const extractionResult = await extractFileContent(formData);
+        const extractionResult = await extractFileContentLogic(formData);
         if (extractionResult.success) {
           const sanitizedDocContent = sanitizeUserContent(extractionResult.content);
           prompt = `[Konteks Dokumen: ${extractionResult.fileName}]\n${sanitizedDocContent}\n\nPertanyaan: ${prompt || 'Tolong ringkas dokumen ini.'}`;

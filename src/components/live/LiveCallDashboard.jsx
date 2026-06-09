@@ -27,6 +27,8 @@ const LiveCallDashboard = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [transcriptions, setTranscriptions] = useState([]);
   const [isTextInputOpen, setIsTextInputOpen] = useState(false);
+  const [remainingMinutes, setRemainingMinutes] = useState(null);
+  const startTimeRef = useRef(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -156,8 +158,12 @@ const LiveCallDashboard = () => {
         const err = await response.json().catch(() => ({}));
         throw new Error(err.error || `Live token request failed (${response.status})`);
       }
-      const { token } = await response.json();
+      const { token, remainingMinutes: rMin } = await response.json();
       if (!token) { setStatusMessage("Sesi gagal dimulai. Coba lagi."); return; }
+      
+      setRemainingMinutes(rMin);
+      startTimeRef.current = Date.now();
+
       const ai = new GoogleGenAI({ apiKey: token });
       const session = await ai.live.connect({
         model: 'gemini-3.1-flash-live-preview',
@@ -214,6 +220,7 @@ const LiveCallDashboard = () => {
           onclose: () => {
             setIsConnected(false);
             setStatusMessage("Panggilan berakhir.");
+            reportUsage();
           }
         }
       });
@@ -226,15 +233,48 @@ const LiveCallDashboard = () => {
 
   useEffect(() => { isMutedRef.current = isMuted; }, [isMuted]);
 
+  const reportUsage = useCallback(async () => {
+    if (!startTimeRef.current) return;
+    const minutesUsed = (Date.now() - startTimeRef.current) / (1000 * 60);
+    if (minutesUsed > 0.05) { // Hanya laporkan jika lebih dari bbrp detik
+      try {
+        await fetch('/api/live', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ minutesUsed }),
+        });
+      } catch (e) {
+        console.error("Failed to report usage:", e);
+      }
+    }
+    startTimeRef.current = null;
+  }, []);
+
   useEffect(() => {
     initAudio().then(success => { if (success) connectLiveAPI(); });
     return () => {
+      reportUsage();
       if (sessionRef.current) sessionRef.current.close();
       if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
       if (audioContextRef.current) audioContextRef.current.close();
       if (videoIntervalRef.current) clearInterval(videoIntervalRef.current);
     };
   }, []);
+
+  // Timer Countdown Effect
+  useEffect(() => {
+    if (!isConnected || remainingMinutes === null) return;
+    const interval = setInterval(() => {
+      const minutesUsed = (Date.now() - startTimeRef.current) / (1000 * 60);
+      const timeLeft = remainingMinutes - minutesUsed;
+      if (timeLeft <= 0) {
+        clearInterval(interval);
+        setStatusMessage("Waktu habis.");
+        handleEndCall();
+      }
+    }, 10000); // Check every 10 seconds
+    return () => clearInterval(interval);
+  }, [isConnected, remainingMinutes]);
 
   useEffect(() => {
     const toggleCamera = async () => {
@@ -375,10 +415,15 @@ const LiveCallDashboard = () => {
       </header>
 
       {/* ── Status bar ── */}
-      <div className="relative z-20 shrink-0 px-5 pb-2">
+      <div className="relative z-20 shrink-0 px-5 pb-2 flex justify-between items-center">
         <p className={`text-xs text-gray-500 ${isConnecting ? 'animate-pulse' : ''}`}>
           {statusMessage}
         </p>
+        {remainingMinutes !== null && isConnected && (
+          <p className="text-xs text-indigo-400 font-mono bg-indigo-500/10 px-2 py-1 rounded-md border border-indigo-500/20">
+            Sisa: {Math.max(0, Math.ceil(remainingMinutes - (Date.now() - startTimeRef.current) / 60000))} mnt
+          </p>
+        )}
       </div>
 
       {/* ══════════════════════════════════════

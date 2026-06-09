@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import useAuth from '@/hooks/useAuth';
-import { createTransaction } from '@/app/actions/subscriptionActions';
+import { createTransaction, verifyPayment } from '@/app/actions/subscriptionActions';
 import { Check, Sparkles, Zap, Crown, ShieldCheck, PartyPopper } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import FloatingOrbs from '@/components/ui/FloatingOrbs';
@@ -15,10 +15,10 @@ const plans = [
     price: '0',
     icon: <ShieldCheck className="text-slate-400" />,
     features: [
-      'Gemini 2.5 Flash',
       '20 pesan / hari',
-      'Konteks pendek',
+      'Live Call Prof Kore: 5 mnt/hari',
       'Tanpa upload file',
+      'Tanpa AI Agent',
     ],
     buttonText: 'Paket Saat Ini',
     disabled: true,
@@ -29,10 +29,10 @@ const plans = [
     price: '50.000',
     icon: <Zap className="text-blue-500" />,
     features: [
-      'Gemini 2.5 Pro',
       '150 pesan / hari',
-      'Upload File & Gambar',
-      'Chat Memory (7 hari)',
+      'Upload File & Gambar: 3 file / 4 jam',
+      'Live Call Prof Kore: 5 mnt / 3 jam',
+      'AI Agent: 10 req / 4 jam',
     ],
     buttonText: 'Pilih Classic',
     recommended: false,
@@ -43,11 +43,11 @@ const plans = [
     price: '100.000',
     icon: <Sparkles className="text-purple-500" />,
     features: [
-      'Gemini 3.1 Pro',
       '500 pesan / hari',
-      'Advanced AI Agent',
-      'Workspace Tools',
-      'Pencarian Internet',
+      'Upload File & Gambar: 10 file / 4 jam',
+      'Live Call Prof Kore: 30 mnt / hari',
+      'AI Agent: 50 req / 4 jam',
+      'Project Memory',
     ],
     buttonText: 'Pilih Pro',
     recommended: true,
@@ -59,11 +59,11 @@ const plans = [
     promo: 'DISKON 70% Bulan Pertama',
     icon: <Crown className="text-amber-500" />,
     features: [
-      'Claude 4.6 Sonnet',
-      'Unlimited Fair Usage',
-      'Long-term Project Memory',
-      'Smart Project Tracking',
-      'Respon Prioritas',
+      '2000 pesan / hari',
+      'Upload File Unlimited (100MB)',
+      'Live Call Prof Kore: 120 mnt / hari',
+      'AI Agent Unlimited',
+      'Long-term Memory + Priority Access',
     ],
     buttonText: 'Pilih Ultra',
     recommended: false,
@@ -121,12 +121,21 @@ export default function PricingPage() {
 
       if (result.success) {
         window.snap.pay(result.snapToken, {
-          onSuccess: function(result) {
+          onSuccess: async function(paymentResult) {
+            // Cek status ke midtrans dan pastikan database diupdate
+            // Terutama untuk local testing dimana webhook midtrans mungkin gagal mencapai localhost
+            try {
+              if (result.orderId) {
+                await verifyPayment(result.orderId);
+              }
+            } catch (err) {
+              console.error('Failed to verify payment', err);
+            }
             setPurchasedPlan(planName);
             setShowSuccessModal(true);
             fetchUser(); // Update user state without reload
           },
-          onPending: function(result) {
+          onPending: function(paymentResult) {
             showNotification('Menunggu pembayaran...');
           },
           onError: function(result) {
@@ -276,21 +285,28 @@ export default function PricingPage() {
                 <td className="px-6 py-4 text-center">20</td>
                 <td className="px-6 py-4 text-center">150</td>
                 <td className="px-6 py-4 text-center">500</td>
-                <td className="px-6 py-4 text-center">Unlimited*</td>
+                <td className="px-6 py-4 text-center">2000</td>
               </tr>
               <tr>
                 <td className="px-6 py-4">Upload File</td>
                 <td className="px-6 py-4 text-center text-red-500">✕</td>
-                <td className="px-6 py-4 text-center text-green-500">✓ (5MB)</td>
-                <td className="px-6 py-4 text-center text-green-500">✓ (20MB)</td>
-                <td className="px-6 py-4 text-center text-green-500">✓ (100MB)</td>
+                <td className="px-6 py-4 text-center text-green-500">✓ (3/4 jam)</td>
+                <td className="px-6 py-4 text-center text-green-500">✓ (10/4 jam)</td>
+                <td className="px-6 py-4 text-center text-green-500">Unlimited</td>
               </tr>
               <tr>
-                <td className="px-6 py-4">AI Agent Level</td>
-                <td className="px-6 py-4 text-center">Basic</td>
-                <td className="px-6 py-4 text-center">Intermediate</td>
-                <td className="px-6 py-4 text-center">Advanced</td>
-                <td className="px-6 py-4 text-center">Full Access</td>
+                <td className="px-6 py-4">Live Call Prof. Kore</td>
+                <td className="px-6 py-4 text-center text-green-500">5 mnt/hari</td>
+                <td className="px-6 py-4 text-center text-green-500">5 mnt/3 jam</td>
+                <td className="px-6 py-4 text-center text-green-500">30 mnt/hari</td>
+                <td className="px-6 py-4 text-center text-green-500">120 mnt/hari</td>
+              </tr>
+              <tr>
+                <td className="px-6 py-4">AI Agent Request</td>
+                <td className="px-6 py-4 text-center text-red-500">✕</td>
+                <td className="px-6 py-4 text-center text-green-500">10 req/4 jam</td>
+                <td className="px-6 py-4 text-center text-green-500">50 req/4 jam</td>
+                <td className="px-6 py-4 text-center text-green-500">Unlimited</td>
               </tr>
               <tr>
                 <td className="px-6 py-4">Project Memory</td>

@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef, useTransition, useCallback } from 'react';
+import { DocumentEditor } from '../editor/DocumentEditor';
+import { SkeletonChatMessage } from '@/components/ui/Skeleton';
 import { useChat } from '@/context/ChatContext';
 import { useLayout } from '@/context/LayoutContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import TextareaAutosize from 'react-textarea-autosize';
-import { ChevronDown, Plus, ArrowUp, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File, Square, Code, GraduationCap, Microscope, ArrowLeft, Mic, Menu, Terminal, Bot, Settings2, Trash2 } from 'lucide-react';
+import { ChevronDown, Plus, ArrowUp, X, FileText, Image as ImageIcon, Briefcase, Search, BookOpen, Edit3, Rocket, Camera, File, Square, Code, GraduationCap, Microscope, ArrowLeft, Mic, PanelLeft, Terminal, Bot, Settings2, Trash2 } from 'lucide-react';
 import { sendMessage, getChatDetails } from '@/app/actions/chatActions';
 import { getProjectDetails } from '@/app/actions/projectActions';
 import { runDeepSearchAnalyzer, runDeepSearchExtractor, runDeepSearchAnalyst, runDeepSearchWriter } from '@/app/actions/deepSearchActions';
@@ -491,7 +493,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
               className={`md:hidden p-2 rounded-lg hover:bg-white/50 dark:hover:bg-black/20 ${agentTheme.text} transition-all pointer-events-auto`}
               aria-label={isSidebarOpen ? 'Tutup sidebar' : 'Buka sidebar'}
             >
-              {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
+              <PanelLeft size={18} />
             </button>
             <Link
               href="/"
@@ -516,28 +518,10 @@ export default function ChatView({ userId, activeChatId, projectId }) {
 
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
         {isLoadingChat ? (
-          <div className="flex-1 max-w-4xl mx-auto w-full pt-8 px-4 space-y-8 animate-pulse">
-            <div className="flex justify-start">
-              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-[#1E1E1E]" />
-              <div className="ml-4 space-y-2">
-                <div className="h-4 w-48 bg-slate-100 dark:bg-[#1E1E1E] rounded" />
-                <div className="h-4 w-64 bg-slate-100 dark:bg-[#1E1E1E] rounded" />
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <div className="mr-4 space-y-2">
-                <div className="h-4 w-32 bg-indigo-50 dark:bg-indigo-900/10 rounded ml-auto" />
-                <div className="h-10 w-64 bg-indigo-50 dark:bg-indigo-900/10 rounded" />
-              </div>
-              <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-900/10" />
-            </div>
-            <div className="flex justify-start pt-4">
-              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-[#1E1E1E]" />
-              <div className="ml-4 space-y-2">
-                <div className="h-4 w-56 bg-slate-100 dark:bg-[#1E1E1E] rounded" />
-                <div className="h-20 w-80 bg-slate-100 dark:bg-[#1E1E1E] rounded" />
-              </div>
-            </div>
+          <div className="flex-1 max-w-4xl mx-auto w-full pt-8 px-4 space-y-4">
+            <SkeletonChatMessage isUser={false} />
+            <SkeletonChatMessage isUser={true} />
+            <SkeletonChatMessage isUser={false} />
           </div>
         ) : messages.length === 0 ? (
           // ── PERUBAHAN 2: Home screen — logo lebih atas, tambah suggested prompts ──
@@ -567,13 +551,22 @@ export default function ChatView({ userId, activeChatId, projectId }) {
               <div className="text-slate-500 dark:text-gray-500 text-sm max-w-sm font-medium h-10 px-2">
                 {project ? (
                   <LoopingTypewriter 
-                    baseText={`Halo ${user?.name ? user.name.split(' ')[0] : 'Sobat'} 👋, saya ${getAgentName(project.agentId)},`} 
-                    dynamicTexts={["siap membantu proyek ini!", "apa yang ingin Anda teliti?", "mari kita kerjakan!"]} 
+                    baseText=""
+                    dynamicTexts={[
+                      `Halo ${user?.name ? user.name.split(' ')[0] : 'Sobat'} 👋, saya ${getAgentName(project.agentId)}, siap membantu proyek ini!`,
+                      `Halo ${user?.name ? user.name.split(' ')[0] : 'Sobat'} 👋, saya ${getAgentName(project.agentId)}, apa yang ingin Anda teliti?`,
+                      `Halo ${user?.name ? user.name.split(' ')[0] : 'Sobat'} 👋, saya ${getAgentName(project.agentId)}, mari kita kerjakan!`,
+                    ]} 
                   />
                 ) : (
                   <LoopingTypewriter 
-                    baseText={`${greetingTime} ${user?.name ? user.name.split(' ')[0] : 'Sobat'} 👋,`} 
-                    dynamicTexts={["ada yang bisa aku bantu?", "mari mulai risetmu!", "butuh referensi jurnal?", "yuk cek skripsimu!"]} 
+                    baseText=""
+                    dynamicTexts={[
+                      `${greetingTime} ${user?.name ? user.name.split(' ')[0] : 'Sobat'} 👋, ada yang bisa aku bantu?`,
+                      `${greetingTime} ${user?.name ? user.name.split(' ')[0] : 'Sobat'} 👋, mari mulai risetmu!`,
+                      `${greetingTime} ${user?.name ? user.name.split(' ')[0] : 'Sobat'} 👋, butuh referensi jurnal?`,
+                      `${greetingTime} ${user?.name ? user.name.split(' ')[0] : 'Sobat'} 👋, yuk cek skripsimu!`,
+                    ]}
                   />
                 )}
               </div>

@@ -40,7 +40,34 @@ export default function ProfilePage() {
     setIsUpdating(false);
   };
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div className="p-8 max-w-2xl mx-auto h-full overflow-y-auto custom-scrollbar bg-white dark:bg-[#0F0F0F]">
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-[#222] animate-pulse"></div>
+          <div className="h-8 w-48 bg-slate-200 dark:bg-[#222] rounded animate-pulse"></div>
+        </div>
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-[2rem] border border-slate-200 dark:border-[#2A2A2A] p-8 shadow-xl">
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-24 h-24 rounded-full bg-slate-200 dark:bg-[#222] animate-pulse mb-4"></div>
+            <div className="h-4 w-32 bg-slate-200 dark:bg-[#222] rounded animate-pulse"></div>
+          </div>
+          <div className="mb-10 h-32 bg-slate-200 dark:bg-[#222] rounded-2xl animate-pulse"></div>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <div className="h-4 w-24 bg-slate-200 dark:bg-[#222] rounded animate-pulse"></div>
+              <div className="h-12 w-full bg-slate-200 dark:bg-[#222] rounded-xl animate-pulse"></div>
+            </div>
+            <div className="space-y-2">
+              <div className="h-4 w-24 bg-slate-200 dark:bg-[#222] rounded animate-pulse"></div>
+              <div className="h-12 w-full bg-slate-200 dark:bg-[#222] rounded-xl animate-pulse"></div>
+            </div>
+            <div className="h-12 w-full bg-slate-200 dark:bg-[#222] rounded-xl animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 max-w-2xl mx-auto h-full overflow-y-auto custom-scrollbar bg-white dark:bg-[#0F0F0F] transition-colors duration-200">

@@ -2,6 +2,7 @@ import Plan from '@/models/Plan';
 import User from '@/models/User';
 import UsageCounter from '@/models/UsageCounter';
 import dbConnect from '@/lib/db/mongodb';
+import WindowUsageCounter from '@/models/WindowUsageCounter';
 
 // Simple in-memory cache for plans
 const planCache = {
@@ -10,7 +11,7 @@ const planCache = {
   ttl: 1000 * 60 * 5, // 5 minutes cache
 };
 
-async function getCachedPlan(planName) {
+export async function getCachedPlan(planName) {
   const now = Date.now();
   if (planCache.data[planName] && now - planCache.lastFetch < planCache.ttl) {
     return planCache.data[planName];
@@ -67,7 +68,7 @@ export function isModelAllowed(userPlan, modelId) {
 }
 
 // Auto-downgrade a user to FREE when their paid plan has expired.
-async function getEffectivePlan(user) {
+export async function getEffectivePlan(user) {
   if (!user) return 'FREE';
   const expired = user.plan_expired_at && new Date(user.plan_expired_at) < new Date();
   if (expired && user.current_plan !== 'FREE') {
@@ -101,6 +102,10 @@ export async function checkFeatureAccess(user, feature) {
       return planDoc.memory_enabled;
     case 'premium_context':
       return planDoc.name !== 'FREE';
+    case 'live_call':
+      return planDoc.live_call_enabled && planDoc.live_call_minutes_per_window > 0;
+    case 'agent_request':
+      return planDoc.agent_enabled && planDoc.agent_requests_per_window !== 0;
     default:
       return false;
   }
@@ -186,4 +191,91 @@ export function getFileSizeLimit(userPlan) {
     default:
       return 0; // No upload for FREE
   }
+}
+
+/**
+ * Cek dan increment window usage untuk fitur tertentu (atomic dgn $inc).
+ * @param {string} userId
+ * @param {string} feature - 'live_call', 'file_upload', 'agent_request'
+ * @param {number} windowHours - durasi window dalam jam
+ * @param {number} maxAmount - batas maksimum (-1 = unlimited)
+ * @param {number} incrementBy - jumlah yang ditambahkan (default 1)
+ * @returns {{ allowed: boolean, used: number, limit: number, windowResetAt: Date }}
+ */
+export async function checkWindowUsage(userId, feature, windowHours, maxAmount, incrementBy = 1) {
+  if (maxAmount === -1) return { allowed: true, used: 0, limit: -1, windowResetAt: null };
+  if (maxAmount === 0) return { allowed: false, used: 0, limit: 0, windowResetAt: null };
+
+  await dbConnect();
+  const now = new Date();
+  const windowDurationMs = windowHours * 60 * 60 * 1000;
+  const windowStart = new Date(Math.floor(now.getTime() / windowDurationMs) * windowDurationMs);
+  const windowEnd = new Date(windowStart.getTime() + windowDurationMs);
+  const uId = String(userId);
+
+  try {
+    const updated = await WindowUsageCounter.findOneAndUpdate(
+      { userId: uId, feature, windowStart, usedAmount: { $lte: maxAmount - incrementBy } },
+      { 
+        $inc: { usedAmount: incrementBy }, 
+        $set: { updatedAt: now },
+        $setOnInsert: { windowDurationMs }
+      },
+      { new: true, upsert: true }
+    );
+    
+    return {
+      allowed: true,
+      used: updated.usedAmount,
+      limit: maxAmount,
+      windowResetAt: windowEnd,
+    };
+  } catch (err) {
+    if (err?.code === 11000) {
+      const retried = await WindowUsageCounter.findOneAndUpdate(
+        { userId: uId, feature, windowStart, usedAmount: { $lte: maxAmount - incrementBy } },
+        { $inc: { usedAmount: incrementBy }, $set: { updatedAt: now } },
+        { new: true }
+      );
+      if (retried) {
+        return {
+          allowed: true,
+          used: retried.usedAmount,
+          limit: maxAmount,
+          windowResetAt: windowEnd,
+        };
+      }
+    }
+    
+    // Pastikan kita bisa mengambil state current kalau gagal (sudah lewat limit)
+    const current = await WindowUsageCounter.findOne({ userId: uId, feature, windowStart }).lean();
+    return {
+      allowed: false,
+      used: current?.usedAmount || 0,
+      limit: maxAmount,
+      windowResetAt: windowEnd,
+    };
+  }
+}
+
+/**
+ * Cek sisa usage tanpa increment (untuk display di UI)
+ */
+export async function getWindowUsage(userId, feature, windowHours) {
+  await dbConnect();
+  const now = new Date();
+  const windowDurationMs = windowHours * 60 * 60 * 1000;
+  const windowStart = new Date(Math.floor(now.getTime() / windowDurationMs) * windowDurationMs);
+  const windowEnd = new Date(windowStart.getTime() + windowDurationMs);
+
+  const counter = await WindowUsageCounter.findOne({
+    userId: String(userId),
+    feature,
+    windowStart,
+  }).lean();
+
+  return {
+    used: counter?.usedAmount || 0,
+    windowResetAt: windowEnd,
+  };
 }

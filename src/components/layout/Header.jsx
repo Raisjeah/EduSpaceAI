@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu, Sparkles, ArrowRight, X, Settings } from 'lucide-react';
+import { Sparkles, ArrowRight, Settings, PanelLeft } from 'lucide-react';
 import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -71,10 +71,10 @@ export default function Header() {
         ) : (
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="w-10 h-10 flex items-center justify-center rounded-full text-slate-700 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all pointer-events-auto"
+            className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-500 dark:text-gray-400 hover:bg-black/10 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-all pointer-events-auto"
             aria-label={isSidebarOpen ? 'Tutup sidebar' : 'Buka sidebar'}
           >
-            {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
+            <PanelLeft size={20} />
           </button>
         )}
       </div>
@@ -95,10 +95,12 @@ export default function Header() {
           <>
             <Link
               href="/pricing"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-amber-500 dark:text-amber-400 text-xs font-bold hover:bg-black/10 dark:hover:bg-white/10 transition-all pointer-events-auto"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-amber-500 dark:text-amber-400 text-xs font-bold hover:bg-black/10 dark:hover:bg-white/10 transition-all pointer-events-auto"
             >
               <Sparkles size={13} />
-              {user?.current_plan === 'FREE' ? 'Upgrade' : user?.current_plan}
+              <span className="hidden sm:inline">
+                {user?.current_plan === 'FREE' ? 'Upgrade' : user?.current_plan}
+              </span>
             </Link>
 
             <Link href="/dashboard" title="Pengaturan" aria-label="Buka pengaturan" className="w-10 h-10 rounded-full flex items-center justify-center text-slate-700 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all pointer-events-auto">
