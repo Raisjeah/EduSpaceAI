@@ -21,9 +21,14 @@ export async function seedPlans() {
 
   try {
     await dbConnect();
-    for (const plan of plans) {
-      await Plan.findOneAndUpdate({ name: plan.name }, { $set: plan }, { upsert: true, new: true });
-    }
+    const operations = plans.map(plan => ({
+      updateOne: {
+        filter: { name: plan.name },
+        update: { $set: plan },
+        upsert: true
+      }
+    }));
+    await Plan.bulkWrite(operations);
     clearPlanCache();
     return { success: true, message: 'Plans seeded successfully' };
   } catch (error) {
