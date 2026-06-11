@@ -267,8 +267,8 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
               <button
                 onClick={handleCopy}
                 className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-white/10 border border-transparent transition-all flex items-center gap-1.5"
-                aria-label="Salin pesan"
-                title="Salin Pesan"
+                aria-label={copied ? "Tersalin!" : "Salin pesan"}
+                title={copied ? "Tersalin!" : "Salin Pesan"}
               >
                 {copied ? (
                   <>
