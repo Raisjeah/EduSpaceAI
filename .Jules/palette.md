@@ -1,0 +1,3 @@
+## 2025-05-14 - [A11y/UX] Enhanced Feedback and Navigation in Chat
+**Learning:** Users often lose their place in long chat threads and need immediate confirmation when interacting with tool buttons (like Copy) without shifting focus. Providing a dedicated 'Scroll to Bottom' button and dynamic ARIA labels for state changes (e.g., 'Tersalin!') significantly improves accessibility for screen readers and convenience for power users.
+**Action:** Always implement dynamic `aria-label` and `title` attributes for action buttons that have a transient 'success' state, and ensure long-scrolling views have quick navigation anchors.

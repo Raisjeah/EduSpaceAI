@@ -457,6 +457,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const agentTheme = project ? getAgentTheme(project.agentId) : getAgentTheme('default');
 
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
+  const [isFooterScrolled, setIsFooterScrolled] = useState(false);
   const chatContainerRef = useRef(null);
 
   useEffect(() => {
@@ -465,6 +466,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
 
       setIsHeaderScrolled(scrollTop > 20);
+      setIsFooterScrolled(scrollTop + clientHeight < scrollHeight - 20);
     };
 
     const currentRef = chatContainerRef.current;
@@ -486,7 +488,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       />
       {/* Project Header */}
       {project && (
-        <div className={`px-4 md:px-6 py-3 border-b ${agentTheme.border} bg-white/10 dark:bg-black/20 backdrop-blur-xl flex items-center justify-between z-10 flex-none transition-all`}>
+        <div className={`px-4 md:px-6 py-3 border-b ${agentTheme.border} ${isHeaderScrolled ? 'bg-white/80 dark:bg-black/60 shadow-sm' : 'bg-white/10 dark:bg-black/20'} backdrop-blur-xl flex items-center justify-between z-10 flex-none transition-all duration-300`}>
           <div className="flex items-center gap-1 md:gap-4">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -646,8 +648,23 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         className={`fixed bottom-0 right-0 p-3 sm:p-4 md:p-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-[max(1.5rem,env(safe-area-inset-bottom))] transition-all duration-300 z-30 ${
           isSidebarOpen ? 'left-0 md:left-[280px]' : 'left-0'
         } bg-transparent pointer-events-none`}>
-        <div className="max-w-4xl mx-auto flex flex-col gap-3 pointer-events-auto">
-          <div className="flex justify-center">
+        <div className="max-w-4xl mx-auto flex flex-col items-center gap-3 pointer-events-auto w-full">
+          <div className="flex flex-col items-center gap-2">
+            <AnimatePresence>
+              {isFooterScrolled && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                  onClick={() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                  className="w-10 h-10 rounded-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] flex items-center justify-center text-slate-600 dark:text-gray-300 shadow-lg hover:bg-slate-50 dark:hover:bg-[#252525] transition-all mb-2"
+                  aria-label="Scroll ke bawah"
+                >
+                  <ChevronDown size={20} />
+                </motion.button>
+              )}
+            </AnimatePresence>
+
             <AnimatePresence>
               {isTyping && (
                 <motion.button
@@ -852,7 +869,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
         )}
       </AnimatePresence>
 
-      <div className={`relative bg-white dark:bg-[#151515] border border-slate-200 dark:border-white/10 rounded-[24px] p-1.5 flex items-end gap-1 transition-all shadow-2xl pointer-events-auto group-focus-within:border-transparent ${agentTheme ? `focus-within:border-transparent focus-within:ring-2 focus-within:${agentTheme.border.replace('border-', 'ring-').split(' ')[0]}` : 'focus-within:ring-2 focus-within:ring-indigo-500/30'}`}>
+      <div className={`relative bg-white dark:bg-[#151515] border border-slate-200 dark:border-white/10 rounded-[24px] p-1.5 flex items-end gap-1 transition-all shadow-2xl pointer-events-auto group-focus-within:border-transparent w-full ${agentTheme ? `focus-within:border-transparent focus-within:ring-2 focus-within:${agentTheme.border.replace('border-', 'ring-').split(' ')[0]}` : 'focus-within:ring-2 focus-within:ring-indigo-500/30'}`}>
         <div className="relative">
           <AnimatePresence>
             {showNudge && !isActionSheetOpen && (
