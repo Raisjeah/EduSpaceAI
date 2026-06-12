@@ -457,6 +457,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const agentTheme = project ? getAgentTheme(project.agentId) : getAgentTheme('default');
 
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
+  const [isFooterScrolled, setIsFooterScrolled] = useState(false);
   const chatContainerRef = useRef(null);
 
   useEffect(() => {
@@ -465,6 +466,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
 
       setIsHeaderScrolled(scrollTop > 20);
+      setIsFooterScrolled(scrollTop + clientHeight < scrollHeight - 100);
     };
 
     const currentRef = chatContainerRef.current;
@@ -647,15 +649,29 @@ export default function ChatView({ userId, activeChatId, projectId }) {
           isSidebarOpen ? 'left-0 md:left-[280px]' : 'left-0'
         } bg-transparent pointer-events-none`}>
         <div className="max-w-4xl mx-auto flex flex-col gap-3 pointer-events-auto">
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-2 mb-2">
             <AnimatePresence>
+              {isFooterScrolled && (
+                <motion.button
+                  key="scroll-bottom"
+                  initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.8 }}
+                  onClick={() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                  className="flex items-center justify-center w-9 h-9 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-slate-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-md pointer-events-auto"
+                  aria-label="Scroll ke bawah"
+                >
+                  <ChevronDown size={18} />
+                </motion.button>
+              )}
               {isTyping && (
                 <motion.button
+                  key="stop-generating"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
                   onClick={() => stopTypewriter(currentId)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[11px] font-bold text-slate-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 hover:border-red-200 transition-all shadow-sm mb-2 pointer-events-auto"
+                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2A2A2A] rounded-full text-[11px] font-bold text-slate-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 hover:border-red-200 transition-all shadow-sm pointer-events-auto"
                   aria-label="Berhenti menghasilkan jawaban"
                 >
                   <Square size={12} fill="currentColor" /> Berhenti Menghasilkan
