@@ -68,6 +68,8 @@ export default function ModernThinking({
         onClick={() => setIsExpanded(!isExpanded)}
         className="flex items-center justify-between px-4 py-3 w-full hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group cursor-pointer border-b border-transparent data-[expanded=true]:border-slate-100 dark:data-[expanded=true]:border-[#222]"
         data-expanded={isExpanded}
+        aria-expanded={isExpanded}
+        aria-label={isExpanded ? 'Sembunyikan detail' : 'Tampilkan detail'}
       >
         <div className="flex items-center gap-3">
           <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${getAgentTheme()} ${!isDone && !hitlData ? 'animate-pulse' : ''}`}>
