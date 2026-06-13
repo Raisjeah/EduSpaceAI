@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { login, loginWithGoogle } from '@/app/actions/authActions';
@@ -17,15 +17,27 @@ function sanitizeCallbackUrl(raw) {
 function LoginPageInner() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+  const agreedRef = useRef(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { fetchUser, showNotification } = useAuth();
 
   const callbackUrl = sanitizeCallbackUrl(searchParams.get('callbackUrl'));
 
+  useEffect(() => {
+    agreedRef.current = agreed;
+  }, [agreed]);
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+
+    if (!agreed) {
+      setError('Anda harus menyetujui Ketentuan Layanan & Kebijakan Privasi.');
+      return;
+    }
+
     setLoading(true);
     const formData = new FormData(e.target);
     const result = await login(formData);
@@ -40,6 +52,11 @@ function LoginPageInner() {
   }
 
   async function handleGoogleResponse(response) {
+    if (!agreedRef.current) {
+      setError('Anda harus menyetujui Ketentuan Layanan & Kebijakan Privasi sebelum masuk dengan Google.');
+      return;
+    }
+
     setLoading(true);
     const result = await loginWithGoogle(response.credential);
     if (result.success) {
@@ -170,10 +187,22 @@ function LoginPageInner() {
                 placeholder="••••••••"
               />
             </div>
+            <div className="flex items-start gap-2.5 pt-1.5 mb-2">
+              <input
+                type="checkbox"
+                id="agree-checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="mt-0.5 w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 focus:outline-none shrink-0 cursor-pointer"
+              />
+              <label htmlFor="agree-checkbox" className="text-[11px] text-slate-500 dark:text-gray-400 leading-tight cursor-pointer">
+                Saya setuju dengan <Link href="/terms" target="_blank" className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">Ketentuan Layanan</Link> dan <Link href="/privacy" target="_blank" className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">Kebijakan Privasi</Link> EduSpaceAI.
+              </label>
+            </div>
             <button
               type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+              disabled={loading || !agreed}
+              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
               {loading ? (
                 <><Loader2 size={17} className="animate-spin" /> Masuk...</>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { X, Rocket, Search, BookOpen, Edit3, Loader2 } from 'lucide-react';
 import { createProject } from '@/app/actions/projectActions';
 import { useRouter } from 'next/navigation';
@@ -12,6 +12,18 @@ export default function ProjectModal({ isOpen, onClose, userId }) {
   const [isPending, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState('');
   const router = useRouter();
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   const agents = [
     { id: 'deep-search', name: 'Deep Search', desc: 'Ahli Real-time Search', icon: <Search size={18} /> },

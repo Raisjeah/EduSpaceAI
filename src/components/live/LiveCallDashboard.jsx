@@ -168,7 +168,10 @@ const LiveCallDashboard = () => {
       setRemainingMinutes(rMin);
       startTimeRef.current = Date.now();
 
-      const ai = new GoogleGenAI({ apiKey: token });
+      const ai = new GoogleGenAI({
+        apiKey: token,
+        httpOptions: { apiVersion: 'v1alpha' }
+      });
       const session = await ai.live.connect({
         model: 'gemini-3.1-flash-live-preview',
         config: {

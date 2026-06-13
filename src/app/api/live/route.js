@@ -2,6 +2,7 @@ import { getSessionUser } from '@/lib/core/session';
 import { NextResponse } from 'next/server';
 import { getCachedPlan, getEffectivePlan, checkWindowUsage, getWindowUsage } from '@/lib/core/subscription';
 import dbConnect from '@/lib/db/mongodb';
+import { GoogleGenAI } from '@google/genai';
 
 export async function GET() {
   const user = await getSessionUser();
@@ -39,20 +40,36 @@ export async function GET() {
     );
   }
 
-  const apiKey = process.env.GEMINI_LIVE_TOKEN || process.env.GEMINI_API_KEY_2;
+  const apiKey = process.env.GEMINI_LIVE_TOKEN || process.env.GEMINI_API_KEY_2 || process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: 'Live token tidak dikonfigurasi.' }, { status: 503 });
   }
 
-  // PENTING: Idealnya gunakan ephemeral token dari Gemini API, bukan raw key.
-  // Lihat: https://ai.google.dev/gemini-api/docs/ephemeral-tokens
-  // Untuk sementara, return token dengan remainingMinutes agar client bisa enforce di sisi UI juga.
-  return NextResponse.json({
-    token: apiKey,
-    remainingMinutes,
-    windowResetAt,
-    planName,
-  });
+  try {
+    const ai = new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        apiVersion: 'v1alpha',
+      },
+    });
+    // Generate a secure ephemeral token for client authentication
+    const tokenDoc = await ai.authTokens.create({
+      config: {
+        uses: 1,
+        expireTime: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes expiry
+      },
+    });
+
+    return NextResponse.json({
+      token: tokenDoc.name,
+      remainingMinutes,
+      windowResetAt,
+      planName,
+    });
+  } catch (error) {
+    console.error('[Live Token API] Error generating ephemeral token:', error);
+    return NextResponse.json({ error: 'Gagal mengamankan sesi panggilan.' }, { status: 500 });
+  }
 }
 
 // Endpoint untuk melaporkan durasi sesi yang sudah digunakan

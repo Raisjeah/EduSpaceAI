@@ -1,9 +1,22 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Sparkles, X, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function UpgradeModal({ isOpen, onClose, featureName, limit }) {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (

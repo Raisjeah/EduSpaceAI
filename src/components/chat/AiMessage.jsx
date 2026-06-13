@@ -5,10 +5,19 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { ThumbsUp, ThumbsDown, Copy, Check, Volume2, Loader2, StopCircle, RefreshCw, Sparkles, Search, BookOpen, Edit3, Code as CodeIcon, FileText } from 'lucide-react';
-import Mermaid from '../editor/Mermaid';
+import dynamic from 'next/dynamic';
 import 'katex/dist/katex.min.css';
 
-export default function AiMessage({ content, isUser = false, isTyping = false, onRegenerate, isLast = false, agentId }) {
+const Mermaid = dynamic(() => import('../editor/Mermaid'), {
+  ssr: false,
+  loading: () => (
+    <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-xl text-center text-xs animate-pulse text-slate-500 my-4">
+      Memuat Diagram...
+    </div>
+  )
+});
+
+export default function AiMessage({ content, isUser = false, isTyping = false, onRegenerate, onApply, isLast = false, agentId }) {
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
@@ -264,6 +273,16 @@ export default function AiMessage({ content, isUser = false, isTyping = false, o
           </button>
           {!imageData && (
             <div className="flex items-center gap-2">
+              {onApply && (
+                <button
+                  onClick={() => onApply(content)}
+                  className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-white/10 border border-transparent transition-all flex items-center gap-1.5"
+                  aria-label="Kirim ke Dokumen"
+                  title="Kirim ke Dokumen"
+                >
+                  <BookOpen size={16} />
+                </button>
+              )}
               <button
                 onClick={handleCopy}
                 className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-white/10 border border-transparent transition-all flex items-center gap-1.5"

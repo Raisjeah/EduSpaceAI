@@ -852,36 +852,7 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
         )}
       </AnimatePresence>
 
-      <div className={`relative bg-white dark:bg-[#151515] border border-slate-200 dark:border-white/10 rounded-[24px] p-1.5 flex items-end gap-1 transition-all shadow-2xl pointer-events-auto group-focus-within:border-transparent ${agentTheme ? `focus-within:border-transparent focus-within:ring-2 focus-within:${agentTheme.border.replace('border-', 'ring-').split(' ')[0]}` : 'focus-within:ring-2 focus-within:ring-indigo-500/30'}`}>
-        <div className="relative">
-          <AnimatePresence>
-            {showNudge && !isActionSheetOpen && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.5, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.5, y: 10 }}
-                className="absolute bottom-full left-0 mb-4 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap shadow-xl"
-              >
-                Unggah File/Gambar di sini!
-                <div className="absolute top-full left-4 w-2 h-2 bg-indigo-600 rotate-45 -translate-y-1"></div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <button
-            onClick={() => {
-              setIsActionSheetOpen(!isActionSheetOpen);
-              setShowNudge(false);
-            }}
-            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
-              isActionSheetOpen
-              ? 'bg-indigo-600 text-white rotate-45'
-              : 'text-slate-400 dark:text-gray-500 hover:text-indigo-400'
-            } ${showNudge && !isActionSheetOpen ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-[#0F0F0F] animate-pulse' : ''}`}
-          >
-            <Plus size={20} />
-          </button>
-        </div>
-
+      <div className={`relative bg-white dark:bg-[#151515] border border-slate-200 dark:border-white/10 rounded-[24px] p-1.5 flex flex-col gap-0 transition-all shadow-2xl pointer-events-auto group-focus-within:border-transparent ${agentTheme ? `focus-within:border-transparent focus-within:ring-2 focus-within:${agentTheme.border.replace('border-', 'ring-').split(' ')[0]}` : 'focus-within:ring-2 focus-within:ring-indigo-500/30'}`}>
         <input type="file" ref={cameraInputRef} onChange={handleFileChange} className="hidden" accept="image/*" capture="environment" />
         <input type="file" ref={galleryInputRef} onChange={handleFileChange} className="hidden" accept="image/*,video/*" />
         <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".pdf,.doc,.docx,.txt,.csv" />
@@ -897,13 +868,45 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
             }
           }}
           minRows={1}
-          maxRows={8}
+          maxRows={12}
           disabled={disabled}
           placeholder={placeholder || "Tanya apa saja ke Dosen AI-mu..."}
-          className="flex-1 w-full min-w-0 bg-transparent border-none outline-none py-2.5 px-3 text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
+          className="w-full min-w-0 bg-transparent border-none outline-none py-3 px-4 text-base text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 resize-none overflow-y-auto custom-scrollbar"
         />
-        <div className="flex flex-col items-end gap-1.5">
-          <div className="flex items-center gap-0.5 px-1">
+
+        <div className="flex items-center justify-between px-2 pb-1.5 pt-1 w-full">
+          {/* Kiri */}
+          <div className="flex items-center gap-1">
+            <div className="relative">
+              <AnimatePresence>
+                {showNudge && !isActionSheetOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.5, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.5, y: 10 }}
+                    className="absolute bottom-full left-0 mb-4 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap shadow-xl z-20"
+                  >
+                    Unggah File/Gambar di sini!
+                    <div className="absolute top-full left-4 w-2 h-2 bg-indigo-600 rotate-45 -translate-y-1"></div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <button
+                onClick={() => {
+                  setIsActionSheetOpen(!isActionSheetOpen);
+                  setShowNudge(false);
+                }}
+                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
+                  isActionSheetOpen
+                  ? 'bg-indigo-600 text-white rotate-45'
+                  : 'text-slate-400 dark:text-gray-500 hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-white/5'
+                } ${showNudge && !isActionSheetOpen ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-[#0F0F0F] animate-pulse' : ''}`}
+                aria-label="Tambah file"
+              >
+                <Plus size={20} />
+              </button>
+            </div>
+
             <Link
               href="/tools"
               className="inline-flex items-center justify-center min-h-[36px] px-3 py-1.5 text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-indigo-500 hover:bg-indigo-500/5 rounded-lg transition-all tracking-widest uppercase"
@@ -920,11 +923,14 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               Agent
             </button>
           </div>
+
+          {/* Reroll / Send Actions (Kanan) */}
           <div className="flex items-center gap-1">
             {modelSelector}
             <Link
+              id="live-call-button"
               href="/chat/live"
-              className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/5 dark:bg-white/5 text-slate-900 dark:text-white hover:scale-105 transition-all shadow-sm border border-slate-200 dark:border-white/10"
+              className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/5 dark:bg-white/5 text-slate-900 dark:text-white hover:scale-105 transition-all shadow-sm border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5"
               title="Voice Call (Live)"
               aria-label="Buka Voice Call Live"
             >
@@ -935,14 +941,14 @@ function InputBox({ input, setInput, handleSend, disabled, selectedFile, setSele
               </div>
             </Link>
             <button
-            onClick={input.trim() || selectedFile ? handleSend : undefined}
-            disabled={disabled || (!input.trim() && !selectedFile)}
-            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
-              input.trim() || selectedFile
-                ? (agentTheme ? `${agentTheme.accent.replace('bg-', 'bg-').split(' ')[0]} text-white` : 'bg-indigo-600 text-white shadow-md hover:bg-indigo-700 hover:scale-105')
-                : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-gray-600'
-            }`}
-            aria-label="Kirim pesan"
+              onClick={input.trim() || selectedFile ? handleSend : undefined}
+              disabled={disabled || (!input.trim() && !selectedFile)}
+              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shrink-0 ${
+                input.trim() || selectedFile
+                  ? (agentTheme ? `${agentTheme.accent.replace('bg-', 'bg-').split(' ')[0]} text-white` : 'bg-indigo-600 text-white shadow-md hover:bg-indigo-700 hover:scale-105')
+                  : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-gray-600'
+              }`}
+              aria-label="Kirim pesan"
             >
               <ArrowUp size={16} />
             </button>

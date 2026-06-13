@@ -5,13 +5,15 @@ import User from '@/models/User';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 
+import { cache } from 'react';
+
 const JWT_SECRET = process.env.JWT_SECRET;
 
 if (!JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is required');
 }
 
-export async function getSessionUser() {
+export const getSessionUser = cache(async () => {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get('eduspace_session')?.value;
@@ -29,4 +31,4 @@ export async function getSessionUser() {
   } catch (error) {
     return null;
   }
-}
+});

@@ -17,11 +17,6 @@ import TextareaAutosize from 'react-textarea-autosize';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 
-// Export Imports
-import html2pdf from 'html2pdf.js';
-import { asBlob } from 'html-docx-js-typescript';
-import { saveAs } from 'file-saver';
-
 const MenuBar = ({ editor }) => {
   if (!editor) {
     return null;
@@ -272,7 +267,7 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
     }
   }, [editor]);
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (!editor) return;
     const element = document.querySelector('.tiptap');
     if (!element) return;
@@ -285,7 +280,12 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    html2pdf().from(element).set(opt).save();
+    try {
+      const html2pdf = (await import('html2pdf.js')).default;
+      html2pdf().from(element).set(opt).save();
+    } catch (err) {
+      console.error("Gagal mendownload PDF:", err);
+    }
   };
 
   const handleDownloadDocx = async () => {
@@ -305,6 +305,8 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
     `;
 
     try {
+      const { asBlob } = await import('html-docx-js-typescript');
+      const { saveAs } = await import('file-saver');
       const blob = await asBlob(fullHtml);
       saveAs(blob, `${fileName.split('.')[0] || 'dokumen'}.docx`);
     } catch (error) {
@@ -641,8 +643,7 @@ export default function DocumentEditor({ type, userId, docId, projectId: initial
                   isUser={msg.role === 'user'}
                   isTyping={msg.role === 'model' && idx === messages.length - 1 && isTyping}
                   onApply={msg.role === 'model' ? (text) => {
-                    setContent(text);
-                    if (editor) editor.commands.setContent(text);
+                    if (editor) editor.commands.insertContent(text);
                   } : null}
                 />
               ))}

@@ -166,6 +166,40 @@ export async function verifyPayment(orderId) {
   }
 }
 
+export async function verifyPendingPayments() {
+  try {
+    await dbConnect();
+    const user = await getSessionUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const pendingSubscriptions = await Subscription.find({
+      user_id: user._id,
+      payment_status: 'pending'
+    });
+
+    if (pendingSubscriptions.length === 0) {
+      return { success: false, error: 'Tidak ada transaksi pending ditemukan.' };
+    }
+
+    let verifiedCount = 0;
+    for (const sub of pendingSubscriptions) {
+      const result = await verifyPayment(sub.midtrans_order_id);
+      if (result.success) {
+        verifiedCount++;
+      }
+    }
+
+    if (verifiedCount > 0) {
+      return { success: true, message: `${verifiedCount} transaksi berhasil diverifikasi dan paket telah aktif.` };
+    }
+
+    return { success: false, error: 'Transaksi masih belum diselesaikan atau pembayaran gagal.' };
+  } catch (error) {
+    console.error('verifyPendingPayments error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 export async function getSubscriptionStatus() {
   try {
     const user = await getSessionUser();

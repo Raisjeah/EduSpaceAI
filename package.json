@@ -23,6 +23,7 @@
     "google-auth-library": "^10.6.2",
     "html-docx-js-typescript": "^0.1.5",
     "html2pdf.js": "^0.14.0",
+    "jose": "^6.2.3",
     "jsonwebtoken": "^9.0.3",
     "katex": "^0.16.22",
     "lucide-react": "^0.469.0",
@@ -60,4 +61,3 @@
     "tmp": "^0.2.6"
   }
 }
-

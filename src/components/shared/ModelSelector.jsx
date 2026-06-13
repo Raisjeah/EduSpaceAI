@@ -74,7 +74,7 @@ export default function ModelSelector({ currentPlan, selectedModel, onSelect }) 
   const userRank = TIER_RANK[currentPlan] || 0;
 
   return (
-    <div className="relative" ref={dropdownRef} onKeyDown={(e) => { if (e.key === 'Escape') setIsOpen(false); }}>
+    <div id="agent-selector-bar" className="relative" ref={dropdownRef} onKeyDown={(e) => { if (e.key === 'Escape') setIsOpen(false); }}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}

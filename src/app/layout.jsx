@@ -7,10 +7,12 @@ import { ChatProvider } from '@/context/ChatContext'
 import { LayoutProvider } from '@/context/LayoutContext'
 import ThemeProvider from '@/components/ui/ThemeProvider'
 import Script from 'next/script'
+import OnboardingTour from '@/components/ui/OnboardingTour'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://eduspaceai.com'),
   title: 'EduSpaceAI — Asisten Riset Akademik Berbasis AI',
   description:
     'Platform riset akademik bertenaga AI untuk mahasiswa Indonesia. Bantu skripsi, temukan referensi Scopus, koreksi PUEBI, dan visualisasi data penelitian.',
@@ -53,7 +55,10 @@ export default function RootLayout({ children }) {
             <ChatProvider>
               <LayoutProvider>
                 <Suspense fallback={null}>
-                  <MainLayout>{children}</MainLayout>
+                  <MainLayout>
+                    {children}
+                    <OnboardingTour />
+                  </MainLayout>
                 </Suspense>
               </LayoutProvider>
             </ChatProvider>

@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { updateProfile } from '@/app/actions/authActions';
+import { verifyPendingPayments } from '@/app/actions/subscriptionActions';
 import useAuth from '@/hooks/useAuth';
 import { User, Mail, Save, ArrowLeft, Crown, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ProfilePage() {
-  const { user, userId, updateUserName } = useAuth();
+  const { user, userId, updateUserName, fetchUser } = useAuth();
   const [name, setName] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -36,6 +37,19 @@ export default function ProfilePage() {
       setMessage({ type: 'success', text: 'Profil berhasil diperbarui!' });
     } else {
       setMessage({ type: 'error', text: result.error || 'Gagal memperbarui profil' });
+    }
+    setIsUpdating(false);
+  };
+
+  const handleVerifyPayment = async () => {
+    setIsUpdating(true);
+    setMessage({ type: '', text: 'Sedang memverifikasi dengan Midtrans...' });
+    const result = await verifyPendingPayments();
+    if (result.success) {
+      setMessage({ type: 'success', text: result.message });
+      if (fetchUser) fetchUser();
+    } else {
+      setMessage({ type: 'error', text: result.error });
     }
     setIsUpdating(false);
   };
@@ -119,6 +133,16 @@ export default function ProfilePage() {
                   {user.plan_expired_at ? new Date(user.plan_expired_at).toLocaleDateString() : 'Selamanya'}
                 </p>
               </div>
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={handleVerifyPayment}
+                disabled={isUpdating}
+                className="px-4 py-2 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-xl border border-indigo-500/20 transition-all flex items-center gap-2"
+              >
+                <Sparkles size={14} /> Verifikasi Transaksi Pending
+              </button>
             </div>
           </div>
           <Sparkles className="absolute -bottom-6 -right-6 text-indigo-500/10 w-32 h-32" />

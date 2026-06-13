@@ -13,7 +13,7 @@ function sanitizeUserContent(text) {
   return text
     .replace(/(?:ignore|disregard|skip|forget|delete|reset)\b.*?\b(?:instructions|prompt|rules|context|previous)/gi, "[INSTRUCTION_FILTERED]")
     .replace(/\b(system prompt|assistant:|developer:|user:|act as|you are a|instruction:|output:|input:|respond as)\b/gi, "[KEYWORD_FILTERED]")
-    .replace(/[^\x20-\x7E\s\r\n]/g, ""); 
+    .replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F\u200B-\u200D\uFEFF]/g, ""); 
 }
 
 const rateLimitMap = new Map();

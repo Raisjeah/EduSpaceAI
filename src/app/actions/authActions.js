@@ -35,15 +35,13 @@ function normalizeEmail(email) {
 }
 
 function validatePassword(password) {
-  if (typeof password !== 'string') {
-    return 'Password tidak valid';
-  }
-  if (password.length < 8) {
-    return 'Password minimal 8 karakter';
-  }
-  if (password.length > 128) {
-    return 'Password terlalu panjang';
-  }
+  if (typeof password !== 'string') return 'Password tidak valid';
+  if (password.length < 8) return 'Password minimal 8 karakter';
+  if (password.length > 128) return 'Password terlalu panjang';
+  if (!/[A-Z]/.test(password)) return 'Password harus mengandung minimal 1 huruf kapital';
+  if (!/[a-z]/.test(password)) return 'Password harus mengandung minimal 1 huruf kecil';
+  if (!/[0-9]/.test(password)) return 'Password harus mengandung minimal 1 angka';
+  if (!/[^A-Za-z0-9]/.test(password)) return 'Password harus mengandung minimal 1 karakter spesial (!@#$%^&*)';
   return null;
 }
 
@@ -103,12 +101,18 @@ async function clearLoginRateLimit(email) {
 }
 
 export async function register(formData) {
-  const name = (formData.get('name') || '').toString().trim();
+  const firstName = (formData.get('firstName') || '').toString().trim();
+  const lastName = (formData.get('lastName') || '').toString().trim();
+  const name = `${firstName} ${lastName}`.trim();
   const email = normalizeEmail(formData.get('email'));
   const password = formData.get('password');
+  const confirmPassword = formData.get('confirmPassword');
 
-  if (!name || !email || !password) {
+  if (!firstName || !lastName || !email || !password) {
     return { success: false, error: 'Semua field harus diisi' };
+  }
+  if (password !== confirmPassword) {
+    return { success: false, error: 'Konfirmasi password tidak cocok' };
   }
 
   if (!EMAIL_REGEX.test(email)) {
@@ -298,6 +302,7 @@ export async function getUser() {
       image: user.image,
       current_plan: currentPlan,
       plan_expired_at: currentPlan === 'FREE' ? null : user.plan_expired_at,
+      is_first_login: user.is_first_login !== false, // default to true if undefined/true
     };
   } catch (error) {
     return null;
@@ -342,5 +347,19 @@ export async function updateProfile(formData) {
   } catch (error) {
     console.error('Update profile error:', error);
     return { success: false, error: 'Gagal memperbarui profil' };
+  }
+}
+
+export async function completeOnboarding() {
+  try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) return { success: false, error: 'Sesi berakhir.' };
+
+    await dbConnect();
+    await User.findByIdAndUpdate(sessionUser._id, { is_first_login: false });
+    return { success: true };
+  } catch (error) {
+    console.error('completeOnboarding error:', error);
+    return { success: false, error: 'Gagal memperbarui status onboarding.' };
   }
 }

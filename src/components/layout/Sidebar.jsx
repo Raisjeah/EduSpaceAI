@@ -226,7 +226,7 @@ export default function Sidebar({
         />
       )}
 
-      <aside className={`
+      <aside id="sidebar-nav" className={`
         fixed top-0 left-0 h-full z-50
         bg-white dark:bg-[#0F0F0F]
         border-r border-neutral-200/50 dark:border-neutral-800/50
@@ -248,6 +248,7 @@ export default function Sidebar({
               <span>Dashboard</span>
             </Link>
             <Link
+              id="editor-nav-link"
               href="/workspace"
               onClick={closeSidebar}
               className={`flex items-center gap-3 w-full px-3 py-2 text-[13px] font-medium transition-all rounded-xl ${pathname === '/workspace' ? 'bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/5'}`}
