@@ -457,6 +457,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
   const agentTheme = project ? getAgentTheme(project.agentId) : getAgentTheme('default');
 
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
+  const [isFooterScrolled, setIsFooterScrolled] = useState(false);
   const chatContainerRef = useRef(null);
 
   useEffect(() => {
@@ -465,6 +466,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
 
       setIsHeaderScrolled(scrollTop > 20);
+      setIsFooterScrolled(scrollTop + clientHeight < scrollHeight - 100);
     };
 
     const currentRef = chatContainerRef.current;
@@ -486,7 +488,7 @@ export default function ChatView({ userId, activeChatId, projectId }) {
       />
       {/* Project Header */}
       {project && (
-        <div className={`px-4 md:px-6 py-3 border-b ${agentTheme.border} bg-white/10 dark:bg-black/20 backdrop-blur-xl flex items-center justify-between z-10 flex-none transition-all`}>
+        <div className={`px-4 md:px-6 py-3 border-b ${agentTheme.border} ${isHeaderScrolled ? 'bg-white/80 dark:bg-[#151515]/80 shadow-md backdrop-blur-md' : 'bg-white/10 dark:bg-black/20 backdrop-blur-xl'} flex items-center justify-between z-10 flex-none transition-all`}>
           <div className="flex items-center gap-1 md:gap-4">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -646,7 +648,21 @@ export default function ChatView({ userId, activeChatId, projectId }) {
         className={`fixed bottom-0 right-0 p-3 sm:p-4 md:p-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-[max(1.5rem,env(safe-area-inset-bottom))] transition-all duration-300 z-30 ${
           isSidebarOpen ? 'left-0 md:left-[280px]' : 'left-0'
         } bg-transparent pointer-events-none`}>
-        <div className="max-w-4xl mx-auto flex flex-col gap-3 pointer-events-auto">
+        <div className="max-w-4xl mx-auto flex flex-col gap-3 pointer-events-auto items-center">
+          <AnimatePresence>
+            {isFooterScrolled && (
+              <motion.button
+                initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.8 }}
+                onClick={() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                className="w-10 h-10 rounded-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#333] shadow-lg flex items-center justify-center text-slate-500 dark:text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 hover:border-indigo-500/50 transition-all mb-2 pointer-events-auto"
+                aria-label="Scroll ke bawah"
+              >
+                <ChevronDown size={20} />
+              </motion.button>
+            )}
+          </AnimatePresence>
           <div className="flex justify-center">
             <AnimatePresence>
               {isTyping && (
